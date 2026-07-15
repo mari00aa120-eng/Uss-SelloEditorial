@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acceso administrador | USS Sello Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  .admin-login-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f4f4;
+    padding: 24px;
+  }
+  .admin-login-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 32px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  }
+  .admin-login-card h1 {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+  .admin-login-card p.subtitle {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+  .admin-login-card label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .admin-login-card input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+  .admin-login-card button {
+    width: 100%;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .admin-login-card button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .admin-login-msg {
+    margin-top: 14px;
+    font-size: 13px;
+    text-align: center;
+  }
+  .admin-login-msg.error { color: #c0392b; }
+  .admin-login-msg.success { color: #1e8e3e; }
+  .admin-login-step { display: none; }
+  .admin-login-step.is-active { display: block; }
+</style>
+</head>
+<body>
+
+  <div class="admin-login-wrap">
+    <div class="admin-login-card">
+      <h1>Panel de administración</h1>
+      <p class="subtitle">Acceso restringido. Solo el correo autorizado puede continuar.</p>
+
+      <!-- Paso 1: solicitar código -->
+      <div class="admin-login-step is-active" id="stepEmail">
+        <form id="formRequestCode">
+          <label for="adminEmail">Correo electrónico</label>
+          <input type="email" id="adminEmail" placeholder="correo@ejemplo.com" required>
+          <button type="submit" id="btnRequestCode">Enviar código</button>
+        </form>
+      </div>
+
+      <!-- Paso 2: ingresar código recibido por correo (Brevo) -->
+      <div class="admin-login-step" id="stepCode">
+        <form id="formVerifyCode">
+          <label for="adminCode">Código de verificación (6 dígitos)</label>
+          <input type="text" id="adminCode" inputmode="numeric" maxlength="6" placeholder="000000" required>
+          <button type="submit" id="btnVerifyCode">Verificar e ingresar</button>
+        </form>
+      </div>
+
+      <p class="admin-login-msg" id="adminMsg"></p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var stepEmail = document.getElementById('stepEmail');
+      var stepCode = document.getElementById('stepCode');
+      var msg = document.getElementById('adminMsg');
+      var emailInput = document.getElementById('adminEmail');
+      var codeInput = document.getElementById('adminCode');
+      var formRequestCode = document.getElementById('formRequestCode');
+      var formVerifyCode = document.getElementById('formVerifyCode');
+      var btnRequestCode = document.getElementById('btnRequestCode');
+      var btnVerifyCode = document.getElementById('btnVerifyCode');
+
+      function showMsg(text, type) {
+        msg.textContent = text;
+        msg.className = 'admin-login-msg ' + (type || '');
+      }
+
+      formRequestCode.addEventListener('submit', function (e) {
+        e.preventDefault();
+        showMsg('', '');
+        btnRequestCode.disabled = true;
+        btnRequestCode.textContent = 'Enviando...';
+
+        fetch('/api/admin/request-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailInput.value.trim() }),
+        })
+          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (res) {
+            if (res.data.ok) {
+              showMsg(res.data.message, 'success');
+              stepEmail.classList.remove('is-active');
+              stepCode.classList.add('is-active');
+            } else {
+              showMsg(res.data.message || 'No se pudo enviar el código.', 'error');
+            }
+          })
+          .catch(function () { showMsg('Error de conexión con el servidor.', 'error'); })
+          .finally(function () {
+            btnRequestCode.disabled = false;
+            btnRequestCode.textContent = 'Enviar código';
+          });
+      });
+
+      formVerifyCode.addEventListener('submit', function (e) {
+        e.preventDefault();
+        showMsg('', '');
+        btnVerifyCode.disabled = true;
+        btnVerifyCode.textContent = 'Verificando...';
+
+        fetch('/api/admin/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailInput.value.trim(), code: codeInput.value.trim() }),
+        })
+          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (res) {
+            if (res.data.ok) {
+              showMsg('Acceso concedido. Redirigiendo...', 'success');
+              window.location.href = '/admin';
+            } else {
+              showMsg(res.data.message || 'Código incorrecto o expirado.', 'error');
+            }
+          })
+          .catch(function () { showMsg('Error de conexión con el servidor.', 'error'); })
+          .finally(function () {
+            btnVerifyCode.disabled = false;
+            btnVerifyCode.textContent = 'Verificar e ingresar';
+          });
+      });
+    })();
+  </script>
+
+  <script src="assets/js/session.js"></script>
+</body>
+</html>

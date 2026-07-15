@@ -1,0 +1,18 @@
+// Middleware que exige que el usuario haya iniciado sesión (cliente normal).
+function requireUser(req, res, next) {
+  if (req.session && req.session.userId) {
+    return next();
+  }
+  return res.status(401).json({ ok: false, message: 'Debes iniciar sesión para continuar.' });
+}
+
+// Middleware que exige que la sesión tenga el flag de administrador verificado
+// (solo se activa tras pasar correo + código de un solo uso enviado por Brevo).
+function requireAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin && req.session.adminEmail) {
+    return next();
+  }
+  return res.status(401).json({ ok: false, message: 'No autorizado.' });
+}
+
+module.exports = { requireUser, requireAdmin };
