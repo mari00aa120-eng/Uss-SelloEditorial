@@ -320,11 +320,30 @@
       });
     });
 
-    // ---------- Botón "Pagar": redirige a confirmación ----------
+    // ---------- Botón "Pagar": genera la factura real y redirige a confirmación ----------
     var payButton = document.getElementById('payButton');
     if (payButton) {
       payButton.addEventListener('click', function () {
-        window.location.href = 'confirmacionPago.html';
+        var originalText = payButton.textContent;
+        payButton.disabled = true;
+        payButton.textContent = 'Procesando pago...';
+
+        fetch('/api/orders', { method: 'POST' })
+          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (res) {
+            if (res.data.ok) {
+              window.location.href = 'confirmacionPago.html';
+            } else {
+              alert(res.data.message || 'No se pudo procesar el pago.');
+              payButton.disabled = false;
+              payButton.textContent = originalText;
+            }
+          })
+          .catch(function () {
+            alert('Error de conexión con el servidor.');
+            payButton.disabled = false;
+            payButton.textContent = originalText;
+          });
       });
     }
   </script>
@@ -679,5 +698,6 @@
   </script>
 
   <script src="assets/js/session.js"></script>
+  <script src="assets/js/account-panel.js"></script>
 </body>
 </html>

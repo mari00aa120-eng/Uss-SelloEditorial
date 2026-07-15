@@ -5643,3 +5643,270 @@ margin: 40px 0 32px;
     gap: 20px;
   }
 }
+
+/* =========================================================
+   Panel de cuenta (drawer lateral), confirmación de cierre
+   de sesión y modal de "Mis productos" (facturas generadas)
+   ========================================================= */
+
+.account-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1200;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease;
+}
+
+.account-drawer-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.account-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: min(340px, 90vw);
+  background: #fff;
+  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.15);
+  transform: translateX(100%);
+  transition: transform 0.28s ease;
+  display: flex;
+  flex-direction: column;
+  z-index: 1201;
+}
+
+.account-drawer-overlay.is-open .account-drawer {
+  transform: translateX(0);
+}
+
+.account-drawer__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.account-drawer__avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.account-drawer__name {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.account-drawer__email {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.account-drawer__close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--ink);
+  padding: 4px;
+}
+
+.account-drawer__menu {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 4px;
+}
+
+.account-drawer__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.account-drawer__menu-item:hover {
+  background: var(--cream);
+}
+
+.account-drawer__menu-item--danger {
+  color: #c0392b;
+}
+
+.account-drawer__menu-item svg {
+  flex-shrink: 0;
+}
+
+/* ---------- Modal genérico centrado (confirmar cierre de sesión / mis productos) ---------- */
+
+.account-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease;
+}
+
+.account-modal-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.account-modal {
+  background: #fff;
+  border-radius: var(--radius-md);
+  padding: 32px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.account-modal h3 {
+  font-size: 1.15rem;
+  margin: 0 0 10px;
+  color: var(--ink);
+}
+
+.account-modal p {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0 0 24px;
+}
+
+.account-modal__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.account-modal__actions .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ---------- Modal "Mis productos" (más ancho, con lista) ---------- */
+
+.account-orders-modal {
+  max-width: 560px;
+  text-align: left;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.account-orders-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.account-orders-modal__header h3 {
+  margin: 0;
+}
+
+.account-orders-modal__close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.account-orders-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-right: 4px;
+}
+
+.account-order-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+
+.account-order-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.account-order-card__invoice {
+  font-weight: 700;
+  color: var(--green);
+  font-size: 0.95rem;
+}
+
+.account-order-card__date {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.account-order-card__items {
+  font-size: 0.88rem;
+  color: #444;
+  margin: 0 0 10px;
+  padding-left: 18px;
+}
+
+.account-order-card__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.account-order-card__total {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.account-order-card__download {
+  background: transparent;
+  border: 1px solid var(--green);
+  color: var(--green);
+  border-radius: var(--radius-btn);
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.account-order-card__download:hover {
+  background: var(--green);
+  color: #fff;
+}
+
+.account-orders-empty {
+  text-align: center;
+  color: #777;
+  padding: 32px 12px;
+}

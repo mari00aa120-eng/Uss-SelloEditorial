@@ -69,6 +69,24 @@ CREATE INDEX IF NOT EXISTS idx_admin_codes_email ON admin_auth_codes (email);
 
 
 -- =========================================================
+--  TABLA: orders
+--  Cada fila es una factura/pedido generado cuando el usuario
+--  confirma el pago en "procesarPago.html". Guarda una foto
+--  (snapshot) de los productos comprados en ese momento.
+-- =========================================================
+CREATE TABLE IF NOT EXISTS orders (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    invoice_number  VARCHAR(50) NOT NULL UNIQUE,
+    total           NUMERIC(10, 2) NOT NULL,
+    items           JSONB NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_orders_user ON orders (user_id);
+
+
+-- =========================================================
 --  TABLA: session
 --  Guarda las sesiones activas (login de clientes y de admin).
 --  La crea automáticamente "connect-pg-simple" al iniciar el

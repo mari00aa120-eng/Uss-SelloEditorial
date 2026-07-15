@@ -10,6 +10,7 @@ const pool = require('./config/db');
 const authRoutes = require('./routes/auth.routes');
 const cartRoutes = require('./routes/cart.routes');
 const adminRoutes = require('./routes/admin.routes');
+const ordersRoutes = require('./routes/orders.routes');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -32,11 +33,12 @@ app.use(
     secret: process.env.SESSION_SECRET || 'cambia_esto_en_produccion',
     resave: false,
     saveUninitialized: false,
+    rolling: true, // cada request activo reinicia el contador de expiración (inactividad, no vida fija)
     cookie: {
       httpOnly: true,
       secure: isProduction, // solo HTTPS en producción (Railway sirve HTTPS)
       sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 días
+      maxAge: 1000 * 60 * 60 * 2, // 2 horas de INACTIVIDAD -> la sesión se cierra sola
     },
   })
 );
@@ -45,6 +47,7 @@ app.use(
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/orders', ordersRoutes);
 
 // ------------------ Panel de administración (protegido) ------------------
 // El HTML del dashboard vive FUERA de /public para que nadie pueda acceder
@@ -54,6 +57,14 @@ app.get('/admin', (req, res) => {
     return res.sendFile(path.join(__dirname, 'views', 'admin-dashboard.html'));
   }
   return res.redirect('/admin-login.html');
+});
+
+// ------------------ Página raíz ------------------
+// Como el proyecto no tiene "index.html" sino "inicio.html", redirigimos
+// la raíz "/" hacia la página de inicio para que Railway no muestre
+// "Cannot GET /" cuando alguien entra solo con el dominio.
+app.get('/', (req, res) => {
+  res.redirect('/inicio.html');
 });
 
 // ------------------ Frontend estático (landing, catálogo, carrito, etc.) ------------------

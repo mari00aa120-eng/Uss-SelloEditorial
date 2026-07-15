@@ -39,7 +39,7 @@
         </svg>
         <span class="user-actions__cart-badge" id="navCartBadge">0</span>
       </button>
-      <button type="button" class="user-actions__profile" id="navProfileBtn" title="Cerrar sesión">
+      <button type="button" class="user-actions__profile" id="navProfileBtn" title="Mi cuenta">
         <img class="user-actions__avatar" id="navAvatarImg" src="${avatarForEmail(user.email)}" alt="${initials}">
         <span class="user-actions__name">${escapeHtml(user.firstName)}</span>
       </button>
@@ -87,7 +87,9 @@
         const profileBtn = userWrap.querySelector('#navProfileBtn');
         if (profileBtn) {
           profileBtn.addEventListener('click', () => {
-            if (window.confirm('¿Deseas cerrar sesión, ' + session.user.firstName + '?')) {
+            if (window.USS && window.USS.openAccountPanel) {
+              window.USS.openAccountPanel(session.user);
+            } else if (window.confirm('¿Deseas cerrar sesión, ' + session.user.firstName + '?')) {
               logout();
             }
           });
@@ -139,6 +141,21 @@
     if (errorEl) errorEl.remove();
   }
 
+  function showFormSuccess(form, message) {
+    clearFormError(form);
+    let successEl = form.querySelector('.auth-modal__success');
+    if (!successEl) {
+      successEl = document.createElement('p');
+      successEl.className = 'auth-modal__success';
+      successEl.style.color = '#1e8e3e';
+      successEl.style.fontSize = '13px';
+      successEl.style.fontWeight = '600';
+      successEl.style.marginTop = '4px';
+      form.insertBefore(successEl, form.firstChild);
+    }
+    successEl.textContent = message;
+  }
+
   function wireAuthForms() {
     const loginForm = document.getElementById('authLoginForm');
     if (loginForm) {
@@ -160,13 +177,17 @@
           .then((r) => r.json().then((data) => ({ status: r.status, data })))
           .then((res) => {
             if (res.data.ok) {
-              window.location.reload();
+              showFormSuccess(loginForm, '¡Sesión iniciada correctamente! Redirigiendo...');
+              submitBtn.disabled = true;
+              setTimeout(() => window.location.reload(), 1200);
             } else {
               showFormError(loginForm, res.data.message || 'No se pudo iniciar sesión.');
+              submitBtn.disabled = false;
+              submitBtn.textContent = originalText;
             }
           })
-          .catch(() => showFormError(loginForm, 'Error de conexión con el servidor.'))
-          .finally(() => {
+          .catch(() => {
+            showFormError(loginForm, 'Error de conexión con el servidor.');
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
           });
@@ -204,13 +225,17 @@
           .then((r) => r.json().then((data) => ({ status: r.status, data })))
           .then((res) => {
             if (res.data.ok) {
-              window.location.reload();
+              showFormSuccess(registerForm, '¡Cuenta creada exitosamente! Iniciando sesión...');
+              submitBtn.disabled = true;
+              setTimeout(() => window.location.reload(), 1200);
             } else {
               showFormError(registerForm, res.data.message || 'No se pudo crear la cuenta.');
+              submitBtn.disabled = false;
+              submitBtn.textContent = originalText;
             }
           })
-          .catch(() => showFormError(registerForm, 'Error de conexión con el servidor.'))
-          .finally(() => {
+          .catch(() => {
+            showFormError(registerForm, 'Error de conexión con el servidor.');
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
           });
