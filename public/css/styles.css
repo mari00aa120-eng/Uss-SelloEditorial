@@ -168,6 +168,12 @@ button {
   font-size: 1.05rem;
 }
 
+.guest-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 /* ---------- Navbar: estado autenticado (avatar + nombre + carrito) ---------- */
 
 .navbar__actions[data-session-state="loading"] .guest-actions,

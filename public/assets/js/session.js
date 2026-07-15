@@ -61,8 +61,6 @@
       if (!guestWrap) {
         guestWrap = document.createElement('div');
         guestWrap.className = 'guest-actions';
-        guestWrap.style.display = 'flex';
-        guestWrap.style.gap = '16px';
         const originalButtons = Array.from(container.querySelectorAll('[data-auth-open]'));
         originalButtons.forEach((btn) => guestWrap.appendChild(btn));
         container.appendChild(guestWrap);

@@ -34,9 +34,12 @@ router.post('/request-code', requestLimiter, async (req, res) => {
       return res.status(400).json({ ok: false, message: 'El correo es obligatorio.' });
     }
     const normalizedEmail = email.trim().toLowerCase();
-    const authorizedEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    const authorizedEmails = (process.env.ADMIN_EMAIL || '')
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
 
-    if (!authorizedEmail || normalizedEmail !== authorizedEmail) {
+    if (authorizedEmails.length === 0 || !authorizedEmails.includes(normalizedEmail)) {
       // No revelamos si el correo existe o no en el sistema, solo negamos el acceso.
       return res.status(403).json({ ok: false, message: 'Este correo no está autorizado para acceder al panel.' });
     }
@@ -74,9 +77,12 @@ router.post('/verify-code', verifyLimiter, async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Correo y código son obligatorios.' });
     }
     const normalizedEmail = email.trim().toLowerCase();
-    const authorizedEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    const authorizedEmails = (process.env.ADMIN_EMAIL || '')
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
 
-    if (!authorizedEmail || normalizedEmail !== authorizedEmail) {
+    if (authorizedEmails.length === 0 || !authorizedEmails.includes(normalizedEmail)) {
       return res.status(403).json({ ok: false, message: 'Correo no autorizado.' });
     }
 
