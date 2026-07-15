@@ -212,6 +212,7 @@ Si algo falla, revisa el mensaje de error en la terminal: casi siempre es porque
    - Ve a la pestaña **"Settings"** del servicio.
    - En la sección **"Networking"**, haz clic en **"Generate Domain"** (Generar dominio).
    - Railway te dará una URL como `https://uss-sello-editorial-production.up.railway.app`.
+   hola
 8. Abre esa URL + `/inicio.html` en tu navegador, por ejemplo:
    ```
    https://uss-sello-editorial-production.up.railway.app/inicio.html
