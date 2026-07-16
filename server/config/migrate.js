@@ -6,6 +6,7 @@
 // seguro correrlo en cada arranque, incluso si las tablas ya existen.
 
 const pool = require('./db');
+const { PAYMENT_ACCOUNTS: DEFAULT_ACCOUNTS, REQUESTABLE_METHODS } = require('./paymentAccounts');
 
 async function runMigrations() {
   await pool.query(`
@@ -25,6 +26,31 @@ async function runMigrations() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_admin_tickets_user ON admin_tickets (user_id);
   `);
+
+  // Cuentas/números de pago de la institución (Yape, Plin, BCP, BBVA).
+  // Editables desde el panel de admin -> "Configurar cuentas de pago".
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS payment_accounts (
+        key         VARCHAR(30) PRIMARY KEY,
+        label       VARCHAR(100) NOT NULL,
+        handle      VARCHAR(255) NOT NULL,
+        cci         VARCHAR(255),
+        holder      VARCHAR(255) NOT NULL,
+        updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  // Siembra los valores por defecto SOLO si la fila todavía no existe,
+  // para no pisar ediciones que ya haya hecho el admin desde el panel.
+  for (const key of REQUESTABLE_METHODS) {
+    const def = DEFAULT_ACCOUNTS[key];
+    await pool.query(
+      `INSERT INTO payment_accounts (key, label, handle, cci, holder)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (key) DO NOTHING`,
+      [key, def.label, def.handle, def.cci || null, def.holder]
+    );
+  }
 
   console.log('[migrate] Esquema verificado/actualizado correctamente.');
 }

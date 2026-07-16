@@ -125,7 +125,35 @@ CREATE INDEX IF NOT EXISTS idx_orders_user ON orders (user_id);
 
 ```
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS email_sent BOOLEAN NOT NULL DEFAULT FALSE;4
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS email_sent BOOLEAN NOT NULL DEFAULT FALSE;
+```
+
+-- =========================================================
+--  TABLA: admin_tickets
+--  Guarda el estado del "caso" de cada usuario en el panel de
+--  administración (botón "Responder" de Últimos usuarios registrados).
+--  Un solo registro por usuario (se sobreescribe cada vez que el
+--  admin envía una respuesta nueva).
+--    status:
+--      'pendiente'      -> rojo   (aún no se le ha respondido)
+--      'esperando'      -> amarillo (se le pidió el pago, esperando al usuario)
+--      'respondido'     -> verde  (ya se le respondió / confirmó)
+--    order_status: 'procesando' | 'pagado' | 'pendiente_pago'
+-- =========================================================
+```sql
+CREATE TABLE IF NOT EXISTS admin_tickets (
+    id               SERIAL PRIMARY KEY,
+    user_id          INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    status           VARCHAR(20) NOT NULL DEFAULT 'pendiente',
+    order_status     VARCHAR(30),
+    last_message     TEXT,
+    payment_method   VARCHAR(50),
+    payment_amount   NUMERIC(10, 2),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_tickets_user ON admin_tickets (user_id);
 ```
 
 ## Resumen de las tablas

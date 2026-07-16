@@ -12,7 +12,10 @@
   .admin-wrap { max-width: 1150px; margin: 0 auto; padding: 40px 24px 80px; }
   .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
   .admin-header h1 { font-size: 24px; margin: 0; }
+  .admin-header__actions { display: flex; gap: 10px; align-items: center; }
   .admin-header button { background: #1a1a1a; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+  .admin-header .btn-secondary { background: #fff; color: #1a1a1a; border: 1.5px solid #ddd; }
+  .admin-header .btn-secondary:hover { border-color: #046C3B; color: #046C3B; }
   .admin-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
   .admin-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
   .admin-card span { display: block; font-size: 13px; color: #777; margin-bottom: 6px; }
@@ -85,6 +88,21 @@
   .btn-send { background: #046C3B; color: #fff; }
   .btn-send:disabled { opacity: .6; cursor: not-allowed; }
   .form-error { color: #B91C1C; font-size: 12.5px; margin-top: 8px; display: none; }
+
+  /* Configurar cuentas de pago */
+  .pa-modal-box { max-width: 620px; }
+  .pa-account-card { border: 1px solid #ececec; border-radius: 10px; padding: 16px; margin-bottom: 14px; background: #fafafa; }
+  .pa-account-card h4 { margin: 0 0 12px; font-size: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .pa-account-card .pa-saved-tag { font-size: 11.5px; font-weight: 600; color: #046C3B; opacity: 0; transition: opacity .3s ease; }
+  .pa-account-card .pa-saved-tag.show { opacity: 1; }
+  .pa-account-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pa-account-fields .pa-field-full { grid-column: 1 / -1; }
+  .pa-account-fields label { display: block; font-size: 12px; font-weight: 700; color: #555; margin-bottom: 4px; }
+  .pa-account-fields input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 7px; font-size: 13px; font-family: inherit; background: #fff; }
+  .pa-account-card .pa-save-row { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 10px; }
+  .pa-account-card .pa-save-row button { background: #046C3B; color: #fff; border: none; padding: 7px 14px; border-radius: 7px; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+  .pa-account-card .pa-save-row button:disabled { opacity: .6; cursor: not-allowed; }
+  .pa-error { color: #B91C1C; font-size: 12px; margin-top: 6px; display: none; }
 </style>
 </head>
 <body>
@@ -92,7 +110,10 @@
   <div class="admin-wrap">
     <div class="admin-header">
       <h1>Panel de administración</h1>
-      <button id="btnLogout">Cerrar sesión</button>
+      <div class="admin-header__actions">
+        <button id="btnPaymentSettings" class="btn-secondary" type="button">Configurar cuentas de pago</button>
+        <button id="btnLogout">Cerrar sesión</button>
+      </div>
     </div>
 
     <div class="admin-cards" id="adminCards">
@@ -164,6 +185,7 @@
             <label>Medio de pago a solicitar</label>
             <div class="payment-methods-grid" id="paymentMethodsGrid"></div>
             <div class="payment-account-preview" id="paymentAccountPreview">Selecciona un medio de pago para ver los datos que se le enviarán al usuario.</div>
+            <button type="button" id="btnEditFromResponse" style="margin-top:8px; background:none; border:none; color:#046C3B; font-size:12px; font-weight:700; cursor:pointer; padding:0;">¿Cambiar el @/cuenta? Editar cuentas de pago</button>
           </div>
         </div>
 
@@ -179,6 +201,16 @@
           <button type="submit" class="btn-send" id="btnSend">Enviar</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ---------- Modal: configurar cuentas de pago (Yape/Plin/BCP/BBVA) ---------- -->
+  <div class="modal-overlay" id="paModalOverlay">
+    <div class="modal-box pa-modal-box">
+      <button class="modal-close" id="paModalClose" type="button">&times;</button>
+      <h3>Configurar cuentas de pago</h3>
+      <p class="modal-sub">Estos son los datos que se le envían al usuario cuando marcas un pedido como "Pendiente a pagar". Edita el @/número de cuenta que necesites y guarda cada tarjeta por separado.</p>
+      <div id="paAccountsList">Cargando...</div>
     </div>
   </div>
 
@@ -459,6 +491,120 @@
           showError('Error de conexión al enviar la respuesta.');
         });
     });
+
+    // ---------- Modal: configurar cuentas de pago ----------
+    var paModalOverlay = document.getElementById('paModalOverlay');
+    var PA_LABELS = { yape: 'Yape', plin: 'Plin', bcp: 'BCP', bbva: 'BBVA' };
+
+    function openPaymentSettingsModal() {
+      paModalOverlay.classList.add('open');
+      document.getElementById('paAccountsList').innerHTML = 'Cargando...';
+      fetch('/api/admin/payment-accounts')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) {
+            document.getElementById('paAccountsList').innerHTML = '<p class="pa-error" style="display:block;">' + (data.message || 'No se pudieron cargar las cuentas.') + '</p>';
+            return;
+          }
+          renderPaymentAccountsForm(data.accounts);
+        })
+        .catch(function () {
+          document.getElementById('paAccountsList').innerHTML = '<p class="pa-error" style="display:block;">Error de conexión.</p>';
+        });
+    }
+
+    function closePaymentSettingsModal() {
+      paModalOverlay.classList.remove('open');
+    }
+
+    function renderPaymentAccountsForm(accounts) {
+      var list = document.getElementById('paAccountsList');
+      list.innerHTML = accounts.map(function (acc) {
+        var isBank = acc.key === 'bcp' || acc.key === 'bbva';
+        return (
+          '<div class="pa-account-card" data-key="' + acc.key + '">' +
+            '<h4>' + (PA_LABELS[acc.key] || acc.label) + '<span class="pa-saved-tag">Guardado ✓</span></h4>' +
+            '<div class="pa-account-fields">' +
+              '<div' + (isBank ? '' : ' class="pa-field-full"') + '>' +
+                '<label>' + (isBank ? 'Número de cuenta' : 'Número / @') + '</label>' +
+                '<input type="text" class="pa-input-handle" value="' + escapeAttr(acc.handle) + '">' +
+              '</div>' +
+              (isBank ? '<div><label>CCI</label><input type="text" class="pa-input-cci" value="' + escapeAttr(acc.cci || '') + '"></div>' : '') +
+              '<div class="pa-field-full"><label>Titular</label><input type="text" class="pa-input-holder" value="' + escapeAttr(acc.holder) + '"></div>' +
+            '</div>' +
+            '<p class="pa-error"></p>' +
+            '<div class="pa-save-row"><button type="button" class="pa-save-btn">Guardar</button></div>' +
+          '</div>'
+        );
+      }).join('');
+
+      list.querySelectorAll('.pa-account-card').forEach(function (card) {
+        var key = card.getAttribute('data-key');
+        card.querySelector('.pa-save-btn').addEventListener('click', function () {
+          savePaymentAccount(key, card);
+        });
+      });
+    }
+
+    function escapeAttr(str) {
+      var div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML.replace(/"/g, '&quot;');
+    }
+
+    function savePaymentAccount(key, card) {
+      var handleInput = card.querySelector('.pa-input-handle');
+      var cciInput = card.querySelector('.pa-input-cci');
+      var holderInput = card.querySelector('.pa-input-holder');
+      var errorEl = card.querySelector('.pa-error');
+      var savedTag = card.querySelector('.pa-saved-tag');
+      var btn = card.querySelector('.pa-save-btn');
+
+      errorEl.style.display = 'none';
+      savedTag.classList.remove('show');
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      fetch('/api/admin/payment-accounts/' + key, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          handle: handleInput.value.trim(),
+          cci: cciInput ? cciInput.value.trim() : undefined,
+          holder: holderInput.value.trim(),
+        }),
+      })
+        .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+        .then(function (res) {
+          btn.disabled = false;
+          btn.textContent = 'Guardar';
+          if (!res.data.ok) {
+            errorEl.textContent = res.data.message || 'No se pudo guardar.';
+            errorEl.style.display = 'block';
+            return;
+          }
+          savedTag.classList.add('show');
+          setTimeout(function () { savedTag.classList.remove('show'); }, 2000);
+          // Si el modal de respuesta tiene este método cargado, refrescamos su vista previa.
+          if (currentUser) {
+            paymentMethods = paymentMethods.map(function (pm) { return pm.key === key ? res.data.account : pm; });
+            if (selectedMethodKey === key) updatePaymentPreview();
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          btn.textContent = 'Guardar';
+          errorEl.textContent = 'Error de conexión.';
+          errorEl.style.display = 'block';
+        });
+    }
+
+    document.getElementById('btnPaymentSettings').addEventListener('click', openPaymentSettingsModal);
+    document.getElementById('paModalClose').addEventListener('click', closePaymentSettingsModal);
+    paModalOverlay.addEventListener('click', function (e) {
+      if (e.target === paModalOverlay) closePaymentSettingsModal();
+    });
+    document.getElementById('btnEditFromResponse').addEventListener('click', openPaymentSettingsModal);
 
     // ---------- Carga inicial ----------
     loadStats();

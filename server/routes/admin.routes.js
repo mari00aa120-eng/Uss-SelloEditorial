@@ -4,7 +4,12 @@ const pool = require('../config/db');
 const { sendAdminCodeEmail, sendAdminResponseEmail } = require('../config/brevo');
 const { generateSixDigitCode, hashCode } = require('../utils/codes');
 const { requireAdmin } = require('../middleware/auth');
-const { getPaymentAccount, REQUESTABLE_METHODS } = require('../config/paymentAccounts');
+const {
+  getAllPaymentAccounts,
+  getPaymentAccount,
+  updatePaymentAccount,
+  REQUESTABLE_METHODS,
+} = require('../config/paymentAccountsStore');
 
 const ORDER_STATUSES = ['procesando', 'pagado', 'pendiente_pago'];
 const FONDO_EDITORIAL_EMAIL = 'fondoeditorial@uss.edu.pe';
@@ -247,7 +252,7 @@ router.get('/users/:id/detail', requireAdmin, async (req, res) => {
       ok: true,
       user: serializeUserRow(rows[0]),
       fondoEditorialEmail: FONDO_EDITORIAL_EMAIL,
-      paymentMethods: REQUESTABLE_METHODS.map((key) => ({ key, ...getPaymentAccount(key) })),
+      paymentMethods: await getAllPaymentAccounts(),
     });
   } catch (err) {
     console.error('[admin/users/:id/detail]', err);
@@ -283,7 +288,7 @@ router.post('/users/:id/respond', requireAdmin, async (req, res) => {
       if (!paymentMethodKey || !REQUESTABLE_METHODS.includes(paymentMethodKey)) {
         return res.status(400).json({ ok: false, message: 'Selecciona un medio de pago válido para solicitar el cobro.' });
       }
-      const account = getPaymentAccount(paymentMethodKey);
+      const account = await getPaymentAccount(paymentMethodKey);
       if (!account) {
         return res.status(400).json({ ok: false, message: 'No hay una cuenta configurada para ese medio de pago.' });
       }
@@ -326,6 +331,37 @@ router.post('/users/:id/respond', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('[admin/users/:id/respond]', err);
     res.status(500).json({ ok: false, message: 'Error enviando la respuesta al usuario.' });
+  }
+});
+
+// ---------- Configuración editable de cuentas de pago (Yape/Plin/BCP/BBVA) ----------
+
+// GET /api/admin/payment-accounts -> lista los 4 medios con sus datos actuales
+router.get('/payment-accounts', requireAdmin, async (req, res) => {
+  try {
+    const accounts = await getAllPaymentAccounts();
+    res.json({ ok: true, accounts });
+  } catch (err) {
+    console.error('[admin/payment-accounts/get]', err);
+    res.status(500).json({ ok: false, message: 'Error obteniendo las cuentas de pago.' });
+  }
+});
+
+// PUT /api/admin/payment-accounts/:key  body: { handle, cci?, holder }
+router.put('/payment-accounts/:key', requireAdmin, async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { handle, cci, holder } = req.body;
+
+    if (!REQUESTABLE_METHODS.includes(key)) {
+      return res.status(400).json({ ok: false, message: 'Medio de pago inválido.' });
+    }
+
+    const account = await updatePaymentAccount(key, { handle, cci, holder });
+    res.json({ ok: true, account });
+  } catch (err) {
+    console.error('[admin/payment-accounts/put]', err);
+    res.status(400).json({ ok: false, message: err.message || 'Error actualizando la cuenta de pago.' });
   }
 });
 
