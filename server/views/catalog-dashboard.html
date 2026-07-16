@@ -510,7 +510,12 @@
         formData.append('image', file);
 
         fetch('/api/catalog/admin/upload-image', { method: 'POST', body: formData })
-          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (r) {
+            if (r.status === 401) {
+              throw new Error('SESSION_EXPIRED');
+            }
+            return r.json().then(function (data) { return { status: r.status, data: data }; });
+          })
           .then(function (res) {
             if (res.data.ok) {
               uploadedImageUrl = res.data.url;
@@ -523,9 +528,18 @@
               uploadStatus.className = 'cat-upload-status error';
             }
           })
-          .catch(function () {
-            uploadStatus.textContent = 'Error de conexión al subir la imagen.';
-            uploadStatus.className = 'cat-upload-status error';
+          .catch(function (err) {
+            console.error('[panel-catalogo] Error subiendo imagen:', err);
+            if (err && err.message === 'SESSION_EXPIRED') {
+              uploadStatus.innerHTML =
+                'Tu sesión expiró justo al subir la imagen. Tus demás datos siguen aquí en el formulario: ' +
+                '<a href="/catalog-admin-login.html" target="_blank" style="color:#046C3B; font-weight:800;">abre el login en una pestaña nueva</a>, ' +
+                'inicia sesión, y vuelve aquí a intentar subir la imagen de nuevo.';
+              uploadStatus.className = 'cat-upload-status error';
+            } else {
+              uploadStatus.textContent = 'Error de conexión al subir la imagen.';
+              uploadStatus.className = 'cat-upload-status error';
+            }
           });
       });
 
