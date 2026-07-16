@@ -6,6 +6,7 @@ const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 
 const pool = require('./config/db');
+const { runMigrations } = require('./config/migrate');
 
 const authRoutes = require('./routes/auth.routes');
 const cartRoutes = require('./routes/cart.routes');
@@ -33,12 +34,12 @@ app.use(
     secret: process.env.SESSION_SECRET || 'cambia_esto_en_produccion',
     resave: false,
     saveUninitialized: false,
-    rolling: true, // cada request activo reinicia el contador de expiración (inactividad, no vida fija)
+    rolling: false, // sesión FIJA: expira a las 2 horas desde que se inició sesión, sin importar la actividad
     cookie: {
       httpOnly: true,
       secure: isProduction, // solo HTTPS en producción (Railway sirve HTTPS)
       sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 2, // 2 horas de INACTIVIDAD -> la sesión se cierra sola
+      maxAge: 1000 * 60 * 60 * 2, // 2 horas fijas -> luego de eso la sesión se cierra sola
     },
   })
 );
@@ -76,6 +77,12 @@ app.use('/api', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`USS Sello Editorial escuchando en el puerto ${PORT} (${isProduction ? 'producción' : 'desarrollo'})`);
-});
+runMigrations()
+  .catch((err) => {
+    console.error('[migrate] Error creando/verificando tablas:', err.message);
+  })
+  .finally(() => {
+    app.listen(PORT, () => {
+      console.log(`USS Sello Editorial escuchando en el puerto ${PORT} (${isProduction ? 'producción' : 'desarrollo'})`);
+    });
+  });

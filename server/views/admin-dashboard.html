@@ -222,10 +222,19 @@
 
     function loadStats() {
       fetch('/api/admin/stats')
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (!data.ok) {
+        .then(function (r) {
+          if (r.status === 401) {
             window.location.href = '/admin-login.html';
+            return null;
+          }
+          return r.json().then(function (data) { return { status: r.status, data: data }; });
+        })
+        .then(function (res) {
+          if (!res) return; // ya redirigido por 401
+          var data = res.data;
+          if (!data.ok) {
+            var tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '<tr><td colspan="6">Error cargando los datos: ' + (data.message || 'intenta de nuevo en unos segundos.') + '</td></tr>';
             return;
           }
           document.getElementById('statUsers').textContent = data.stats.totalUsers;
@@ -255,7 +264,9 @@
             });
           });
         })
-        .catch(function () { window.location.href = '/admin-login.html'; });
+        .catch(function () {
+          document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="6">Error de conexión. Verifica tu internet e intenta de nuevo.</td></tr>';
+        });
     }
 
     // ---------- Modal ----------
