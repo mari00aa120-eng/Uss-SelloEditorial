@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de catálogo | USS Sello Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  .admin-login-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f4f4;
+    padding: 24px;
+  }
+  .admin-login-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 32px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  }
+  .admin-login-card h1 { font-size: 22px; margin-bottom: 6px; }
+  .admin-login-card p.subtitle { color: #666; font-size: 14px; margin-bottom: 28px; }
+  .admin-login-card label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .admin-login-card input {
+    width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 15px; margin-bottom: 14px; font-family: inherit;
+  }
+  .admin-login-card button {
+    width: 100%; padding: 12px 14px; border: none; border-radius: 8px;
+    background: #046C3B; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .admin-login-card button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .admin-login-msg { margin-top: 14px; font-size: 13px; text-align: center; }
+  .admin-login-msg.error { color: #c0392b; }
+  .admin-login-msg.success { color: #1e8e3e; }
+  .admin-login-step { display: none; }
+  .admin-login-step.is-active { display: block; }
+
+  .pw-checks { display: flex; flex-wrap: wrap; gap: 8px; margin: -4px 0 16px; }
+  .pw-check { font-size: 11.5px; padding: 4px 9px; border-radius: 999px; background: #f1f1f1; color: #888; }
+  .pw-check.is-valid { background: #DCFCE7; color: #046C3B; }
+
+  .back-link { display: inline-block; margin-top: 16px; font-size: 13px; color: #046C3B; text-decoration: none; cursor: pointer; }
+</style>
+</head>
+<body>
+
+  <div class="admin-login-wrap">
+    <div class="admin-login-card">
+      <h1>Panel de catálogo</h1>
+      <p class="subtitle">Acceso restringido para actualizar el catálogo de libros. Solo correos autorizados pueden continuar.</p>
+
+      <!-- Paso 1: pedir correo, saber si crea contraseña o inicia sesión -->
+      <div class="admin-login-step is-active" id="stepEmail">
+        <form id="formCheckEmail">
+          <label for="catalogEmail">Correo electrónico</label>
+          <input type="email" id="catalogEmail" placeholder="correo@ejemplo.com" required>
+          <button type="submit" id="btnCheckEmail">Continuar</button>
+        </form>
+      </div>
+
+      <!-- Paso 2a: crear contraseña (primera vez) -->
+      <div class="admin-login-step" id="stepCreatePassword">
+        <form id="formCreatePassword">
+          <label for="catalogNewPassword">Crea tu contraseña</label>
+          <input type="password" id="catalogNewPassword" placeholder="Crea una contraseña segura" required>
+
+          <div class="pw-checks" id="pwChecks">
+            <span class="pw-check" data-rule="length">Mínimo 8 caracteres</span>
+            <span class="pw-check" data-rule="upper">Una mayúscula</span>
+            <span class="pw-check" data-rule="number">Un número</span>
+            <span class="pw-check" data-rule="symbol">Un símbolo</span>
+          </div>
+
+          <label for="catalogConfirmPassword">Confirmar contraseña</label>
+          <input type="password" id="catalogConfirmPassword" placeholder="Repite tu contraseña" required>
+
+          <button type="submit" id="btnCreatePassword">Crear contraseña e ingresar</button>
+        </form>
+        <a class="back-link" id="backFromCreate">&larr; Usar otro correo</a>
+      </div>
+
+      <!-- Paso 2b: iniciar sesión (correo ya tiene contraseña) -->
+      <div class="admin-login-step" id="stepLogin">
+        <form id="formLogin">
+          <label for="catalogLoginPassword">Contraseña</label>
+          <input type="password" id="catalogLoginPassword" placeholder="Ingresa tu contraseña" required>
+          <button type="submit" id="btnLogin">Iniciar sesión</button>
+        </form>
+        <a class="back-link" id="backFromLogin">&larr; Usar otro correo</a>
+      </div>
+
+      <p class="admin-login-msg" id="catalogMsg"></p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var stepEmail = document.getElementById('stepEmail');
+      var stepCreatePassword = document.getElementById('stepCreatePassword');
+      var stepLogin = document.getElementById('stepLogin');
+      var msg = document.getElementById('catalogMsg');
+
+      var emailInput = document.getElementById('catalogEmail');
+      var newPasswordInput = document.getElementById('catalogNewPassword');
+      var confirmPasswordInput = document.getElementById('catalogConfirmPassword');
+      var loginPasswordInput = document.getElementById('catalogLoginPassword');
+
+      var formCheckEmail = document.getElementById('formCheckEmail');
+      var formCreatePassword = document.getElementById('formCreatePassword');
+      var formLogin = document.getElementById('formLogin');
+
+      var btnCheckEmail = document.getElementById('btnCheckEmail');
+      var btnCreatePassword = document.getElementById('btnCreatePassword');
+      var btnLogin = document.getElementById('btnLogin');
+
+      var currentEmail = '';
+
+      function showMsg(text, type) {
+        msg.textContent = text || '';
+        msg.className = 'admin-login-msg ' + (type || '');
+      }
+
+      function showStep(step) {
+        [stepEmail, stepCreatePassword, stepLogin].forEach(function (el) {
+          el.classList.toggle('is-active', el === step);
+        });
+      }
+
+      formCheckEmail.addEventListener('submit', function (e) {
+        e.preventDefault();
+        showMsg('', '');
+        currentEmail = emailInput.value.trim().toLowerCase();
+        btnCheckEmail.disabled = true;
+        btnCheckEmail.textContent = 'Verificando...';
+
+        fetch('/api/catalog/auth/status?email=' + encodeURIComponent(currentEmail))
+          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (res) {
+            if (!res.data.ok) {
+              showMsg(res.data.message || 'Este correo no está autorizado.', 'error');
+              return;
+            }
+            if (res.data.hasPassword) {
+              showStep(stepLogin);
+            } else {
+              showStep(stepCreatePassword);
+            }
+          })
+          .catch(function () { showMsg('Error de conexión con el servidor.', 'error'); })
+          .finally(function () {
+            btnCheckEmail.disabled = false;
+            btnCheckEmail.textContent = 'Continuar';
+          });
+      });
+
+      newPasswordInput.addEventListener('input', function () {
+        var val = newPasswordInput.value;
+        var rules = {
+          length: val.length >= 8,
+          upper: /[A-Z]/.test(val),
+          number: /[0-9]/.test(val),
+          symbol: /[^A-Za-z0-9]/.test(val)
+        };
+        Object.keys(rules).forEach(function (key) {
+          var el = document.querySelector('.pw-check[data-rule="' + key + '"]');
+          if (el) el.classList.toggle('is-valid', rules[key]);
+        });
+      });
+
+      formCreatePassword.addEventListener('submit', function (e) {
+        e.preventDefault();
+        showMsg('', '');
+
+        if (newPasswordInput.value !== confirmPasswordInput.value) {
+          showMsg('Las contraseñas no coinciden.', 'error');
+          return;
+        }
+
+        btnCreatePassword.disabled = true;
+        btnCreatePassword.textContent = 'Creando...';
+
+        fetch('/api/catalog/auth/create-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentEmail, password: newPasswordInput.value }),
+        })
+          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (res) {
+            if (res.data.ok) {
+              showMsg('Contraseña creada. Redirigiendo...', 'success');
+              window.location.href = '/panel-catalogo';
+            } else {
+              showMsg(res.data.message || 'No se pudo crear la contraseña.', 'error');
+            }
+          })
+          .catch(function () { showMsg('Error de conexión con el servidor.', 'error'); })
+          .finally(function () {
+            btnCreatePassword.disabled = false;
+            btnCreatePassword.textContent = 'Crear contraseña e ingresar';
+          });
+      });
+
+      formLogin.addEventListener('submit', function (e) {
+        e.preventDefault();
+        showMsg('', '');
+        btnLogin.disabled = true;
+        btnLogin.textContent = 'Ingresando...';
+
+        fetch('/api/catalog/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentEmail, password: loginPasswordInput.value }),
+        })
+          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (res) {
+            if (res.data.ok) {
+              showMsg('Acceso concedido. Redirigiendo...', 'success');
+              window.location.href = '/panel-catalogo';
+            } else {
+              showMsg(res.data.message || 'Contraseña incorrecta.', 'error');
+            }
+          })
+          .catch(function () { showMsg('Error de conexión con el servidor.', 'error'); })
+          .finally(function () {
+            btnLogin.disabled = false;
+            btnLogin.textContent = 'Iniciar sesión';
+          });
+      });
+
+      document.getElementById('backFromCreate').addEventListener('click', function () {
+        showMsg('', '');
+        showStep(stepEmail);
+      });
+      document.getElementById('backFromLogin').addEventListener('click', function () {
+        showMsg('', '');
+        showStep(stepEmail);
+      });
+    })();
+  </script>
+
+  <script src="assets/js/session.js"></script>
+  <script src="assets/js/account-panel.js"></script>
+</body>
+</html>

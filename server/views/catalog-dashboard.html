@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de catálogo | USS Sello Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+<style>
+  * { box-sizing: border-box; }
+  body { background: #f6f6f6; font-family: 'Inter', sans-serif; margin: 0; }
+
+  .cat-shell { display: flex; min-height: 100vh; }
+
+  /* ---------- Sidebar izquierdo ---------- */
+  .cat-sidebar {
+    width: 380px;
+    min-width: 380px;
+    background: #fff;
+    border-right: 1px solid #eaeaea;
+    padding: 24px 22px 60px;
+    overflow-y: auto;
+    max-height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+  .cat-sidebar__header { margin-bottom: 18px; }
+  .cat-sidebar__header h2 { margin: 0 0 4px; font-size: 18px; }
+  .cat-sidebar__header p { margin: 0; font-size: 12.5px; color: #888; }
+  .cat-sidebar__logout { background: none; border: none; color: #999; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; margin-top: 6px; }
+
+  .cat-field { margin-bottom: 14px; }
+  .cat-field label { display: block; font-size: 12.5px; font-weight: 700; color: #444; margin-bottom: 6px; }
+  .cat-field input[type="text"],
+  .cat-field input[type="number"],
+  .cat-field input[type="url"],
+  .cat-field select,
+  .cat-field textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 8px;
+    font-family: inherit; font-size: 13.3px; background: #fafafa;
+  }
+  .cat-field textarea { min-height: 70px; resize: vertical; }
+  .cat-field .hint { font-size: 11px; color: #999; margin-top: 4px; }
+
+  .cat-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .cat-section-title {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #046C3B;
+    font-weight: 800; margin: 22px 0 10px; padding-top: 14px; border-top: 1px solid #eee;
+  }
+  .cat-section-title:first-of-type { border-top: none; margin-top: 4px; padding-top: 0; }
+
+  /* Imagen preview */
+  .cat-image-preview {
+    width: 100%; height: 140px; border-radius: 10px; background: #f1f1f1;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    margin-bottom: 8px; border: 1px dashed #ddd;
+  }
+  .cat-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-image-preview span { font-size: 12px; color: #999; }
+
+  /* Autores dinámicos */
+  .cat-authors-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+  .cat-author-row { display: flex; gap: 6px; }
+  .cat-author-row input { flex: 1; }
+  .cat-author-row button { background: #FEE2E2; color: #991B1B; border: none; border-radius: 7px; padding: 0 10px; cursor: pointer; font-weight: 700; }
+  .cat-add-btn {
+    background: #f1f1f1; color: #333; border: 1px dashed #ccc; border-radius: 8px;
+    padding: 8px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; width: 100%;
+  }
+  .cat-add-btn:hover { background: #e9e9e9; }
+
+  /* Descuento toggle */
+  .cat-toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .cat-toggle-row label.switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+  .cat-toggle-row .switch input { opacity: 0; width: 0; height: 0; }
+  .cat-toggle-row .slider {
+    position: absolute; cursor: pointer; inset: 0; background: #ccc; border-radius: 999px; transition: .2s;
+  }
+  .cat-toggle-row .slider:before {
+    position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+    background: #fff; border-radius: 50%; transition: .2s;
+  }
+  .cat-toggle-row input:checked + .slider { background: #046C3B; }
+  .cat-toggle-row input:checked + .slider:before { transform: translateX(18px); }
+  .cat-toggle-row span.toggle-label { font-size: 13px; font-weight: 700; color: #333; }
+
+  .cat-discount-block { display: none; }
+  .cat-discount-block.open { display: block; }
+  .cat-discount-preview {
+    background: #FFF7ED; border: 1px solid #FDBA74; border-radius: 8px; padding: 10px 12px;
+    font-size: 12px; color: #92400E; margin-top: 6px; line-height: 1.5;
+  }
+
+  /* Etiquetas */
+  .cat-tags-current { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 22px; }
+  .cat-tag-chip {
+    background: #DCFCE7; color: #046C3B; font-size: 12px; font-weight: 700; padding: 4px 10px;
+    border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .cat-tag-chip button { background: none; border: none; color: #046C3B; cursor: pointer; font-weight: 900; padding: 0; line-height: 1; }
+  .cat-tag-input-row { display: flex; gap: 6px; }
+  .cat-tag-input-row input { flex: 1; }
+  .cat-tag-input-row button {
+    background: #046C3B; color: #fff; border: none; border-radius: 8px; padding: 0 14px; font-weight: 700; cursor: pointer; font-size: 12.5px;
+  }
+
+  .cat-form-actions { display: flex; gap: 10px; margin-top: 22px; }
+  .cat-form-actions button { flex: 1; border: none; padding: 12px; border-radius: 9px; font-weight: 700; cursor: pointer; font-size: 13.5px; }
+  .cat-btn-save { background: #046C3B; color: #fff; }
+  .cat-btn-save:disabled { opacity: .6; cursor: not-allowed; }
+  .cat-btn-clear { background: #eee; color: #444; }
+  .cat-form-msg { font-size: 12.5px; margin-top: 10px; text-align: center; display: none; }
+  .cat-form-msg.error { display: block; color: #B91C1C; }
+  .cat-form-msg.success { display: block; color: #046C3B; }
+
+  /* ---------- Contenido principal ---------- */
+  .cat-main { flex: 1; padding: 28px 32px 80px; max-width: 1100px; }
+  .cat-main__header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; gap: 16px; flex-wrap: wrap; }
+  .cat-main__header h1 { margin: 0 0 6px; font-size: 22px; }
+  .cat-main__header p { margin: 0; font-size: 13px; color: #777; max-width: 560px; }
+  .cat-refresh-btn { background: #fff; border: 1.5px solid #ddd; border-radius: 8px; padding: 9px 16px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .cat-refresh-btn:hover { border-color: #046C3B; color: #046C3B; }
+
+  .cat-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .cat-stat-card { background: #fff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+  .cat-stat-card span { display: block; font-size: 12.5px; color: #777; margin-bottom: 6px; }
+  .cat-stat-card strong { font-size: 26px; }
+  .cat-stat-card small { display: block; font-size: 11.5px; color: #999; margin-top: 4px; }
+
+  .cat-books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+  .cat-book-card {
+    background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex; flex-direction: column; border: 2px solid transparent;
+  }
+  .cat-book-card.is-editing { border-color: #046C3B; }
+  .cat-book-card.is-inactive { opacity: .55; }
+  .cat-book-card__img { width: 100%; height: 150px; background: #f1f1f1; display: flex; align-items: center; justify-content: center; position: relative; }
+  .cat-book-card__img img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-book-card__img span { font-size: 11px; color: #aaa; }
+  .cat-book-card__badge { position: absolute; top: 8px; left: 8px; background: #046C3B; color: #fff; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; }
+  .cat-book-card__inactive-badge { position: absolute; top: 8px; right: 8px; background: #6B7280; color: #fff; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+  .cat-book-card__body { padding: 12px 14px 14px; flex: 1; display: flex; flex-direction: column; }
+  .cat-book-card__body h4 { font-size: 13.5px; margin: 0 0 4px; line-height: 1.3; }
+  .cat-book-card__body p { font-size: 12px; color: #888; margin: 0 0 8px; }
+  .cat-book-card__price { font-size: 13px; font-weight: 800; color: #046C3B; margin-bottom: 10px; }
+  .cat-book-card__price .old { color: #aaa; text-decoration: line-through; font-weight: 500; margin-right: 6px; font-size: 11.5px; }
+  .cat-book-card__actions { display: flex; gap: 6px; margin-top: auto; }
+  .cat-book-card__actions button {
+    flex: 1; border: none; padding: 7px 6px; border-radius: 7px; font-size: 11.5px; font-weight: 700; cursor: pointer;
+  }
+  .cat-btn-edit { background: #EFF6FF; color: #1D4ED8; }
+  .cat-btn-toggle { background: #FEF3C7; color: #92400E; }
+  .cat-btn-delete { background: #FEE2E2; color: #991B1B; }
+
+  .cat-empty { text-align: center; padding: 60px 20px; color: #999; font-size: 13.5px; }
+
+  @media (max-width: 980px) {
+    .cat-shell { flex-direction: column; }
+    .cat-sidebar { width: 100%; min-width: 0; position: relative; max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="cat-shell">
+    <!-- ============ SIDEBAR IZQUIERDO: formulario de actualización ============ -->
+    <aside class="cat-sidebar">
+      <div class="cat-sidebar__header">
+        <h2 id="formTitle">Añadir libro</h2>
+        <p>Todo lo que llenes aquí se refleja directamente en catalogo.html y descripcionLibro.html.</p>
+        <button type="button" class="cat-sidebar__logout" id="btnLogout">Cerrar sesión</button>
+      </div>
+
+      <form id="bookForm">
+        <input type="hidden" id="bookId" value="">
+
+        <div class="cat-section-title">Imagen y datos básicos</div>
+
+        <div class="cat-field">
+          <label for="fieldImageUrl">URL de la imagen (portada)</label>
+          <div class="cat-image-preview" id="imagePreview"><span>Sin imagen</span></div>
+          <input type="url" id="fieldImageUrl" placeholder="https://... o assets/mi-libro.png">
+          <p class="hint">Pega el link de la imagen, o el nombre de un archivo dentro de /public/assets/.</p>
+        </div>
+
+        <div class="cat-field">
+          <label for="fieldTitle">Título del libro *</label>
+          <input type="text" id="fieldTitle" placeholder="Ej: Sipán, descubrimiento e investigación" required>
+        </div>
+
+        <div class="cat-field">
+          <label>Autores *</label>
+          <div class="cat-authors-list" id="authorsList"></div>
+          <button type="button" class="cat-add-btn" id="btnAddAuthor">+ Añadir autor</button>
+        </div>
+
+        <div class="cat-section-title">Precio y descuento</div>
+
+        <div class="cat-field">
+          <label for="fieldPrice">Precio regular (S/) *</label>
+          <input type="number" id="fieldPrice" min="0" step="0.01" placeholder="120.00" required>
+        </div>
+
+        <div class="cat-toggle-row">
+          <label class="switch">
+            <input type="checkbox" id="fieldHasDiscount">
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label">¿Tiene descuento?</span>
+        </div>
+
+        <div class="cat-discount-block" id="discountBlock">
+          <div class="cat-field">
+            <label for="fieldDiscountPercent">Porcentaje de descuento (%)</label>
+            <input type="number" id="fieldDiscountPercent" min="1" max="99" step="1" placeholder="25">
+          </div>
+          <div class="cat-discount-preview" id="discountPreview">Ingresa el % para ver el precio final.</div>
+        </div>
+
+        <div class="cat-section-title">Reseña (se muestra en descripcionLibro.html)</div>
+
+        <div class="cat-field">
+          <label for="fieldReviewText">Texto de la reseña</label>
+          <textarea id="fieldReviewText" placeholder="Escribe la reseña completa del libro..."></textarea>
+        </div>
+
+        <div class="cat-section-title">Detalles del producto</div>
+
+        <div class="cat-row2">
+          <div class="cat-field">
+            <label for="fieldIsbn">ISBN</label>
+            <input type="text" id="fieldIsbn" placeholder="978-...">
+          </div>
+          <div class="cat-field">
+            <label for="fieldPublisher">Editorial</label>
+            <input type="text" id="fieldPublisher" placeholder="USS - Fondo Editorial">
+          </div>
+        </div>
+
+        <div class="cat-row2">
+          <div class="cat-field">
+            <label for="fieldCoverType">Tapa</label>
+            <select id="fieldCoverType">
+              <option value="">Selecciona</option>
+              <option value="Dura">Dura</option>
+              <option value="Blanda">Blanda</option>
+            </select>
+          </div>
+          <div class="cat-field">
+            <label for="fieldSize">Tamaño</label>
+            <input type="text" id="fieldSize" placeholder="20.5 X 29 cm">
+          </div>
+        </div>
+
+        <div class="cat-row2">
+          <div class="cat-field">
+            <label for="fieldYear">Año de publicación</label>
+            <input type="text" id="fieldYear" placeholder="2026">
+          </div>
+          <div class="cat-field">
+            <label for="fieldPages">Páginas</label>
+            <input type="text" id="fieldPages" placeholder="312">
+          </div>
+        </div>
+
+        <div class="cat-row2">
+          <div class="cat-field">
+            <label for="fieldEdition">Edición</label>
+            <input type="text" id="fieldEdition" placeholder="Primera edición">
+          </div>
+          <div class="cat-field">
+            <label for="fieldCategory">Categoría</label>
+            <input type="text" id="fieldCategory" placeholder="Derecho, Arqueología">
+          </div>
+        </div>
+
+        <div class="cat-field">
+          <label for="fieldLanguage">Idioma</label>
+          <input type="text" id="fieldLanguage" placeholder="Español">
+        </div>
+
+        <div class="cat-field">
+          <label>Etiquetas</label>
+          <div class="cat-tags-current" id="tagsCurrent"></div>
+          <div class="cat-tag-input-row">
+            <input type="text" id="fieldTagInput" placeholder="Ej: Arqueología">
+            <button type="button" id="btnAddTag">Añadir etiqueta</button>
+          </div>
+        </div>
+
+        <div class="cat-toggle-row" style="margin-top: 18px;">
+          <label class="switch">
+            <input type="checkbox" id="fieldIsActive" checked>
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label">Visible en catalogo.html</span>
+        </div>
+
+        <div class="cat-form-actions">
+          <button type="button" class="cat-btn-clear" id="btnClearForm">Limpiar</button>
+          <button type="submit" class="cat-btn-save" id="btnSaveBook">Guardar libro</button>
+        </div>
+        <p class="cat-form-msg" id="formMsg"></p>
+      </form>
+    </aside>
+
+    <!-- ============ CONTENIDO: lista de libros del catálogo ============ -->
+    <main class="cat-main">
+      <div class="cat-main__header">
+        <div>
+          <h1>Catálogo de libros</h1>
+          <p>Cada 6 libros habilitan una página más en catalogo.html. Desactiva un libro para quitarlo del catálogo sin borrarlo, o elimínalo definitivamente.</p>
+        </div>
+        <button type="button" class="cat-refresh-btn" id="btnRefresh">⟳ Refrescar</button>
+      </div>
+
+      <div class="cat-stats">
+        <div class="cat-stat-card">
+          <span>Libros activos</span>
+          <strong id="statActive">–</strong>
+          <small id="statPagesHint">–</small>
+        </div>
+        <div class="cat-stat-card">
+          <span>Libros inactivos</span>
+          <strong id="statInactive">–</strong>
+        </div>
+        <div class="cat-stat-card">
+          <span>Total en el sistema</span>
+          <strong id="statTotal">–</strong>
+        </div>
+      </div>
+
+      <div class="cat-books-grid" id="booksGrid">
+        <div class="cat-empty">Cargando catálogo...</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var books = [];
+      var editingId = null;
+      var currentAuthors = [];
+      var currentTags = [];
+
+      var authorsList = document.getElementById('authorsList');
+      var tagsCurrent = document.getElementById('tagsCurrent');
+      var imagePreview = document.getElementById('imagePreview');
+      var formMsg = document.getElementById('formMsg');
+      var bookForm = document.getElementById('bookForm');
+      var btnSaveBook = document.getElementById('btnSaveBook');
+      var formTitle = document.getElementById('formTitle');
+
+      // ---------------- Sesión / logout ----------------
+      document.getElementById('btnLogout').addEventListener('click', function () {
+        fetch('/api/catalog/auth/logout', { method: 'POST' }).finally(function () {
+          window.location.href = '/catalog-admin-login.html';
+        });
+      });
+
+      // ---------------- Autores dinámicos ----------------
+      function renderAuthors() {
+        authorsList.innerHTML = '';
+        if (currentAuthors.length === 0) currentAuthors.push('');
+        currentAuthors.forEach(function (name, idx) {
+          var row = document.createElement('div');
+          row.className = 'cat-author-row';
+          row.innerHTML =
+            '<input type="text" placeholder="Nombre del autor" value="' + escapeAttr(name) + '" data-idx="' + idx + '">' +
+            '<button type="button" data-remove="' + idx + '">✕</button>';
+          authorsList.appendChild(row);
+        });
+        authorsList.querySelectorAll('input').forEach(function (input) {
+          input.addEventListener('input', function () {
+            currentAuthors[Number(input.getAttribute('data-idx'))] = input.value;
+          });
+        });
+        authorsList.querySelectorAll('button[data-remove]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var idx = Number(btn.getAttribute('data-remove'));
+            currentAuthors.splice(idx, 1);
+            renderAuthors();
+          });
+        });
+      }
+      document.getElementById('btnAddAuthor').addEventListener('click', function () {
+        currentAuthors.push('');
+        renderAuthors();
+      });
+
+      // ---------------- Etiquetas dinámicas ----------------
+      function renderTags() {
+        tagsCurrent.innerHTML = currentTags.map(function (tag, idx) {
+          return '<span class="cat-tag-chip">' + escapeHtml(tag) + '<button type="button" data-remove-tag="' + idx + '">✕</button></span>';
+        }).join('');
+        tagsCurrent.querySelectorAll('button[data-remove-tag]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            currentTags.splice(Number(btn.getAttribute('data-remove-tag')), 1);
+            renderTags();
+          });
+        });
+      }
+      document.getElementById('btnAddTag').addEventListener('click', function () {
+        var input = document.getElementById('fieldTagInput');
+        var val = input.value.trim();
+        if (!val) return;
+        if (currentTags.indexOf(val) === -1) currentTags.push(val);
+        input.value = '';
+        renderTags();
+      });
+      document.getElementById('fieldTagInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('btnAddTag').click();
+        }
+      });
+
+      // ---------------- Descuento toggle ----------------
+      var fieldHasDiscount = document.getElementById('fieldHasDiscount');
+      var discountBlock = document.getElementById('discountBlock');
+      var fieldPrice = document.getElementById('fieldPrice');
+      var fieldDiscountPercent = document.getElementById('fieldDiscountPercent');
+      var discountPreview = document.getElementById('discountPreview');
+
+      function syncDiscountUI() {
+        discountBlock.classList.toggle('open', fieldHasDiscount.checked);
+        updateDiscountPreview();
+      }
+      function updateDiscountPreview() {
+        var price = Number(fieldPrice.value);
+        var pct = Number(fieldDiscountPercent.value);
+        if (!fieldHasDiscount.checked || !price || !pct) {
+          discountPreview.textContent = 'Ingresa el % para ver el precio final.';
+          return;
+        }
+        var saved = price * (pct / 100);
+        var finalPrice = price - saved;
+        discountPreview.innerHTML =
+          'Precio final: <strong>S/ ' + finalPrice.toFixed(2) + '</strong> · Ahorra S/ ' + saved.toFixed(2) + ' (' + pct + '%)';
+      }
+      fieldHasDiscount.addEventListener('change', syncDiscountUI);
+      fieldPrice.addEventListener('input', updateDiscountPreview);
+      fieldDiscountPercent.addEventListener('input', updateDiscountPreview);
+
+      // ---------------- Imagen preview ----------------
+      var fieldImageUrl = document.getElementById('fieldImageUrl');
+      function resolveImageSrc(url) {
+        if (!url) return '';
+        if (/^https?:\/\//i.test(url) || url.indexOf('/') === 0) return url;
+        return '/assets/' + url.replace(/^assets\//, '').replace(/^\/+/, '');
+      }
+      fieldImageUrl.addEventListener('input', function () {
+        var src = resolveImageSrc(fieldImageUrl.value.trim());
+        if (src) {
+          imagePreview.innerHTML = '<img src="' + escapeAttr(src) + '" onerror="this.parentNode.innerHTML=\'<span>No se pudo cargar la imagen</span>\'">';
+        } else {
+          imagePreview.innerHTML = '<span>Sin imagen</span>';
+        }
+      });
+
+      // ---------------- Helpers ----------------
+      function escapeHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+      function escapeAttr(str) { return escapeHtml(str); }
+
+      function showFormMsg(text, type) {
+        formMsg.textContent = text || '';
+        formMsg.className = 'cat-form-msg ' + (type || '');
+      }
+
+      function resetForm() {
+        editingId = null;
+        formTitle.textContent = 'Añadir libro';
+        document.getElementById('bookId').value = '';
+        document.getElementById('fieldTitle').value = '';
+        document.getElementById('fieldImageUrl').value = '';
+        imagePreview.innerHTML = '<span>Sin imagen</span>';
+        document.getElementById('fieldPrice').value = '';
+        fieldHasDiscount.checked = false;
+        document.getElementById('fieldDiscountPercent').value = '';
+        document.getElementById('fieldReviewText').value = '';
+        document.getElementById('fieldIsbn').value = '';
+        document.getElementById('fieldPublisher').value = '';
+        document.getElementById('fieldCoverType').value = '';
+        document.getElementById('fieldSize').value = '';
+        document.getElementById('fieldYear').value = '';
+        document.getElementById('fieldPages').value = '';
+        document.getElementById('fieldEdition').value = '';
+        document.getElementById('fieldCategory').value = '';
+        document.getElementById('fieldLanguage').value = '';
+        document.getElementById('fieldIsActive').checked = true;
+        currentAuthors = [''];
+        currentTags = [];
+        renderAuthors();
+        renderTags();
+        syncDiscountUI();
+        showFormMsg('', '');
+        btnSaveBook.textContent = 'Guardar libro';
+      }
+
+      function loadBookIntoForm(book) {
+        editingId = book.id;
+        formTitle.textContent = 'Editar: ' + book.title;
+        document.getElementById('bookId').value = book.id;
+        document.getElementById('fieldTitle').value = book.title || '';
+        document.getElementById('fieldImageUrl').value = book.imageUrl || '';
+        var src = resolveImageSrc(book.imageUrl || '');
+        imagePreview.innerHTML = src ? ('<img src="' + escapeAttr(src) + '" onerror="this.parentNode.innerHTML=\'<span>No se pudo cargar la imagen</span>\'">') : '<span>Sin imagen</span>';
+        document.getElementById('fieldPrice').value = book.price != null ? book.price : '';
+        fieldHasDiscount.checked = !!book.hasDiscount;
+        document.getElementById('fieldDiscountPercent').value = book.discountPercent != null ? book.discountPercent : '';
+        document.getElementById('fieldReviewText').value = book.reviewText || '';
+        document.getElementById('fieldIsbn').value = book.isbn || '';
+        document.getElementById('fieldPublisher').value = book.publisher || '';
+        document.getElementById('fieldCoverType').value = book.coverType || '';
+        document.getElementById('fieldSize').value = book.sizeDimensions || '';
+        document.getElementById('fieldYear').value = book.publicationYear || '';
+        document.getElementById('fieldPages').value = book.pages || '';
+        document.getElementById('fieldEdition').value = book.edition || '';
+        document.getElementById('fieldCategory').value = book.category || '';
+        document.getElementById('fieldLanguage').value = book.language || '';
+        document.getElementById('fieldIsActive').checked = book.isActive !== false;
+        currentAuthors = (book.authors && book.authors.length) ? book.authors.slice() : [''];
+        currentTags = (book.tags || []).slice();
+        renderAuthors();
+        renderTags();
+        syncDiscountUI();
+        showFormMsg('', '');
+        btnSaveBook.textContent = 'Actualizar libro';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      document.getElementById('btnClearForm').addEventListener('click', resetForm);
+
+      // ---------------- Guardar (crear / editar) ----------------
+      bookForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        showFormMsg('', '');
+
+        var payload = {
+          title: document.getElementById('fieldTitle').value.trim(),
+          authors: currentAuthors.map(function (a) { return a.trim(); }).filter(Boolean),
+          imageUrl: document.getElementById('fieldImageUrl').value.trim(),
+          price: Number(document.getElementById('fieldPrice').value),
+          hasDiscount: fieldHasDiscount.checked,
+          discountPercent: fieldHasDiscount.checked ? Number(document.getElementById('fieldDiscountPercent').value) : null,
+          reviewText: document.getElementById('fieldReviewText').value.trim(),
+          isbn: document.getElementById('fieldIsbn').value.trim(),
+          publisher: document.getElementById('fieldPublisher').value.trim(),
+          coverType: document.getElementById('fieldCoverType').value,
+          sizeDimensions: document.getElementById('fieldSize').value.trim(),
+          publicationYear: document.getElementById('fieldYear').value.trim(),
+          pages: document.getElementById('fieldPages').value.trim(),
+          edition: document.getElementById('fieldEdition').value.trim(),
+          category: document.getElementById('fieldCategory').value.trim(),
+          tags: currentTags,
+          language: document.getElementById('fieldLanguage').value.trim(),
+          isActive: document.getElementById('fieldIsActive').checked,
+        };
+
+        if (!payload.title) return showFormMsg('El título es obligatorio.', 'error');
+        if (payload.authors.length === 0) return showFormMsg('Ingresa al menos un autor.', 'error');
+        if (!payload.price || payload.price <= 0) return showFormMsg('Ingresa un precio válido.', 'error');
+        if (payload.hasDiscount && (!payload.discountPercent || payload.discountPercent <= 0 || payload.discountPercent >= 100)) {
+          return showFormMsg('Ingresa un porcentaje de descuento válido (1-99).', 'error');
+        }
+
+        var url = editingId ? ('/api/catalog/admin/books/' + editingId) : '/api/catalog/admin/books';
+        var method = editingId ? 'PUT' : 'POST';
+
+        btnSaveBook.disabled = true;
+        btnSaveBook.textContent = 'Guardando...';
+
+        fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (res) {
+            if (res.data.ok) {
+              showFormMsg(editingId ? 'Libro actualizado correctamente.' : 'Libro añadido correctamente.', 'success');
+              resetForm();
+              loadBooks();
+            } else {
+              showFormMsg(res.data.message || 'No se pudo guardar el libro.', 'error');
+            }
+          })
+          .catch(function () { showFormMsg('Error de conexión con el servidor.', 'error'); })
+          .finally(function () {
+            btnSaveBook.disabled = false;
+          });
+      });
+
+      // ---------------- Lista de libros ----------------
+      var booksGrid = document.getElementById('booksGrid');
+
+      function loadBooks() {
+        booksGrid.innerHTML = '<div class="cat-empty">Cargando catálogo...</div>';
+        fetch('/api/catalog/admin/books')
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.ok) {
+              booksGrid.innerHTML = '<div class="cat-empty">No se pudo cargar el catálogo.</div>';
+              return;
+            }
+            books = data.books;
+            renderStats();
+            renderBooksGrid();
+          })
+          .catch(function () {
+            booksGrid.innerHTML = '<div class="cat-empty">Error de conexión con el servidor.</div>';
+          });
+      }
+
+      function renderStats() {
+        var active = books.filter(function (b) { return b.isActive; }).length;
+        var inactive = books.length - active;
+        document.getElementById('statActive').textContent = active;
+        document.getElementById('statInactive').textContent = inactive;
+        document.getElementById('statTotal').textContent = books.length;
+        var pages = Math.max(1, Math.ceil(active / 6));
+        document.getElementById('statPagesHint').textContent =
+          active + ' libro(s) activo(s) = ' + pages + ' página(s) habilitada(s) en catalogo.html (6 por página)';
+      }
+
+      function renderBooksGrid() {
+        if (books.length === 0) {
+          booksGrid.innerHTML = '<div class="cat-empty">Todavía no has añadido ningún libro. Usa el formulario de la izquierda para comenzar.</div>';
+          return;
+        }
+        booksGrid.innerHTML = books.map(function (b) {
+          var src = resolveImageSrc(b.imageUrl || '');
+          var imgHtml = src ? ('<img src="' + escapeAttr(src) + '" onerror="this.style.display=\'none\'">') : '<span>Sin imagen</span>';
+          var priceHtml = b.hasDiscount && b.discountPercent
+            ? '<span class="old">S/ ' + Number(b.price).toFixed(2) + '</span>S/ ' + (b.price - (b.price * b.discountPercent / 100)).toFixed(2)
+            : 'S/ ' + Number(b.price).toFixed(2);
+          var authorsText = (b.authors || []).join(', ');
+          return (
+            '<div class="cat-book-card' + (editingId === b.id ? ' is-editing' : '') + (b.isActive ? '' : ' is-inactive') + '">' +
+              '<div class="cat-book-card__img">' + imgHtml +
+                (b.hasDiscount && b.discountPercent ? '<span class="cat-book-card__badge">' + b.discountPercent + '%</span>' : '') +
+                (!b.isActive ? '<span class="cat-book-card__inactive-badge">Oculto</span>' : '') +
+              '</div>' +
+              '<div class="cat-book-card__body">' +
+                '<h4>' + escapeHtml(b.title) + '</h4>' +
+                '<p>' + escapeHtml(authorsText) + '</p>' +
+                '<div class="cat-book-card__price">' + priceHtml + '</div>' +
+                '<div class="cat-book-card__actions">' +
+                  '<button type="button" class="cat-btn-edit" data-edit="' + b.id + '">Editar</button>' +
+                  '<button type="button" class="cat-btn-toggle" data-toggle="' + b.id + '">' + (b.isActive ? 'Ocultar' : 'Mostrar') + '</button>' +
+                  '<button type="button" class="cat-btn-delete" data-delete="' + b.id + '">Eliminar</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+
+        booksGrid.querySelectorAll('[data-edit]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = Number(btn.getAttribute('data-edit'));
+            var book = books.filter(function (b) { return b.id === id; })[0];
+            if (book) loadBookIntoForm(book);
+          });
+        });
+        booksGrid.querySelectorAll('[data-toggle]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-toggle');
+            btn.disabled = true;
+            fetch('/api/catalog/admin/books/' + id + '/toggle', { method: 'PATCH' })
+              .then(function (r) { return r.json(); })
+              .then(function () { loadBooks(); })
+              .finally(function () { btn.disabled = false; });
+          });
+        });
+        booksGrid.querySelectorAll('[data-delete]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-delete');
+            if (!window.confirm('¿Eliminar este libro definitivamente del catálogo? Esta acción no se puede deshacer.')) return;
+            btn.disabled = true;
+            fetch('/api/catalog/admin/books/' + id, { method: 'DELETE' })
+              .then(function (r) { return r.json(); })
+              .then(function (res) {
+                if (res.ok && editingId === Number(id)) resetForm();
+                loadBooks();
+              })
+              .finally(function () { btn.disabled = false; });
+          });
+        });
+      }
+
+      document.getElementById('btnRefresh').addEventListener('click', loadBooks);
+
+      // ---------------- Init ----------------
+      resetForm();
+      loadBooks();
+    })();
+  </script>
+
+  <script src="/assets/js/session.js"></script>
+</body>
+</html>

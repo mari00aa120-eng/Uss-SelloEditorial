@@ -58,6 +58,67 @@ async function runMigrations() {
     );
   }
 
+  // ---------------------------------------------------------------------
+  // Panel de catálogo (actualización de catalogo.html) - acceso separado
+  // del panel de administración general (/admin). Solo correos incluidos
+  // en CATALOG_ADMIN_EMAILS pueden crear su contraseña y entrar aquí.
+  // ---------------------------------------------------------------------
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS catalog_admins (
+        id               SERIAL PRIMARY KEY,
+        email            VARCHAR(255) NOT NULL UNIQUE,
+        password_hash    VARCHAR(255),
+        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS catalog_books (
+        id                  SERIAL PRIMARY KEY,
+        title               VARCHAR(500) NOT NULL,
+        authors             JSONB NOT NULL DEFAULT '[]',
+        image_url           TEXT,
+        price               NUMERIC(10, 2) NOT NULL,
+        has_discount        BOOLEAN NOT NULL DEFAULT FALSE,
+        discount_percent    NUMERIC(5, 2),
+        review_text         TEXT,
+        isbn                VARCHAR(100),
+        publisher           VARCHAR(255),
+        cover_type          VARCHAR(50),
+        size_dimensions     VARCHAR(100),
+        publication_year    VARCHAR(20),
+        pages               VARCHAR(20),
+        edition             VARCHAR(100),
+        category            VARCHAR(150),
+        tags                JSONB NOT NULL DEFAULT '[]',
+        language            VARCHAR(80),
+        is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+        sort_order          INTEGER NOT NULL DEFAULT 0,
+        created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_catalog_books_active ON catalog_books (is_active, sort_order);
+  `);
+
+  // Siembra el/los correo(s) autorizados para el panel de catálogo, sin
+  // password_hash todavía (se crea la primera vez que el correo entra a
+  // "Crear contraseña" en catalog-admin-login.html).
+  const catalogAuthorizedEmails = (process.env.CATALOG_ADMIN_EMAILS || 'isabellacastrocamacho117@outlook.com')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  for (const email of catalogAuthorizedEmails) {
+    await pool.query(
+      `INSERT INTO catalog_admins (email) VALUES ($1) ON CONFLICT (email) DO NOTHING`,
+      [email]
+    );
+  }
+
   console.log('[migrate] Esquema verificado/actualizado correctamente.');
 }
 

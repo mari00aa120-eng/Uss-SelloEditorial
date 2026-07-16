@@ -72,31 +72,25 @@
   <main>
 
     <nav class="book-detail__breadcrumb">
-      <a href="inicio.html">Inicio</a> &gt; <a href="catalogo.html">Catálogo</a> &gt; <span>Sipán, descubrimiento e investigación</span>
+      <a href="inicio.html">Inicio</a> &gt; <a href="catalogo.html">Catálogo</a> &gt; <span id="bookBreadcrumbTitle">Cargando...</span>
     </nav>
 
     <section class="book-detail__top">
       <div class="book-detail__gallery">
         <div class="book-detail__image-wrap" id="bookImageWrap">
-          <span class="book-detail__badge">25%</span>
-          <img id="bookMainImage" class="book-detail__main-image" src="assets/sipan-cover.png" alt="Sipán, descubrimiento e investigación - Walter Alva">
+          <span class="book-detail__badge" id="bookBadge" style="display:none;"></span>
+          <img id="bookMainImage" class="book-detail__main-image" src="assets/logo-uss.svg" alt="Portada del libro">
         </div>
-        <div class="book-detail__thumbs">
-          <button type="button" class="book-detail__thumb book-detail__thumb--active" data-img="assets/sipan-cover.png">
-            <img src="assets/sipan-cover.png" alt="Miniatura portada">
-          </button>
-          <button type="button" class="book-detail__thumb" data-img="assets/sipan-cover.png">
-            <img src="assets/sipan-cover.png" alt="Miniatura portada 2">
-          </button>
-          <button type="button" class="book-detail__thumb" data-img="assets/sipan-cover.png">
-            <img src="assets/sipan-cover.png" alt="Miniatura portada 3">
+        <div class="book-detail__thumbs" id="bookThumbs" style="display:none;">
+          <button type="button" class="book-detail__thumb book-detail__thumb--active" data-img="">
+            <img src="assets/logo-uss.svg" alt="Miniatura portada">
           </button>
         </div>
       </div>
 
       <div class="book-detail__info">
-        <h1>Sipán, descubrimiento e investigación</h1>
-        <p class="book-detail__author">Autor: <span>Alva, Walter</span></p>
+        <h1 id="bookTitle">Cargando...</h1>
+        <p class="book-detail__author">Autor(es): <span id="bookAuthors">—</span></p>
 
         <div class="book-detail__rating">
           <div class="book-detail__rating-stars" aria-label="4.8 de 5 estrellas">
@@ -109,10 +103,10 @@
           <span class="book-detail__rating-score">4.8 (32 reseñas en Blog)</span>
         </div>
 
-        <p class="book-detail__price-label">Precio Regular: <span class="book-detail__price-old">S/ 160.00</span></p>
-        <p class="book-detail__price-new-label">Precio promocional:</p>
-        <p class="book-detail__price-new">S/ 120.00</p>
-        <span class="book-detail__save">Ahorras S/ 40.00 (25%)</span>
+        <p class="book-detail__price-label" id="bookPriceOldWrap" style="display:none;">Precio Regular: <span class="book-detail__price-old" id="bookPriceOld">S/ 0.00</span></p>
+        <p class="book-detail__price-new-label" id="bookPriceNewLabel" style="display:none;">Precio promocional:</p>
+        <p class="book-detail__price-new" id="bookPriceNew">S/ 0.00</p>
+        <span class="book-detail__save" id="bookSave" style="display:none;"></span>
 
         <p class="book-detail__stock">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -164,110 +158,15 @@
       <div class="book-detail__tabs-body">
         <div class="book-detail__tab-panel is-active" id="tab-resena">
           <div class="book-detail__tab-grid">
-            <p class="book-detail__review-text">
-              En abril del año de 1987, un pequeño equipo de arqueólogos peruanos, asumimos la responsabilidad de salvar del saqueo y destrucción la plataforma funeraria del Santuario Mochica de Sipán, destino trágico que amenaza y afecta permanentemente la extraordinaria y cuantiosa herencia cultural del Perú. Nuestra intervención, iniciada en difíciles circunstancias y con limitados recursos brindados por empresas e instituciones comprometidas con la cultura nacional, permitió, después de un exhaustivo trabajo arqueológico, lograr la recuperación científica de la llamada «Tumba del Señor de Sipán».
-            </p>
-            <div class="book-detail__promo-box">
-              <div class="book-detail__promo-item">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2.83 12.83A2 2 0 0 1 2.24 11.41L2.7 4.24A2 2 0 0 1 4.65 2.3l7.16-.46a2 2 0 0 1 1.42.59l7.36 7.36a2 2 0 0 1 0 2.83z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
-                <div>
-                  <h5>25% de descuento</h5>
-                  <p>Por tiempo limitado</p>
-                </div>
-              </div>
-              <div class="book-detail__promo-item">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                <div>
-                  <h5>Ahorra S/ 40.00</h5>
-                  <p>Sobre el precio regular</p>
-                </div>
-              </div>
-              <div class="book-detail__promo-item">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <div>
-                  <h5>Promoción válida</h5>
-                  <p>Hasta agotar stock</p>
-                </div>
-              </div>
-            </div>
+            <p class="book-detail__review-text" id="bookReviewText">Cargando reseña...</p>
+            <div class="book-detail__promo-box" id="bookPromoBox1" style="display:none;"></div>
           </div>
         </div>
 
         <div class="book-detail__tab-panel" id="tab-detalles">
           <div class="book-detail__tab-grid">
-            <div class="book-detail__details-list">
-              <div class="book-detail__detail-item">
-                <span class="book-detail__detail-dot"></span>
-                <div><h5>ISBN:</h5><p>978-612-48101-0-2</p></div>
-              </div>
-              <div class="book-detail__detail-item">
-                <span class="book-detail__detail-dot"></span>
-                <div><h5>Tapa:</h5><p>Dura</p></div>
-              </div>
-              <div class="book-detail__detail-item">
-                <span class="book-detail__detail-dot"></span>
-                <div><h5>Editorial</h5><p>USS - Fondo Editorial</p></div>
-              </div>
-              <div class="book-detail__detail-item">
-                <span class="book-detail__detail-dot"></span>
-                <div><h5>Tamaño:</h5><p>20.5 X 29 cm</p></div>
-              </div>
-              <div class="book-detail__detail-item">
-                <span class="book-detail__detail-dot"></span>
-                <div><h5>Año de Publicación</h5><p>2025</p></div>
-              </div>
-              <div class="book-detail__detail-item">
-                <span class="book-detail__detail-dot"></span>
-                <div><h5>Páginas:</h5><p>312</p></div>
-              </div>
-              <div class="book-detail__detail-item">
-                <span class="book-detail__detail-dot"></span>
-                <div><h5>Edición:</h5><p>Primera edición</p></div>
-              </div>
-              <div class="book-detail__detail-item">
-                <span class="book-detail__detail-dot"></span>
-                <div><h5>Categoría:</h5><p>Derecho, Arqueología</p></div>
-              </div>
-              <div class="book-detail__detail-item">
-                <span class="book-detail__detail-dot"></span>
-                <div><h5>Idioma:</h5><p>Español</p></div>
-              </div>
-              <div class="book-detail__detail-item">
-                <span class="book-detail__detail-dot"></span>
-                <div>
-                  <h5>Etiquetas:</h5>
-                  <div class="book-detail__tags">
-                    <span class="book-detail__tag">Arqueología</span>
-                    <span class="book-detail__tag">Historia de Perú</span>
-                    <span class="book-detail__tag">Sipan</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="book-detail__promo-box">
-              <div class="book-detail__promo-item">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2.83 12.83A2 2 0 0 1 2.24 11.41L2.7 4.24A2 2 0 0 1 4.65 2.3l7.16-.46a2 2 0 0 1 1.42.59l7.36 7.36a2 2 0 0 1 0 2.83z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
-                <div>
-                  <h5>25% de descuento</h5>
-                  <p>Por tiempo limitado</p>
-                </div>
-              </div>
-              <div class="book-detail__promo-item">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                <div>
-                  <h5>Ahorra S/ 40.00</h5>
-                  <p>Sobre el precio regular</p>
-                </div>
-              </div>
-              <div class="book-detail__promo-item">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <div>
-                  <h5>Promoción válida</h5>
-                  <p>Hasta agotar stock</p>
-                </div>
-              </div>
-            </div>
+            <div class="book-detail__details-list" id="bookDetailsList"></div>
+            <div class="book-detail__promo-box" id="bookPromoBox2" style="display:none;"></div>
           </div>
         </div>
       </div>
@@ -797,6 +696,177 @@
           e.preventDefault();
           closeModal();
         });
+      }
+    })();
+  </script>
+
+  <script>
+    // ---------- Detalle de producto: carga dinámica del libro desde el panel de catálogo ----------
+    (function () {
+      function escapeHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+      function resolveImageSrc(url) {
+        if (!url) return 'assets/logo-uss.svg';
+        if (/^https?:\/\//i.test(url) || url.indexOf('/') === 0) return url;
+        return 'assets/' + url.replace(/^assets\//, '').replace(/^\/+/, '');
+      }
+
+      var params = new URLSearchParams(window.location.search);
+      var bookId = params.get('id');
+
+      var reviewTextEl = document.getElementById('bookReviewText');
+
+      if (!bookId) {
+        reviewTextEl.textContent = 'No se especificó ningún libro. Vuelve al catálogo para elegir uno.';
+        document.getElementById('bookTitle').textContent = 'Libro no encontrado';
+        document.getElementById('bookBreadcrumbTitle').textContent = 'Libro no encontrado';
+        return;
+      }
+
+      fetch('/api/catalog/books/' + encodeURIComponent(bookId))
+        .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+        .then(function (res) {
+          if (!res.data.ok) {
+            document.getElementById('bookTitle').textContent = 'Libro no encontrado';
+            document.getElementById('bookBreadcrumbTitle').textContent = 'Libro no encontrado';
+            reviewTextEl.textContent = 'Este libro ya no está disponible en el catálogo.';
+            return;
+          }
+          renderBook(res.data.book);
+        })
+        .catch(function () {
+          reviewTextEl.textContent = 'No se pudo cargar la información del libro. Intenta más tarde.';
+        });
+
+      function renderBook(book) {
+        document.title = book.title + ' | USS Sello Editorial';
+        document.getElementById('bookTitle').textContent = book.title;
+        document.getElementById('bookBreadcrumbTitle').textContent = book.title;
+        document.getElementById('bookAuthors').textContent = (book.authors || []).join(', ') || '—';
+
+        // ---- Imagen principal + miniatura ----
+        var mainSrc = resolveImageSrc(book.imageUrl);
+        var mainImg = document.getElementById('bookMainImage');
+        mainImg.src = mainSrc;
+        mainImg.alt = book.title;
+        document.getElementById('bookLightboxImage').src = mainSrc;
+        var thumbsWrap = document.getElementById('bookThumbs');
+        thumbsWrap.style.display = '';
+        thumbsWrap.innerHTML =
+          '<button type="button" class="book-detail__thumb book-detail__thumb--active" data-img="' + escapeHtml(mainSrc) + '">' +
+            '<img src="' + escapeHtml(mainSrc) + '" alt="Miniatura portada">' +
+          '</button>';
+        thumbsWrap.querySelectorAll('.book-detail__thumb').forEach(function (thumb) {
+          thumb.addEventListener('click', function () {
+            thumbsWrap.querySelectorAll('.book-detail__thumb').forEach(function (t) { t.classList.remove('book-detail__thumb--active'); });
+            thumb.classList.add('book-detail__thumb--active');
+            var newSrc = thumb.getAttribute('data-img');
+            if (mainImg && newSrc) mainImg.src = newSrc;
+          });
+        });
+
+        // ---- Precio y descuento (condicional: si NO hay descuento, no se muestra nada de eso) ----
+        var hasDiscount = !!(book.hasDiscount && book.discountPercent);
+        var badgeEl = document.getElementById('bookBadge');
+        var priceOldWrap = document.getElementById('bookPriceOldWrap');
+        var priceOldEl = document.getElementById('bookPriceOld');
+        var priceNewLabelEl = document.getElementById('bookPriceNewLabel');
+        var priceNewEl = document.getElementById('bookPriceNew');
+        var saveEl = document.getElementById('bookSave');
+
+        if (hasDiscount) {
+          var finalPrice = book.price - (book.price * book.discountPercent / 100);
+          var savedAmount = book.price - finalPrice;
+
+          badgeEl.style.display = '';
+          badgeEl.textContent = book.discountPercent + '%';
+
+          priceOldWrap.style.display = '';
+          priceOldEl.textContent = 'S/ ' + Number(book.price).toFixed(2);
+
+          priceNewLabelEl.style.display = '';
+          priceNewEl.textContent = 'S/ ' + finalPrice.toFixed(2);
+
+          saveEl.style.display = '';
+          saveEl.textContent = 'Ahorras S/ ' + savedAmount.toFixed(2) + ' (' + book.discountPercent + '%)';
+        } else {
+          badgeEl.style.display = 'none';
+          priceOldWrap.style.display = 'none';
+          priceNewLabelEl.style.display = 'none';
+          saveEl.style.display = 'none';
+          priceNewEl.textContent = 'S/ ' + Number(book.price).toFixed(2);
+        }
+
+        // ---- Cajas promocionales (solo si hay descuento) ----
+        var promoBoxesHtml = '';
+        if (hasDiscount) {
+          var promoSaved = book.price * (book.discountPercent / 100);
+          promoBoxesHtml =
+            '<div class="book-detail__promo-item">' +
+              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2.83 12.83A2 2 0 0 1 2.24 11.41L2.7 4.24A2 2 0 0 1 4.65 2.3l7.16-.46a2 2 0 0 1 1.42.59l7.36 7.36a2 2 0 0 1 0 2.83z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>' +
+              '<div><h5>' + book.discountPercent + '% de descuento</h5><p>Por tiempo limitado</p></div>' +
+            '</div>' +
+            '<div class="book-detail__promo-item">' +
+              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>' +
+              '<div><h5>Ahorra S/ ' + promoSaved.toFixed(2) + '</h5><p>Sobre el precio regular</p></div>' +
+            '</div>' +
+            '<div class="book-detail__promo-item">' +
+              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+              '<div><h5>Promoción válida</h5><p>Hasta agotar stock</p></div>' +
+            '</div>';
+        }
+        var promoBox1 = document.getElementById('bookPromoBox1');
+        var promoBox2 = document.getElementById('bookPromoBox2');
+        if (hasDiscount) {
+          promoBox1.style.display = '';
+          promoBox1.innerHTML = promoBoxesHtml;
+          promoBox2.style.display = '';
+          promoBox2.innerHTML = promoBoxesHtml;
+        } else {
+          promoBox1.style.display = 'none';
+          promoBox2.style.display = 'none';
+        }
+
+        // ---- Reseña ----
+        reviewTextEl.textContent = book.reviewText || 'Este libro todavía no tiene una reseña disponible.';
+
+        // ---- Detalles del producto ----
+        var detailRows = [
+          ['ISBN:', book.isbn],
+          ['Tapa:', book.coverType],
+          ['Editorial', book.publisher],
+          ['Tamaño:', book.sizeDimensions],
+          ['Año de Publicación', book.publicationYear],
+          ['Páginas:', book.pages],
+          ['Edición:', book.edition],
+          ['Categoría:', book.category],
+          ['Idioma:', book.language],
+        ];
+        var detailsHtml = detailRows
+          .filter(function (row) { return row[1]; })
+          .map(function (row) {
+            return (
+              '<div class="book-detail__detail-item">' +
+                '<span class="book-detail__detail-dot"></span>' +
+                '<div><h5>' + escapeHtml(row[0]) + '</h5><p>' + escapeHtml(row[1]) + '</p></div>' +
+              '</div>'
+            );
+          }).join('');
+
+        if (book.tags && book.tags.length > 0) {
+          detailsHtml +=
+            '<div class="book-detail__detail-item">' +
+              '<span class="book-detail__detail-dot"></span>' +
+              '<div><h5>Etiquetas:</h5><div class="book-detail__tags">' +
+                book.tags.map(function (t) { return '<span class="book-detail__tag">' + escapeHtml(t) + '</span>'; }).join('') +
+              '</div></div>' +
+            '</div>';
+        }
+
+        document.getElementById('bookDetailsList').innerHTML = detailsHtml || '<p style="color:#999;">Sin detalles adicionales.</p>';
       }
     })();
   </script>

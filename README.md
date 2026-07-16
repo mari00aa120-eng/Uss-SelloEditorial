@@ -247,3 +247,43 @@ Solo necesitas hacer `git push` a tu repositorio de GitHub (`git add .` → `git
 - El único correo que puede pedir un código de administrador está fijado en la variable `ADMIN_EMAIL`. Si algún día quieres cambiarlo, solo edita esa variable (en tu `.env` local y en Railway) — no necesitas tocar código.
 - Las contraseñas de los usuarios se guardan cifradas (bcrypt), nunca en texto plano.
 - Hay límites de intentos (rate limiting) en login y en la solicitud de códigos de administrador para dificultar ataques de fuerza bruta.
+
+---
+
+## Panel de actualización de catálogo (`/panel-catalogo`)
+
+Este es un panel **independiente** del panel de administración general (`/admin`). Sirve para
+añadir, editar, ocultar o eliminar los libros que se muestran en `catalogo.html` y
+`descripcionLibro.html`.
+
+- **Acceso**: `https://tu-dominio/panel-catalogo` (redirige a `catalog-admin-login.html` si no hay sesión).
+- **Autorización**: solo los correos listados en la variable de entorno `CATALOG_ADMIN_EMAILS`
+  (separados por coma) pueden crear una contraseña y entrar. Por ahora está fijado a:
+  ```
+  CATALOG_ADMIN_EMAILS=isabellacastrocamacho117@outlook.com
+  ```
+  Si no defines esta variable, el sistema usa ese mismo correo por defecto.
+- **Es un tipo de acceso distinto al de `/admin`**: aunque hoy comparta el mismo correo, usa su
+  propia sesión (`isCatalogAdmin`), su propia tabla en la base de datos (`catalog_admins`, con
+  contraseña propia hasheada con bcrypt) y sus propias rutas (`/api/catalog/auth/...`). Entrar a
+  `/admin` NO da acceso a `/panel-catalogo`, y viceversa.
+- **Primera vez**: el correo autorizado entra a `catalog-admin-login.html`, escribe su correo, y
+  si todavía no tiene contraseña, el sistema le pide crearla (mínimo 8 caracteres, una mayúscula,
+  un número y un símbolo). Las siguientes veces, el mismo formulario le pedirá directamente la
+  contraseña para iniciar sesión.
+- **Qué controla**: el sidebar izquierdo del panel tiene el formulario completo de un libro
+  (imagen, título, autores dinámicos, precio, descuento opcional, reseña, ISBN, editorial, tapa,
+  tamaño, año, páginas, edición, categoría, etiquetas, idioma). Todo lo que se guarda ahí se
+  refleja automáticamente en `catalogo.html` (que ahora carga los libros dinámicamente desde
+  `/api/catalog/books`) y en `descripcionLibro.html?id=ID` (que carga el detalle desde
+  `/api/catalog/books/:id`).
+- **Paginación automática**: `catalogo.html` muestra 6 libros por página. Si hay 7-12 libros
+  activos aparece la página 2, con 13-18 la página 3, y así sucesivamente — no hay que configurar
+  nada manualmente.
+- **Descuento condicional**: si un libro no tiene descuento marcado, no se muestra ningún badge
+  de "%", precio tachado, "Ahorras S/...", ni las cajas de "X% de descuento / Ahorra S/... /
+  Promoción válida" en `descripcionLibro.html`. Todo eso solo aparece si activas el interruptor
+  "¿Tiene descuento?" y pones un porcentaje.
+- **Ocultar vs. eliminar**: el botón "Ocultar" desactiva el libro (deja de aparecer en
+  `catalogo.html` pero se conserva en el panel para reactivarlo después); el botón "Eliminar" lo
+  borra definitivamente de la base de datos.

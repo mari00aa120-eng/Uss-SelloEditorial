@@ -15,4 +15,14 @@ function requireAdmin(req, res, next) {
   return res.status(401).json({ ok: false, message: 'No autorizado.' });
 }
 
-module.exports = { requireUser, requireAdmin };
+// Middleware que exige que la sesión tenga el flag de administrador de
+// CATÁLOGO verificado (correo + contraseña propios, distinto del panel
+// /admin). Se usa para proteger el CRUD de catalog_books.
+function requireCatalogAdmin(req, res, next) {
+  if (req.session && req.session.isCatalogAdmin && req.session.catalogAdminEmail) {
+    return next();
+  }
+  return res.status(401).json({ ok: false, message: 'No autorizado.' });
+}
+
+module.exports = { requireUser, requireAdmin, requireCatalogAdmin };

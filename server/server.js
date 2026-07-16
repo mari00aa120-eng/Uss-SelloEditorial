@@ -12,6 +12,7 @@ const authRoutes = require('./routes/auth.routes');
 const cartRoutes = require('./routes/cart.routes');
 const adminRoutes = require('./routes/admin.routes');
 const ordersRoutes = require('./routes/orders.routes');
+const catalogRoutes = require('./routes/catalog.routes');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -49,6 +50,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/catalog', catalogRoutes);
 
 // ------------------ Panel de administración (protegido) ------------------
 // El HTML del dashboard vive FUERA de /public para que nadie pueda acceder
@@ -58,6 +60,16 @@ app.get('/admin', (req, res) => {
     return res.sendFile(path.join(__dirname, 'views', 'admin-dashboard.html'));
   }
   return res.redirect('/admin-login.html');
+});
+
+// ------------------ Panel de actualización de catálogo (protegido) ------------------
+// Acceso SEPARADO del panel /admin: usa su propia sesión (isCatalogAdmin) y
+// su propio login por correo + contraseña (catalog-admin-login.html).
+app.get('/panel-catalogo', (req, res) => {
+  if (req.session && req.session.isCatalogAdmin && req.session.catalogAdminEmail) {
+    return res.sendFile(path.join(__dirname, 'views', 'catalog-dashboard.html'));
+  }
+  return res.redirect('/catalog-admin-login.html');
 });
 
 // ------------------ Página raíz ------------------
