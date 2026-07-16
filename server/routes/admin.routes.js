@@ -14,6 +14,17 @@ const {
 const ORDER_STATUSES = ['procesando', 'pagado', 'pendiente_pago'];
 const FONDO_EDITORIAL_EMAIL = 'fondoeditorial@uss.edu.pe';
 
+// Cuánto tiempo se considera "tomado" un usuario después de que un admin le
+// dio clic a Responder, por si cierra la pestaña sin cancelar/enviar y deja
+// el usuario bloqueado para los demás para siempre.
+const CLAIM_STALE_MINUTES = 15;
+
+function isClaimActive(claimedAt) {
+  if (!claimedAt) return false;
+  const ageMs = Date.now() - new Date(claimedAt).getTime();
+  return ageMs < CLAIM_STALE_MINUTES * 60 * 1000;
+}
+
 const router = express.Router();
 
 const CODE_TTL_MINUTES = 10;
@@ -154,6 +165,8 @@ router.get('/stats', requireAdmin, async (req, res) => {
           t.last_message AS ticket_last_message,
           t.payment_method AS ticket_payment_method,
           t.payment_amount AS ticket_payment_amount,
+          t.claimed_by AS ticket_claimed_by,
+          t.claimed_at AS ticket_claimed_at,
           t.updated_at AS ticket_updated_at,
           o.id AS order_id,
           o.invoice_number AS order_invoice_number,
@@ -199,6 +212,8 @@ function serializeUserRow(row) {
       lastMessage: row.ticket_last_message,
       paymentMethod: row.ticket_payment_method,
       paymentAmount: row.ticket_payment_amount !== null ? Number(row.ticket_payment_amount) : null,
+      claimedBy: isClaimActive(row.ticket_claimed_at) ? row.ticket_claimed_by : null,
+      claimedAt: isClaimActive(row.ticket_claimed_at) ? row.ticket_claimed_at : null,
       updatedAt: row.ticket_updated_at,
     },
     latestOrder: row.order_id
@@ -227,6 +242,8 @@ router.get('/users/:id/detail', requireAdmin, async (req, res) => {
           t.last_message AS ticket_last_message,
           t.payment_method AS ticket_payment_method,
           t.payment_amount AS ticket_payment_amount,
+          t.claimed_by AS ticket_claimed_by,
+          t.claimed_at AS ticket_claimed_at,
           t.updated_at AS ticket_updated_at,
           o.id AS order_id,
           o.invoice_number AS order_invoice_number,
@@ -257,6 +274,69 @@ router.get('/users/:id/detail', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('[admin/users/:id/detail]', err);
     res.status(500).json({ ok: false, message: 'Error obteniendo el detalle del usuario.' });
+  }
+});
+
+// POST /api/admin/users/:id/claim -> intenta "tomar" al usuario antes de abrir el modal de Responder.
+// Si otro admin ya lo tiene tomado (y el claim sigue vigente), devuelve 409 con el correo que lo tomó.
+router.post('/users/:id/claim', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const myEmail = req.session.adminEmail;
+
+    const userResult = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ ok: false, message: 'Usuario no encontrado.' });
+    }
+
+    const existing = await pool.query(
+      'SELECT claimed_by, claimed_at FROM admin_tickets WHERE user_id = $1',
+      [id]
+    );
+
+    if (existing.rows.length > 0) {
+      const row = existing.rows[0];
+      if (row.claimed_by && row.claimed_by !== myEmail && isClaimActive(row.claimed_at)) {
+        return res.status(409).json({
+          ok: false,
+          taken: true,
+          claimedBy: row.claimed_by,
+          message: 'Este usuario ya fue tomado por ' + row.claimed_by + '. Elige a otro usuario.',
+        });
+      }
+    }
+
+    await pool.query(
+      `INSERT INTO admin_tickets (user_id, claimed_by, claimed_at, updated_at)
+       VALUES ($1, $2, NOW(), NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+         claimed_by = EXCLUDED.claimed_by,
+         claimed_at = NOW()`,
+      [id, myEmail]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[admin/users/:id/claim]', err);
+    res.status(500).json({ ok: false, message: 'Error al tomar al usuario.' });
+  }
+});
+
+// POST /api/admin/users/:id/release -> suelta al usuario (al cancelar/cerrar el modal, o tras responder).
+// Solo libera si el que lo pide es quien lo tomó, para no pisar el claim de otro admin por una carrera de clics.
+router.post('/users/:id/release', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const myEmail = req.session.adminEmail;
+    await pool.query(
+      `UPDATE admin_tickets SET claimed_by = NULL, claimed_at = NULL
+       WHERE user_id = $1 AND claimed_by = $2`,
+      [id, myEmail]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[admin/users/:id/release]', err);
+    res.status(500).json({ ok: false, message: 'Error al soltar al usuario.' });
   }
 });
 
@@ -314,14 +394,16 @@ router.post('/users/:id/respond', requireAdmin, async (req, res) => {
     });
 
     const upsertResult = await pool.query(
-      `INSERT INTO admin_tickets (user_id, status, order_status, last_message, payment_method, payment_amount, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      `INSERT INTO admin_tickets (user_id, status, order_status, last_message, payment_method, payment_amount, claimed_by, claimed_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL, NOW())
        ON CONFLICT (user_id) DO UPDATE SET
          status = EXCLUDED.status,
          order_status = EXCLUDED.order_status,
          last_message = EXCLUDED.last_message,
          payment_method = EXCLUDED.payment_method,
          payment_amount = EXCLUDED.payment_amount,
+         claimed_by = NULL,
+         claimed_at = NULL,
          updated_at = NOW()
        RETURNING *`,
       [id, newStatus, orderStatus, message || null, paymentMethodLabel, paymentAmount]

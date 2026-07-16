@@ -18,10 +18,16 @@ async function runMigrations() {
         last_message     TEXT,
         payment_method   VARCHAR(50),
         payment_amount   NUMERIC(10, 2),
+        claimed_by       VARCHAR(255),
+        claimed_at       TIMESTAMPTZ,
         updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+
+  // Por si la tabla ya existía de antes de agregar el sistema de "tomado por".
+  await pool.query(`ALTER TABLE admin_tickets ADD COLUMN IF NOT EXISTS claimed_by VARCHAR(255);`);
+  await pool.query(`ALTER TABLE admin_tickets ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ;`);
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_admin_tickets_user ON admin_tickets (user_id);

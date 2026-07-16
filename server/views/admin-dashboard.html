@@ -40,6 +40,8 @@
   .btn-responder--pendiente { background: #EF4444; } /* rojo claro: aún no se le ha respondido */
   .btn-responder--esperando { background: #F59E0B; } /* amarillo: esperando la solicitud/pago del usuario */
   .btn-responder--respondido { background: #16A34A; } /* verde: usuario respondió / ya se le respondió */
+  .btn-responder--taken { background: #6B7280; cursor: not-allowed; }
+  .btn-responder--taken:hover { filter: none; }
 
   /* Modal */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 999; overflow-y: auto; }
@@ -74,6 +76,9 @@
   .status-opt input:checked + label.opt-procesando { border-color: #F59E0B; background: #FEF3C7; color: #92400E; }
   .status-opt input:checked + label.opt-pagado { border-color: #16A34A; background: #DCFCE7; color: #046C3B; }
   .status-opt input:checked + label.opt-pendiente_pago { border-color: #EF4444; background: #FEE2E2; color: #991B1B; }
+  .status-opt label.is-disabled { opacity: .4; cursor: not-allowed; background: #f5f5f5; }
+  .status-opt input:disabled + label { pointer-events: none; }
+  .status-flow-hint { font-size: 11.5px; color: #888; margin-top: 6px; }
 
   .payment-request-block { display: none; margin-top: 14px; padding: 14px; background: #FFF7ED; border: 1px solid #FDBA74; border-radius: 10px; }
   .payment-request-block.open { display: block; }
@@ -111,6 +116,7 @@
     <div class="admin-header">
       <h1>Panel de administración</h1>
       <div class="admin-header__actions">
+        <button id="btnRefresh" class="btn-secondary" type="button">⟳ Refrescar</button>
         <button id="btnPaymentSettings" class="btn-secondary" type="button">Configurar cuentas de pago</button>
         <button id="btnLogout">Cerrar sesión</button>
       </div>
@@ -122,9 +128,11 @@
       <div class="admin-card"><span>Unidades en carritos</span><strong id="statCartUnits">–</strong></div>
     </div>
 
+    <p class="hint" id="lastRefreshedHint" style="text-align:right; margin-top:-6px;"></p>
+
     <div class="admin-table-wrap">
       <h2>Últimos usuarios registrados</h2>
-      <p class="hint">Rojo: aún no se le ha respondido · Amarillo: esperando el pago del usuario · Verde: ya se le respondió.</p>
+      <p class="hint">Rojo: aún no se le ha respondido · Amarillo: esperando el pago del usuario · Verde: ya se le respondió. Si otro admin está respondiendo a un usuario, el botón mostrará "Tomado por...". Usa Refrescar para ver los cambios de otros admins.</p>
       <table>
         <thead>
           <tr><th>Nombre</th><th>Correo</th><th>Registrado</th><th>Proceso de compra</th><th>Factura</th><th>Estado</th></tr>
@@ -174,6 +182,7 @@
               <label for="optPendientePago" class="opt-pendiente_pago">Pendiente a pagar</label>
             </div>
           </div>
+          <p class="status-flow-hint" id="statusFlowHint"></p>
         </div>
 
         <div class="payment-request-block" id="paymentRequestBlock">
@@ -209,7 +218,7 @@
     <div class="modal-box pa-modal-box">
       <button class="modal-close" id="paModalClose" type="button">&times;</button>
       <h3>Configurar cuentas de pago</h3>
-      <p class="modal-sub">Estos son los datos que se le envían al usuario cuando marcas un pedido como "Pendiente a pagar". Edita el @/número de cuenta que necesites y guarda cada tarjeta por separado.</p>
+      <p class="modal-sub" id="paModalSub">Estos son los datos que se le envían al usuario cuando marcas un pedido como "Pendiente a pagar". Edita el @/número de cuenta que necesites y guarda cada tarjeta por separado.</p>
       <div id="paAccountsList">Cargando...</div>
     </div>
   </div>
@@ -220,6 +229,12 @@
     var currentUser = null;
     var paymentMethods = [];
     var selectedMethodKey = null;
+    var myAdminEmail = null;
+
+    fetch('/api/admin/session')
+      .then(function (r) { return r.json(); })
+      .then(function (data) { if (data.ok && data.isAdmin) myAdminEmail = data.email; })
+      .catch(function () {});
 
     var STATUS_TEMPLATES = {
       procesando: 'Hola, te escribimos para contarte que tu pedido ya está siendo procesado. Te avisaremos apenas tengamos una actualización.',
@@ -245,6 +260,13 @@
 
     function responderButtonHtml(u) {
       var status = (u.ticket && u.ticket.status) || 'pendiente';
+      var claimedBy = u.ticket && u.ticket.claimedBy;
+
+      if (claimedBy && claimedBy !== myAdminEmail) {
+        return '<button type="button" class="btn-responder btn-responder--taken" data-user-id="' + u.id + '" data-taken-by="' + claimedBy + '">' +
+          '<span class="dot"></span>Tomado por ' + claimedBy + '</button>';
+      }
+
       var labelByStatus = { pendiente: 'Responder', esperando: 'Esperando pago', respondido: 'Respondido' };
       var cls = 'btn-responder--' + status;
       var label = labelByStatus[status] || 'Responder';
@@ -292,9 +314,16 @@
 
           document.querySelectorAll('.btn-responder').forEach(function (btn) {
             btn.addEventListener('click', function () {
-              openModal(btn.getAttribute('data-user-id'));
+              if (btn.classList.contains('btn-responder--taken')) {
+                alert('Este usuario ya fue tomado por ' + btn.getAttribute('data-taken-by') + '. Elige a otro usuario.');
+                return;
+              }
+              claimAndOpenModal(btn.getAttribute('data-user-id'));
             });
           });
+
+          var now = new Date();
+          document.getElementById('lastRefreshedHint').textContent = 'Última actualización: ' + now.toLocaleTimeString('es-PE');
         })
         .catch(function () {
           document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="6">Error de conexión. Verifica tu internet e intenta de nuevo.</td></tr>';
@@ -303,6 +332,24 @@
 
     // ---------- Modal ----------
     var modalOverlay = document.getElementById('modalOverlay');
+
+    // Antes de abrir el modal de Responder, "tomamos" al usuario en el servidor.
+    // Si otro admin ya lo tomó (y sigue vigente), avisamos y no dejamos abrir el modal.
+    function claimAndOpenModal(userId) {
+      fetch('/api/admin/users/' + userId + '/claim', { method: 'POST' })
+        .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+        .then(function (res) {
+          if (!res.data.ok) {
+            alert(res.data.message || 'No se pudo abrir este usuario. Puede que otro admin lo esté atendiendo.');
+            loadStats();
+            return;
+          }
+          openModal(userId);
+        })
+        .catch(function () {
+          alert('Error de conexión al intentar tomar este usuario.');
+        });
+    }
 
     function openModal(userId) {
       currentUserId = userId;
@@ -327,6 +374,9 @@
     }
 
     function closeModal() {
+      if (currentUserId) {
+        fetch('/api/admin/users/' + currentUserId + '/release', { method: 'POST' }).catch(function () {});
+      }
       modalOverlay.classList.remove('open');
       currentUserId = null;
       currentUser = null;
@@ -369,7 +419,7 @@
       }
 
       renderPaymentMethods();
-      syncStatusUI();
+      applyOrderStatusFlow(u.ticket ? u.ticket.orderStatus : null);
     }
 
     function renderPaymentMethods() {
@@ -412,6 +462,38 @@
       if (!textarea.dataset.userEdited) {
         textarea.value = STATUS_TEMPLATES[status] || '';
       }
+    }
+
+    // El flujo de un pedido es: Pendiente a pagar -> Pedido pagado -> Su pedido está siendo procesado.
+    // Cada vez que se envía una respuesta, solo se habilita el siguiente paso del flujo.
+    var STATUS_FLOW_NEXT = {
+      pendiente_pago: 'pagado',
+      pagado: 'procesando',
+      procesando: null,
+    };
+    var STATUS_FLOW_HINTS = {
+      pendiente_pago: 'Este pedido aún no tiene una respuesta enviada: primero debes solicitar el pago (Pendiente a pagar).',
+      pagado: 'Ya se solicitó el pago pendiente. El siguiente paso es marcar el pedido como pagado.',
+      procesando: 'El pago ya fue confirmado. El siguiente paso es marcar que el pedido se está procesando.',
+      null: 'Este pedido ya completó todo el flujo de estados.',
+    };
+
+    function applyOrderStatusFlow(lastOrderStatus) {
+      var nextAllowed = lastOrderStatus ? STATUS_FLOW_NEXT[lastOrderStatus] : 'pendiente_pago';
+      if (typeof nextAllowed === 'undefined') nextAllowed = 'pendiente_pago';
+
+      document.querySelectorAll('input[name="orderStatus"]').forEach(function (input) {
+        var label = input.nextElementSibling;
+        var isAllowed = input.value === nextAllowed;
+        input.disabled = !isAllowed;
+        if (label) label.classList.toggle('is-disabled', !isAllowed);
+        if (isAllowed) input.checked = true;
+      });
+
+      var hintEl = document.getElementById('statusFlowHint');
+      hintEl.textContent = STATUS_FLOW_HINTS[nextAllowed === null ? 'null' : nextAllowed] || '';
+
+      syncStatusUI();
     }
 
     document.querySelectorAll('input[name="orderStatus"]').forEach(function (input) {
@@ -496,7 +578,9 @@
     var paModalOverlay = document.getElementById('paModalOverlay');
     var PA_LABELS = { yape: 'Yape', plin: 'Plin', bcp: 'BCP', bbva: 'BBVA' };
 
-    function openPaymentSettingsModal() {
+    var lastLoadedAccounts = [];
+
+    function openPaymentSettingsModal(filterKey) {
       paModalOverlay.classList.add('open');
       document.getElementById('paAccountsList').innerHTML = 'Cargando...';
       fetch('/api/admin/payment-accounts')
@@ -506,7 +590,8 @@
             document.getElementById('paAccountsList').innerHTML = '<p class="pa-error" style="display:block;">' + (data.message || 'No se pudieron cargar las cuentas.') + '</p>';
             return;
           }
-          renderPaymentAccountsForm(data.accounts);
+          lastLoadedAccounts = data.accounts;
+          renderPaymentAccountsForm(data.accounts, filterKey);
         })
         .catch(function () {
           document.getElementById('paAccountsList').innerHTML = '<p class="pa-error" style="display:block;">Error de conexión.</p>';
@@ -517,9 +602,19 @@
       paModalOverlay.classList.remove('open');
     }
 
-    function renderPaymentAccountsForm(accounts) {
+    function renderPaymentAccountsForm(accounts, filterKey) {
       var list = document.getElementById('paAccountsList');
-      list.innerHTML = accounts.map(function (acc) {
+      var subEl = document.getElementById('paModalSub');
+      var accountsToShow = filterKey ? accounts.filter(function (a) { return a.key === filterKey; }) : accounts;
+
+      if (filterKey) {
+        subEl.innerHTML = 'Editando solo la cuenta de <strong>' + (PA_LABELS[filterKey] || filterKey) + '</strong>, que es el medio de pago seleccionado en la respuesta. ' +
+          '<button type="button" id="paShowAll" style="background:none; border:none; color:#046C3B; font-weight:700; cursor:pointer; padding:0; font-size:inherit;">Ver todas las cuentas</button>';
+      } else {
+        subEl.textContent = 'Estos son los datos que se le envían al usuario cuando marcas un pedido como "Pendiente a pagar". Edita el @/número de cuenta que necesites y guarda cada tarjeta por separado.';
+      }
+
+      list.innerHTML = accountsToShow.map(function (acc) {
         var isBank = acc.key === 'bcp' || acc.key === 'bbva';
         return (
           '<div class="pa-account-card" data-key="' + acc.key + '">' +
@@ -544,6 +639,13 @@
           savePaymentAccount(key, card);
         });
       });
+
+      var showAllBtn = document.getElementById('paShowAll');
+      if (showAllBtn) {
+        showAllBtn.addEventListener('click', function () {
+          renderPaymentAccountsForm(lastLoadedAccounts, null);
+        });
+      }
     }
 
     function escapeAttr(str) {
@@ -599,12 +701,18 @@
         });
     }
 
-    document.getElementById('btnPaymentSettings').addEventListener('click', openPaymentSettingsModal);
+    document.getElementById('btnPaymentSettings').addEventListener('click', function () { openPaymentSettingsModal(null); });
     document.getElementById('paModalClose').addEventListener('click', closePaymentSettingsModal);
     paModalOverlay.addEventListener('click', function (e) {
       if (e.target === paModalOverlay) closePaymentSettingsModal();
     });
-    document.getElementById('btnEditFromResponse').addEventListener('click', openPaymentSettingsModal);
+    document.getElementById('btnEditFromResponse').addEventListener('click', function () {
+      openPaymentSettingsModal(selectedMethodKey);
+    });
+
+    document.getElementById('btnRefresh').addEventListener('click', function () {
+      loadStats();
+    });
 
     // ---------- Carga inicial ----------
     loadStats();
