@@ -1,9 +1,13 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const pool = require('../config/db');
-const { sendAdminCodeEmail } = require('../config/brevo');
+const { sendAdminCodeEmail, sendAdminResponseEmail } = require('../config/brevo');
 const { generateSixDigitCode, hashCode } = require('../utils/codes');
 const { requireAdmin } = require('../middleware/auth');
+const { getPaymentAccount, REQUESTABLE_METHODS } = require('../config/paymentAccounts');
+
+const ORDER_STATUSES = ['procesando', 'pagado', 'pendiente_pago'];
+const FONDO_EDITORIAL_EMAIL = 'fondoeditorial@uss.edu.pe';
 
 const router = express.Router();
 
@@ -137,9 +141,29 @@ router.get('/stats', requireAdmin, async (req, res) => {
     const [{ rows: userCountRows }, { rows: cartCountRows }, { rows: recentUsers }] = await Promise.all([
       pool.query('SELECT COUNT(*)::int AS count FROM users'),
       pool.query('SELECT COUNT(*)::int AS count, COALESCE(SUM(quantity),0)::int AS units FROM cart_items'),
-      pool.query(
-        'SELECT first_name, last_name, email, created_at FROM users ORDER BY created_at DESC LIMIT 10'
-      ),
+      pool.query(`
+        SELECT
+          u.id, u.first_name, u.last_name, u.email, u.created_at,
+          t.status AS ticket_status,
+          t.order_status AS ticket_order_status,
+          t.last_message AS ticket_last_message,
+          t.payment_method AS ticket_payment_method,
+          t.payment_amount AS ticket_payment_amount,
+          t.updated_at AS ticket_updated_at,
+          o.id AS order_id,
+          o.invoice_number AS order_invoice_number,
+          o.total AS order_total,
+          o.payment_method AS order_payment_method,
+          o.email_sent AS order_email_sent,
+          o.created_at AS order_created_at
+        FROM users u
+        LEFT JOIN admin_tickets t ON t.user_id = u.id
+        LEFT JOIN LATERAL (
+          SELECT * FROM orders WHERE orders.user_id = u.id ORDER BY created_at DESC LIMIT 1
+        ) o ON TRUE
+        ORDER BY u.created_at DESC
+        LIMIT 10
+      `),
     ]);
 
     res.json({
@@ -149,11 +173,159 @@ router.get('/stats', requireAdmin, async (req, res) => {
         totalCartLines: cartCountRows[0].count,
         totalCartUnits: cartCountRows[0].units,
       },
-      recentUsers: recentUsers,
+      recentUsers: recentUsers.map(serializeUserRow),
     });
   } catch (err) {
     console.error('[admin/stats]', err);
     res.status(500).json({ ok: false, message: 'Error obteniendo estadísticas.' });
+  }
+});
+
+function serializeUserRow(row) {
+  return {
+    id: row.id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    email: row.email,
+    createdAt: row.created_at,
+    ticket: {
+      status: row.ticket_status || 'pendiente', // pendiente | esperando | respondido
+      orderStatus: row.ticket_order_status,
+      lastMessage: row.ticket_last_message,
+      paymentMethod: row.ticket_payment_method,
+      paymentAmount: row.ticket_payment_amount !== null ? Number(row.ticket_payment_amount) : null,
+      updatedAt: row.ticket_updated_at,
+    },
+    latestOrder: row.order_id
+      ? {
+          id: row.order_id,
+          invoiceNumber: row.order_invoice_number,
+          total: Number(row.order_total),
+          paymentMethod: row.order_payment_method,
+          emailSent: row.order_email_sent,
+          createdAt: row.order_created_at,
+        }
+      : null,
+  };
+}
+
+// GET /api/admin/users/:id/detail -> info completa de un usuario para el panel de "Responder"
+router.get('/users/:id/detail', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `
+        SELECT
+          u.id, u.first_name, u.last_name, u.email, u.created_at,
+          t.status AS ticket_status,
+          t.order_status AS ticket_order_status,
+          t.last_message AS ticket_last_message,
+          t.payment_method AS ticket_payment_method,
+          t.payment_amount AS ticket_payment_amount,
+          t.updated_at AS ticket_updated_at,
+          o.id AS order_id,
+          o.invoice_number AS order_invoice_number,
+          o.total AS order_total,
+          o.payment_method AS order_payment_method,
+          o.email_sent AS order_email_sent,
+          o.created_at AS order_created_at
+        FROM users u
+        LEFT JOIN admin_tickets t ON t.user_id = u.id
+        LEFT JOIN LATERAL (
+          SELECT * FROM orders WHERE orders.user_id = u.id ORDER BY created_at DESC LIMIT 1
+        ) o ON TRUE
+        WHERE u.id = $1
+      `,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ ok: false, message: 'Usuario no encontrado.' });
+    }
+
+    res.json({
+      ok: true,
+      user: serializeUserRow(rows[0]),
+      fondoEditorialEmail: FONDO_EDITORIAL_EMAIL,
+      paymentMethods: REQUESTABLE_METHODS.map((key) => ({ key, ...getPaymentAccount(key) })),
+    });
+  } catch (err) {
+    console.error('[admin/users/:id/detail]', err);
+    res.status(500).json({ ok: false, message: 'Error obteniendo el detalle del usuario.' });
+  }
+});
+
+// POST /api/admin/users/:id/respond
+// body: { message, orderStatus: 'procesando'|'pagado'|'pendiente_pago', paymentMethodKey?, amount? }
+router.post('/users/:id/respond', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message, orderStatus, paymentMethodKey, amount } = req.body;
+
+    if (!orderStatus || !ORDER_STATUSES.includes(orderStatus)) {
+      return res.status(400).json({ ok: false, message: 'Selecciona un estado de pedido válido.' });
+    }
+
+    const userResult = await pool.query(
+      'SELECT id, first_name, last_name, email FROM users WHERE id = $1',
+      [id]
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ ok: false, message: 'Usuario no encontrado.' });
+    }
+    const customer = userResult.rows[0];
+
+    let paymentInfo = null;
+    let paymentMethodLabel = null;
+    let paymentAmount = null;
+
+    if (orderStatus === 'pendiente_pago') {
+      if (!paymentMethodKey || !REQUESTABLE_METHODS.includes(paymentMethodKey)) {
+        return res.status(400).json({ ok: false, message: 'Selecciona un medio de pago válido para solicitar el cobro.' });
+      }
+      const account = getPaymentAccount(paymentMethodKey);
+      if (!account) {
+        return res.status(400).json({ ok: false, message: 'No hay una cuenta configurada para ese medio de pago.' });
+      }
+      if (amount === undefined || amount === null || Number.isNaN(Number(amount)) || Number(amount) <= 0) {
+        return res.status(400).json({ ok: false, message: 'Indica un monto válido a cobrar.' });
+      }
+      paymentAmount = Number(amount);
+      paymentMethodLabel = account.label;
+      paymentInfo = { ...account, amount: paymentAmount };
+    }
+
+    // El nuevo estado del "semáforo" del botón Responder:
+    //   pendiente_pago -> esperando (amarillo, esperando que el usuario pague)
+    //   procesando / pagado -> respondido (verde, ya se le respondió)
+    const newStatus = orderStatus === 'pendiente_pago' ? 'esperando' : 'respondido';
+
+    await sendAdminResponseEmail({
+      to: customer.email,
+      customerName: customer.first_name,
+      message: message || '',
+      orderStatus,
+      paymentInfo,
+    });
+
+    const upsertResult = await pool.query(
+      `INSERT INTO admin_tickets (user_id, status, order_status, last_message, payment_method, payment_amount, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+         status = EXCLUDED.status,
+         order_status = EXCLUDED.order_status,
+         last_message = EXCLUDED.last_message,
+         payment_method = EXCLUDED.payment_method,
+         payment_amount = EXCLUDED.payment_amount,
+         updated_at = NOW()
+       RETURNING *`,
+      [id, newStatus, orderStatus, message || null, paymentMethodLabel, paymentAmount]
+    );
+
+    res.json({ ok: true, ticket: upsertResult.rows[0] });
+  } catch (err) {
+    console.error('[admin/users/:id/respond]', err);
+    res.status(500).json({ ok: false, message: 'Error enviando la respuesta al usuario.' });
   }
 });
 

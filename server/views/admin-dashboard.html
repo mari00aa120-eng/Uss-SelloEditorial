@@ -9,19 +9,82 @@
 <link rel="stylesheet" href="/css/styles.css">
 <style>
   body { background: #f6f6f6; font-family: 'Inter', sans-serif; }
-  .admin-wrap { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
+  .admin-wrap { max-width: 1150px; margin: 0 auto; padding: 40px 24px 80px; }
   .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-  .admin-header h1 { font-size: 24px; }
+  .admin-header h1 { font-size: 24px; margin: 0; }
   .admin-header button { background: #1a1a1a; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; }
   .admin-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
   .admin-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
   .admin-card span { display: block; font-size: 13px; color: #777; margin-bottom: 6px; }
   .admin-card strong { font-size: 28px; }
-  .admin-table-wrap { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-  .admin-table-wrap h2 { font-size: 16px; margin-bottom: 14px; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; }
-  th { color: #777; font-weight: 600; }
+  .admin-table-wrap { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
+  .admin-table-wrap h2 { font-size: 16px; margin: 0 0 4px; }
+  .admin-table-wrap p.hint { font-size: 12.5px; color: #888; margin: 0 0 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 780px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  th { color: #777; font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: .02em; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .pill--gray { background: #f1f1f1; color: #555; }
+  .pill--green { background: #DCFCE7; color: #046C3B; }
+  .pill--amber { background: #FEF3C7; color: #92400E; }
+  .pill--red { background: #FEE2E2; color: #991B1B; }
+
+  /* Botón "Responder" con semáforo de estado */
+  .btn-responder { border: none; cursor: pointer; font-weight: 700; font-size: 12.5px; padding: 8px 14px; border-radius: 8px; color: #fff; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; transition: filter .15s ease; }
+  .btn-responder:hover { filter: brightness(0.93); }
+  .btn-responder .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.85); }
+  .btn-responder--pendiente { background: #EF4444; } /* rojo claro: aún no se le ha respondido */
+  .btn-responder--esperando { background: #F59E0B; } /* amarillo: esperando la solicitud/pago del usuario */
+  .btn-responder--respondido { background: #16A34A; } /* verde: usuario respondió / ya se le respondió */
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 999; overflow-y: auto; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: #fff; border-radius: 14px; max-width: 560px; width: 100%; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+  .modal-box h3 { margin: 0 0 4px; font-size: 19px; }
+  .modal-box .modal-sub { font-size: 13px; color: #777; margin: 0 0 18px; }
+  .modal-close { position: absolute; top: 18px; right: 20px; background: none; border: none; font-size: 20px; cursor: pointer; color: #888; }
+  .modal-box { position: relative; }
+
+  .purchase-card { background: #f8f8f6; border: 1px solid #ececec; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; font-size: 13.5px; }
+  .purchase-card h4 { margin: 0 0 10px; font-size: 13px; color: #555; text-transform: uppercase; letter-spacing: .03em; }
+  .purchase-row { display: flex; justify-content: space-between; padding: 3px 0; }
+  .purchase-row span:first-child { color: #777; }
+  .purchase-row span:last-child { font-weight: 600; text-align: right; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 700; color: #444; margin-bottom: 6px; }
+  .field input[type="text"], .field input[type="email"], .field input[type="number"], .field textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 13.5px; background: #fafafa;
+  }
+  .field input[readonly] { background: #f1f1f1; color: #666; }
+  .field textarea { min-height: 90px; resize: vertical; }
+
+  .status-options { display: flex; flex-wrap: wrap; gap: 8px; }
+  .status-opt { flex: 1 1 auto; min-width: 140px; }
+  .status-opt input { display: none; }
+  .status-opt label {
+    display: block; text-align: center; padding: 10px 8px; border: 1.5px solid #ddd; border-radius: 8px;
+    font-size: 12.5px; font-weight: 700; cursor: pointer; color: #555; transition: all .15s ease;
+  }
+  .status-opt input:checked + label.opt-procesando { border-color: #F59E0B; background: #FEF3C7; color: #92400E; }
+  .status-opt input:checked + label.opt-pagado { border-color: #16A34A; background: #DCFCE7; color: #046C3B; }
+  .status-opt input:checked + label.opt-pendiente_pago { border-color: #EF4444; background: #FEE2E2; color: #991B1B; }
+
+  .payment-request-block { display: none; margin-top: 14px; padding: 14px; background: #FFF7ED; border: 1px solid #FDBA74; border-radius: 10px; }
+  .payment-request-block.open { display: block; }
+  .payment-methods-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-top: 6px; }
+  .pm-option { border: 1.5px solid #ddd; border-radius: 8px; padding: 8px; text-align: center; font-size: 12.5px; font-weight: 700; cursor: pointer; background: #fff; color: #555; }
+  .pm-option.active { border-color: #046C3B; background: #DCFCE7; color: #046C3B; }
+  .payment-account-preview { margin-top: 10px; font-size: 12.5px; background: #fff; border: 1px dashed #ddd; border-radius: 8px; padding: 10px 12px; color: #555; line-height: 1.5; }
+
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+  .modal-actions button { border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13.5px; }
+  .btn-cancel { background: #eee; color: #444; }
+  .btn-send { background: #046C3B; color: #fff; }
+  .btn-send:disabled { opacity: .6; cursor: not-allowed; }
+  .form-error { color: #B91C1C; font-size: 12.5px; margin-top: 8px; display: none; }
 </style>
 </head>
 <body>
@@ -40,40 +103,354 @@
 
     <div class="admin-table-wrap">
       <h2>Últimos usuarios registrados</h2>
+      <p class="hint">Rojo: aún no se le ha respondido · Amarillo: esperando el pago del usuario · Verde: ya se le respondió.</p>
       <table>
         <thead>
-          <tr><th>Nombre</th><th>Correo</th><th>Registrado</th></tr>
+          <tr><th>Nombre</th><th>Correo</th><th>Registrado</th><th>Proceso de compra</th><th>Factura</th><th>Estado</th></tr>
         </thead>
         <tbody id="usersTableBody">
-          <tr><td colspan="3">Cargando...</td></tr>
+          <tr><td colspan="6">Cargando...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <script>
-    fetch('/api/admin/stats')
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (!data.ok) {
-          window.location.href = '/admin-login.html';
-          return;
-        }
-        document.getElementById('statUsers').textContent = data.stats.totalUsers;
-        document.getElementById('statCartLines').textContent = data.stats.totalCartLines;
-        document.getElementById('statCartUnits').textContent = data.stats.totalCartUnits;
+  <!-- ---------- Modal: detalle del usuario + formato de respuesta ---------- -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose" type="button">&times;</button>
+      <h3 id="modalUserName">—</h3>
+      <p class="modal-sub" id="modalUserEmail">—</p>
 
-        var tbody = document.getElementById('usersTableBody');
-        if (data.recentUsers.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="3">Aún no hay usuarios registrados.</td></tr>';
+      <div class="purchase-card" id="purchaseCard">
+        <h4>Proceso de compra</h4>
+        <div id="purchaseCardBody">Cargando...</div>
+      </div>
+
+      <form id="responseForm">
+        <div class="field">
+          <label>De (remitente / responder a)</label>
+          <input type="email" id="fieldFrom" value="fondoeditorial@uss.edu.pe" readonly>
+        </div>
+        <div class="field">
+          <label>Para</label>
+          <input type="email" id="fieldTo" readonly>
+        </div>
+
+        <div class="field">
+          <label>Estado del pedido</label>
+          <div class="status-options">
+            <div class="status-opt">
+              <input type="radio" name="orderStatus" id="optProcesando" value="procesando" checked>
+              <label for="optProcesando" class="opt-procesando">Su pedido está siendo procesado</label>
+            </div>
+            <div class="status-opt">
+              <input type="radio" name="orderStatus" id="optPagado" value="pagado">
+              <label for="optPagado" class="opt-pagado">Pedido pagado</label>
+            </div>
+            <div class="status-opt">
+              <input type="radio" name="orderStatus" id="optPendientePago" value="pendiente_pago">
+              <label for="optPendientePago" class="opt-pendiente_pago">Pendiente a pagar</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="payment-request-block" id="paymentRequestBlock">
+          <div class="field" style="margin-bottom:10px;">
+            <label>Monto a cobrar (S/)</label>
+            <input type="number" id="fieldAmount" min="0.01" step="0.01" placeholder="0.00">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Medio de pago a solicitar</label>
+            <div class="payment-methods-grid" id="paymentMethodsGrid"></div>
+            <div class="payment-account-preview" id="paymentAccountPreview">Selecciona un medio de pago para ver los datos que se le enviarán al usuario.</div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:16px;">
+          <label>Mensaje</label>
+          <textarea id="fieldMessage" placeholder="Escribe un mensaje para el usuario..."></textarea>
+        </div>
+
+        <p class="form-error" id="formError"></p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" id="btnCancel">Cancelar</button>
+          <button type="submit" class="btn-send" id="btnSend">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    var FONDO_EDITORIAL_EMAIL = 'fondoeditorial@uss.edu.pe';
+    var currentUserId = null;
+    var currentUser = null;
+    var paymentMethods = [];
+    var selectedMethodKey = null;
+
+    var STATUS_TEMPLATES = {
+      procesando: 'Hola, te escribimos para contarte que tu pedido ya está siendo procesado. Te avisaremos apenas tengamos una actualización.',
+      pagado: 'Hola, confirmamos que tu pago fue registrado correctamente. ¡Gracias por tu compra!',
+      pendiente_pago: 'Hola, notamos que tu pedido aún tiene un pago pendiente. Te dejamos los datos para completarlo a continuación.',
+    };
+
+    function statusPillHtml(u) {
+      var latestOrder = u.latestOrder;
+      if (!latestOrder) {
+        return '<span class="pill pill--gray">Sin compra iniciada</span>';
+      }
+      return '<span class="pill pill--green">Pago confirmado</span>';
+    }
+
+    function invoicePillHtml(u) {
+      var latestOrder = u.latestOrder;
+      if (!latestOrder) return '<span class="pill pill--gray">—</span>';
+      return latestOrder.emailSent
+        ? '<span class="pill pill--green">Factura enviada</span>'
+        : '<span class="pill pill--amber">Factura no enviada</span>';
+    }
+
+    function responderButtonHtml(u) {
+      var status = (u.ticket && u.ticket.status) || 'pendiente';
+      var labelByStatus = { pendiente: 'Responder', esperando: 'Esperando pago', respondido: 'Respondido' };
+      var cls = 'btn-responder--' + status;
+      var label = labelByStatus[status] || 'Responder';
+      return '<button type="button" class="btn-responder ' + cls + '" data-user-id="' + u.id + '">' +
+        '<span class="dot"></span>' + label + '</button>';
+    }
+
+    function loadStats() {
+      fetch('/api/admin/stats')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) {
+            window.location.href = '/admin-login.html';
+            return;
+          }
+          document.getElementById('statUsers').textContent = data.stats.totalUsers;
+          document.getElementById('statCartLines').textContent = data.stats.totalCartLines;
+          document.getElementById('statCartUnits').textContent = data.stats.totalCartUnits;
+
+          var tbody = document.getElementById('usersTableBody');
+          if (data.recentUsers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">Aún no hay usuarios registrados.</td></tr>';
+            return;
+          }
+          tbody.innerHTML = data.recentUsers.map(function (u) {
+            var fecha = new Date(u.createdAt).toLocaleString('es-PE');
+            return '<tr>' +
+              '<td>' + u.firstName + ' ' + u.lastName + '</td>' +
+              '<td>' + u.email + '</td>' +
+              '<td>' + fecha + '</td>' +
+              '<td>' + statusPillHtml(u) + '</td>' +
+              '<td>' + invoicePillHtml(u) + '</td>' +
+              '<td>' + responderButtonHtml(u) + '</td>' +
+              '</tr>';
+          }).join('');
+
+          document.querySelectorAll('.btn-responder').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              openModal(btn.getAttribute('data-user-id'));
+            });
+          });
+        })
+        .catch(function () { window.location.href = '/admin-login.html'; });
+    }
+
+    // ---------- Modal ----------
+    var modalOverlay = document.getElementById('modalOverlay');
+
+    function openModal(userId) {
+      currentUserId = userId;
+      resetForm();
+      modalOverlay.classList.add('open');
+      document.getElementById('modalUserName').textContent = 'Cargando...';
+      document.getElementById('modalUserEmail').textContent = '';
+      document.getElementById('purchaseCardBody').textContent = 'Cargando...';
+
+      fetch('/api/admin/users/' + userId + '/detail')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) {
+            showError(data.message || 'No se pudo cargar el usuario.');
+            return;
+          }
+          currentUser = data.user;
+          paymentMethods = data.paymentMethods || [];
+          renderModal(data);
+        })
+        .catch(function () { showError('Error de conexión al cargar el usuario.'); });
+    }
+
+    function closeModal() {
+      modalOverlay.classList.remove('open');
+      currentUserId = null;
+      currentUser = null;
+    }
+
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('btnCancel').addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', function (e) {
+      if (e.target === modalOverlay) closeModal();
+    });
+
+    function renderModal(data) {
+      var u = data.user;
+      document.getElementById('modalUserName').textContent = u.firstName + ' ' + u.lastName;
+      document.getElementById('modalUserEmail').textContent = u.email;
+      document.getElementById('fieldTo').value = u.email;
+      document.getElementById('fieldFrom').value = data.fondoEditorialEmail || FONDO_EDITORIAL_EMAIL;
+
+      var order = u.latestOrder;
+      var body = '';
+      if (!order) {
+        body = '<div class="purchase-row"><span>Estado</span><span>El usuario aún no ha confirmado ningún pago (no ha llegado a confirmacionPago.html).</span></div>';
+      } else {
+        body =
+          '<div class="purchase-row"><span>Factura</span><span>' + order.invoiceNumber + '</span></div>' +
+          '<div class="purchase-row"><span>Total</span><span>S/ ' + order.total.toFixed(2) + '</span></div>' +
+          '<div class="purchase-row"><span>Medio de pago usado</span><span>' + (order.paymentMethod || '—') + '</span></div>' +
+          '<div class="purchase-row"><span>Factura enviada al correo</span><span>' + (order.emailSent ? 'Sí, se le envió' : 'No, aún no se le envió') + '</span></div>' +
+          '<div class="purchase-row"><span>Fecha</span><span>' + new Date(order.createdAt).toLocaleString('es-PE') + '</span></div>';
+      }
+      if (u.ticket && u.ticket.lastMessage) {
+        body += '<div class="purchase-row" style="margin-top:6px; border-top:1px dashed #ddd; padding-top:8px;">' +
+          '<span>Última respuesta enviada</span><span>' + new Date(u.ticket.updatedAt).toLocaleString('es-PE') + '</span></div>';
+      }
+      document.getElementById('purchaseCardBody').innerHTML = body;
+
+      // Prefill monto sugerido con el total de la última compra, si existe
+      if (order && order.total) {
+        document.getElementById('fieldAmount').value = order.total.toFixed(2);
+      }
+
+      renderPaymentMethods();
+      syncStatusUI();
+    }
+
+    function renderPaymentMethods() {
+      var grid = document.getElementById('paymentMethodsGrid');
+      grid.innerHTML = paymentMethods.map(function (pm) {
+        return '<div class="pm-option" data-key="' + pm.key + '">' + pm.label.replace(' - Cuenta corriente', '') + '</div>';
+      }).join('');
+      grid.querySelectorAll('.pm-option').forEach(function (el) {
+        el.addEventListener('click', function () {
+          selectedMethodKey = el.getAttribute('data-key');
+          grid.querySelectorAll('.pm-option').forEach(function (o) { o.classList.remove('active'); });
+          el.classList.add('active');
+          updatePaymentPreview();
+        });
+      });
+    }
+
+    function updatePaymentPreview() {
+      var preview = document.getElementById('paymentAccountPreview');
+      var pm = paymentMethods.filter(function (p) { return p.key === selectedMethodKey; })[0];
+      if (!pm) {
+        preview.textContent = 'Selecciona un medio de pago para ver los datos que se le enviarán al usuario.';
+        return;
+      }
+      var lines = ['<strong>' + pm.label + '</strong>', (pm.cci ? 'Cuenta' : 'Número / @') + ': ' + pm.handle];
+      if (pm.cci) lines.push('CCI: ' + pm.cci);
+      lines.push('Titular: ' + pm.holder);
+      preview.innerHTML = lines.join('<br>');
+    }
+
+    function syncStatusUI() {
+      var status = document.querySelector('input[name="orderStatus"]:checked').value;
+      var block = document.getElementById('paymentRequestBlock');
+      if (status === 'pendiente_pago') {
+        block.classList.add('open');
+      } else {
+        block.classList.remove('open');
+      }
+      var textarea = document.getElementById('fieldMessage');
+      if (!textarea.dataset.userEdited) {
+        textarea.value = STATUS_TEMPLATES[status] || '';
+      }
+    }
+
+    document.querySelectorAll('input[name="orderStatus"]').forEach(function (input) {
+      input.addEventListener('change', syncStatusUI);
+    });
+
+    document.getElementById('fieldMessage').addEventListener('input', function () {
+      this.dataset.userEdited = '1';
+    });
+
+    function resetForm() {
+      document.getElementById('responseForm').reset();
+      document.getElementById('fieldMessage').dataset.userEdited = '';
+      document.getElementById('fieldAmount').value = '';
+      selectedMethodKey = null;
+      hideError();
+      document.getElementById('paymentRequestBlock').classList.remove('open');
+      syncStatusUI();
+    }
+
+    function showError(msg) {
+      var el = document.getElementById('formError');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function hideError() {
+      var el = document.getElementById('formError');
+      el.style.display = 'none';
+      el.textContent = '';
+    }
+
+    document.getElementById('responseForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      hideError();
+
+      var orderStatus = document.querySelector('input[name="orderStatus"]:checked').value;
+      var message = document.getElementById('fieldMessage').value.trim();
+      var payload = { orderStatus: orderStatus, message: message };
+
+      if (orderStatus === 'pendiente_pago') {
+        var amount = parseFloat(document.getElementById('fieldAmount').value);
+        if (!selectedMethodKey) {
+          showError('Selecciona el medio de pago que quieres solicitar al usuario.');
           return;
         }
-        tbody.innerHTML = data.recentUsers.map(function (u) {
-          var fecha = new Date(u.created_at).toLocaleString('es-PE');
-          return '<tr><td>' + u.first_name + ' ' + u.last_name + '</td><td>' + u.email + '</td><td>' + fecha + '</td></tr>';
-        }).join('');
+        if (!amount || amount <= 0) {
+          showError('Indica un monto válido a cobrar.');
+          return;
+        }
+        payload.paymentMethodKey = selectedMethodKey;
+        payload.amount = amount;
+      }
+
+      var btnSend = document.getElementById('btnSend');
+      btnSend.disabled = true;
+      btnSend.textContent = 'Enviando...';
+
+      fetch('/api/admin/users/' + currentUserId + '/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       })
-      .catch(function () { window.location.href = '/admin-login.html'; });
+        .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+        .then(function (res) {
+          btnSend.disabled = false;
+          btnSend.textContent = 'Enviar';
+          if (!res.data.ok) {
+            showError(res.data.message || 'No se pudo enviar la respuesta.');
+            return;
+          }
+          closeModal();
+          loadStats();
+        })
+        .catch(function () {
+          btnSend.disabled = false;
+          btnSend.textContent = 'Enviar';
+          showError('Error de conexión al enviar la respuesta.');
+        });
+    });
+
+    // ---------- Carga inicial ----------
+    loadStats();
 
     document.getElementById('btnLogout').addEventListener('click', function () {
       fetch('/api/admin/logout', { method: 'POST' }).finally(function () {
