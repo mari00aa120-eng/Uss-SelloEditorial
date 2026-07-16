@@ -179,9 +179,23 @@
   .cat-btn-save { background: #046C3B; color: #fff; }
   .cat-btn-save:disabled { opacity: .6; cursor: not-allowed; }
   .cat-btn-clear { background: #eee; color: #444; }
-  .cat-form-msg { font-size: 12.5px; margin-top: 10px; text-align: center; display: none; }
-  .cat-form-msg.error { display: block; color: #B91C1C; }
-  .cat-form-msg.success { display: block; color: #046C3B; }
+  .cat-form-msg {
+    font-size: 14px; margin-top: 12px; text-align: center; display: none;
+    padding: 10px 12px; border-radius: 8px; font-weight: 700;
+  }
+  .cat-form-msg.error { display: block; color: #B91C1C; background: #FEE2E2; border: 1px solid #FCA5A5; }
+  .cat-form-msg.success { display: block; color: #046C3B; background: #DCFCE7; border: 1px solid #86EFAC; }
+
+  /* Errores por campo (se marcan en rojo, como un formulario normal) */
+  .cat-field.has-error input,
+  .cat-field.has-error select,
+  .cat-field.has-error textarea {
+    border-color: #B91C1C !important; background: #FEF2F2 !important;
+  }
+  .cat-field-error {
+    display: none; font-size: 11.5px; color: #B91C1C; font-weight: 700; margin-top: 4px;
+  }
+  .cat-field.has-error .cat-field-error { display: block; }
 
   .cat-view { display: none; }
   .cat-view.active { display: block; }
@@ -201,7 +215,7 @@
       <div class="cat-header">
         <div>
           <h1>Catálogo de libros</h1>
-          <p>Cada 6 libros habilitan una página más en catalogo.html. Desactiva un libro para quitarlo del catálogo sin borrarlo, o elimínalo definitivamente.</p>
+          <p>Desactiva un libro para quitarlo del catálogo sin borrarlo, o elimínalo definitivamente.</p>
         </div>
         <div class="cat-header__actions">
           <button type="button" class="cat-btn-add" id="btnAddBook">+ Añadir libro</button>
@@ -228,7 +242,7 @@
 
       <div class="cat-table-wrap">
         <h2>Libros registrados</h2>
-        <p class="hint">Edita, oculta o elimina cualquier libro. Los cambios se reflejan de inmediato en catalogo.html y descripcionLibro.html.</p>
+        <p class="hint">Edita, oculta o elimina cualquier libro. Los cambios se reflejan de inmediato en el catalogo.</p>
         <div id="booksTableArea">
           <div class="cat-loading">Cargando catálogo...</div>
         </div>
@@ -241,7 +255,7 @@
         <div class="cat-form-page__header">
           <div>
             <h2 id="formTitle">Añadir libro</h2>
-            <p>Todo lo que llenes aquí se refleja directamente en catalogo.html y descripcionLibro.html.</p>
+            <p>Todo lo que llenes aquí se refleja directamente en catalogo oficiao de Uss Sello Eitorial.</p>
           </div>
           <button type="button" class="cat-btn-back" id="btnBackToList">← Volver al listado</button>
         </div>
@@ -275,22 +289,25 @@
             </div>
           </div>
 
-          <div class="cat-field">
+          <div class="cat-field" id="fieldWrapTitle">
             <label for="fieldTitle">Título del libro *</label>
             <input type="text" id="fieldTitle" placeholder="Ej: Sipán, descubrimiento e investigación" required>
+            <div class="cat-field-error" id="errorTitle">El título es obligatorio.</div>
           </div>
 
-          <div class="cat-field">
+          <div class="cat-field" id="fieldWrapAuthors">
             <label>Autores *</label>
             <div class="cat-authors-list" id="authorsList"></div>
             <button type="button" class="cat-add-btn" id="btnAddAuthor">+ Añadir autor</button>
+            <div class="cat-field-error" id="errorAuthors">Ingresa al menos un autor (revisa que el campo no esté vacío o con solo espacios).</div>
           </div>
 
           <div class="cat-section-title">Precio y descuento</div>
 
-          <div class="cat-field">
+          <div class="cat-field" id="fieldWrapPrice">
             <label for="fieldPrice">Precio regular (S/) *</label>
             <input type="number" id="fieldPrice" min="0" step="0.01" placeholder="120.00" required>
+            <div class="cat-field-error" id="errorPrice">Ingresa un precio válido, mayor a 0 (usa punto para decimales, ej: 120.00).</div>
           </div>
 
           <div class="cat-toggle-row">
@@ -302,9 +319,10 @@
           </div>
 
           <div class="cat-discount-block" id="discountBlock">
-            <div class="cat-field">
+            <div class="cat-field" id="fieldWrapDiscount">
               <label for="fieldDiscountPercent">Porcentaje de descuento (%)</label>
               <input type="number" id="fieldDiscountPercent" min="1" max="99" step="1" placeholder="25">
+              <div class="cat-field-error" id="errorDiscount">Ingresa un porcentaje válido, entre 1 y 99.</div>
             </div>
             <div class="cat-discount-preview" id="discountPreview">Ingresa el % para ver el precio final.</div>
           </div>
@@ -385,7 +403,7 @@
               <input type="checkbox" id="fieldIsActive" checked>
               <span class="slider"></span>
             </label>
-            <span class="toggle-label">Visible en catalogo.html</span>
+            <span class="toggle-label">Visible en catalogo</span>
           </div>
 
           <div class="cat-form-actions">
@@ -526,6 +544,7 @@
         authorsList.querySelectorAll('input').forEach(function (input) {
           input.addEventListener('input', function () {
             currentAuthors[Number(input.getAttribute('data-idx'))] = input.value;
+            document.getElementById('fieldWrapAuthors').classList.remove('has-error');
           });
         });
         authorsList.querySelectorAll('button[data-remove]').forEach(function (btn) {
@@ -621,7 +640,37 @@
       function showFormMsg(text, type) {
         formMsg.textContent = text || '';
         formMsg.className = 'cat-form-msg ' + (type || '');
+        if (text) {
+          formMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }
+
+      // ---------------- Errores por campo (marca en rojo el campo con el error) ----------------
+      var FIELD_ERROR_WRAPS = ['fieldWrapTitle', 'fieldWrapAuthors', 'fieldWrapPrice', 'fieldWrapDiscount'];
+      function clearFieldErrors() {
+        FIELD_ERROR_WRAPS.forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.classList.remove('has-error');
+        });
+      }
+      function markFieldError(wrapId) {
+        var el = document.getElementById(wrapId);
+        if (el) {
+          el.classList.add('has-error');
+          if (!document.querySelector('.cat-field.has-error')) return;
+          document.querySelector('.cat-field.has-error').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      // Al corregir un campo, su marca roja desaparece sola.
+      document.getElementById('fieldTitle').addEventListener('input', function () {
+        document.getElementById('fieldWrapTitle').classList.remove('has-error');
+      });
+      document.getElementById('fieldPrice').addEventListener('input', function () {
+        document.getElementById('fieldWrapPrice').classList.remove('has-error');
+      });
+      document.getElementById('fieldDiscountPercent').addEventListener('input', function () {
+        document.getElementById('fieldWrapDiscount').classList.remove('has-error');
+      });
 
       function resetForm() {
         editingId = null;
@@ -655,6 +704,7 @@
         renderTags();
         syncDiscountUI();
         showFormMsg('', '');
+        clearFieldErrors();
         btnSaveBook.textContent = 'Guardar libro';
       }
 
@@ -691,6 +741,7 @@
         renderTags();
         syncDiscountUI();
         showFormMsg('', '');
+        clearFieldErrors();
         btnSaveBook.textContent = 'Actualizar libro';
       }
 
@@ -700,6 +751,7 @@
       bookForm.addEventListener('submit', function (e) {
         e.preventDefault();
         showFormMsg('', '');
+        clearFieldErrors();
 
         var payload = {
           title: document.getElementById('fieldTitle').value.trim(),
@@ -722,11 +774,26 @@
           isActive: document.getElementById('fieldIsActive').checked,
         };
 
-        if (!payload.title) return showFormMsg('El título es obligatorio.', 'error');
-        if (payload.authors.length === 0) return showFormMsg('Ingresa al menos un autor.', 'error');
-        if (!payload.price || payload.price <= 0) return showFormMsg('Ingresa un precio válido.', 'error');
-        if (payload.hasDiscount && (!payload.discountPercent || payload.discountPercent <= 0 || payload.discountPercent >= 100)) {
-          return showFormMsg('Ingresa un porcentaje de descuento válido (1-99).', 'error');
+        // ---- Validación por campo: marca en rojo el campo exacto con el error ----
+        var hasError = false;
+        if (!payload.title) {
+          markFieldError('fieldWrapTitle');
+          hasError = true;
+        }
+        if (payload.authors.length === 0) {
+          markFieldError('fieldWrapAuthors');
+          hasError = true;
+        }
+        if (!payload.price || Number.isNaN(payload.price) || payload.price <= 0) {
+          markFieldError('fieldWrapPrice');
+          hasError = true;
+        }
+        if (payload.hasDiscount && (!payload.discountPercent || Number.isNaN(payload.discountPercent) || payload.discountPercent <= 0 || payload.discountPercent >= 100)) {
+          markFieldError('fieldWrapDiscount');
+          hasError = true;
+        }
+        if (hasError) {
+          return showFormMsg('Hay campos marcados en rojo que debes corregir antes de guardar.', 'error');
         }
 
         var url = editingId ? ('/api/catalog/admin/books/' + editingId) : '/api/catalog/admin/books';
@@ -740,21 +807,43 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         })
-          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (r) {
+            // Si la sesión expiró (2 horas) el servidor responde 401 y SIN cuerpo JSON útil,
+            // o si el servidor tiene un error interno puede responder HTML en vez de JSON.
+            // Antes esto rompía el flujo silenciosamente ("no pasa nada"); ahora se detecta.
+            if (r.status === 401) {
+              throw new Error('SESSION_EXPIRED');
+            }
+            return r.json().then(
+              function (data) { return { status: r.status, data: data }; },
+              function () { throw new Error('INVALID_SERVER_RESPONSE'); }
+            );
+          })
           .then(function (res) {
             if (res.data.ok) {
-              var wasEditing = !!editingId;
               resetForm();
               loadBooks();
               showListView();
               showFormMsg('', '');
             } else {
-              showFormMsg(res.data.message || 'No se pudo guardar el libro.', 'error');
+              showFormMsg(res.data.message || 'No se pudo guardar el libro. Revisa los datos e inténtalo de nuevo.', 'error');
             }
           })
-          .catch(function () { showFormMsg('Error de conexión con el servidor.', 'error'); })
+          .catch(function (err) {
+            console.error('[panel-catalogo] Error guardando el libro:', err);
+            if (err && err.message === 'SESSION_EXPIRED') {
+              showFormMsg('Tu sesión expiró (dura 2 horas). Vuelve a iniciar sesión para poder guardar el libro; tus datos NO se perdieron, quedan en el formulario.', 'error');
+            } else if (err && err.message === 'INVALID_SERVER_RESPONSE') {
+              showFormMsg('El servidor respondió de forma inesperada (posible error interno). Revisa la consola del navegador (F12) y vuelve a intentarlo.', 'error');
+            } else {
+              showFormMsg('Error de conexión con el servidor. Revisa tu internet y vuelve a intentarlo.', 'error');
+            }
+          })
           .finally(function () {
             btnSaveBook.disabled = false;
+            if (btnSaveBook.textContent === 'Guardando...') {
+              btnSaveBook.textContent = editingId ? 'Actualizar libro' : 'Guardar libro';
+            }
           });
       });
 
