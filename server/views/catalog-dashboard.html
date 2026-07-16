@@ -11,24 +11,71 @@
   * { box-sizing: border-box; }
   body { background: #f6f6f6; font-family: 'Inter', sans-serif; margin: 0; }
 
-  .cat-shell { display: flex; min-height: 100vh; }
+  .cat-page { max-width: 1150px; margin: 0 auto; padding: 40px 24px 80px; }
 
-  /* ---------- Sidebar izquierdo ---------- */
-  .cat-sidebar {
-    width: 380px;
-    min-width: 380px;
-    background: #fff;
-    border-right: 1px solid #eaeaea;
-    padding: 24px 22px 60px;
-    overflow-y: auto;
-    max-height: 100vh;
-    position: sticky;
-    top: 0;
-  }
-  .cat-sidebar__header { margin-bottom: 18px; }
-  .cat-sidebar__header h2 { margin: 0 0 4px; font-size: 18px; }
-  .cat-sidebar__header p { margin: 0; font-size: 12.5px; color: #888; }
-  .cat-sidebar__logout { background: none; border: none; color: #999; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; margin-top: 6px; }
+  /* ---------- Encabezado ---------- */
+  .cat-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+  .cat-header h1 { margin: 0 0 6px; font-size: 24px; }
+  .cat-header p { margin: 0; font-size: 13px; color: #777; max-width: 560px; }
+  .cat-header__actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .cat-header__actions button { border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13.5px; white-space: nowrap; }
+  .cat-btn-add { background: #046C3B; color: #fff; }
+  .cat-btn-add:hover { background: #035c31; }
+  .cat-btn-refresh { background: #fff; color: #1a1a1a; border: 1.5px solid #ddd !important; }
+  .cat-btn-refresh:hover { border-color: #046C3B !important; color: #046C3B; }
+  .cat-btn-logout { background: #1a1a1a; color: #fff; }
+  .cat-btn-logout:hover { background: #333; }
+
+  /* ---------- Tarjetas de estadísticas ---------- */
+  .cat-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .cat-stat-card { background: #fff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+  .cat-stat-card span { display: block; font-size: 12.5px; color: #777; margin-bottom: 6px; }
+  .cat-stat-card strong { font-size: 26px; }
+  .cat-stat-card small { display: block; font-size: 11.5px; color: #999; margin-top: 4px; }
+
+  /* ---------- Tabla de libros (estilo similar a /admin) ---------- */
+  .cat-table-wrap { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
+  .cat-table-wrap h2 { font-size: 16px; margin: 0 0 4px; }
+  .cat-table-wrap p.hint { font-size: 12.5px; color: #888; margin: 0 0 14px; }
+  table.cat-table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 820px; }
+  table.cat-table th, table.cat-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  table.cat-table th { color: #777; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .02em; }
+  table.cat-table tr:last-child td { border-bottom: none; }
+
+  .cat-row-thumb { width: 44px; height: 60px; border-radius: 6px; background: #f1f1f1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .cat-row-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-row-thumb span { font-size: 9px; color: #aaa; text-align: center; }
+
+  .cat-row-title { font-weight: 700; color: #1a1a1a; margin: 0 0 2px; }
+  .cat-row-authors { font-size: 12px; color: #888; margin: 0; }
+
+  .cat-row-price { font-weight: 800; color: #046C3B; }
+  .cat-row-price .old { color: #aaa; text-decoration: line-through; font-weight: 500; margin-right: 6px; font-size: 11.5px; }
+
+  .cat-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .cat-pill--green { background: #DCFCE7; color: #046C3B; }
+  .cat-pill--gray { background: #f1f1f1; color: #555; }
+
+  .cat-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cat-row-actions button { border: none; padding: 6px 10px; border-radius: 7px; font-size: 11.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .cat-btn-edit { background: #EFF6FF; color: #1D4ED8; }
+  .cat-btn-toggle { background: #FEF3C7; color: #92400E; }
+  .cat-btn-delete { background: #FEE2E2; color: #991B1B; }
+
+  .cat-empty-state { text-align: center; padding: 70px 20px; }
+  .cat-empty-state p { font-size: 14px; color: #888; margin: 0 0 18px; }
+  .cat-empty-state button { background: #046C3B; color: #fff; border: none; padding: 12px 22px; border-radius: 9px; font-weight: 700; font-size: 13.5px; cursor: pointer; }
+  .cat-empty-state button:hover { background: #035c31; }
+
+  .cat-loading { text-align: center; padding: 60px 20px; color: #999; font-size: 13.5px; }
+
+  /* ---------- Vista de formulario (Añadir / Editar libro) ---------- */
+  .cat-form-page { background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 30px 34px 36px; max-width: 760px; margin: 0 auto; }
+  .cat-form-page__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  .cat-form-page__header h2 { margin: 0 0 4px; font-size: 20px; }
+  .cat-form-page__header p { margin: 0; font-size: 12.5px; color: #888; max-width: 480px; }
+  .cat-btn-back { background: #f1f1f1; color: #333; border: none; padding: 9px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .cat-btn-back:hover { background: #e6e6e6; }
 
   .cat-field { margin-bottom: 14px; }
   .cat-field label { display: block; font-size: 12.5px; font-weight: 700; color: #444; margin-bottom: 6px; }
@@ -51,14 +98,35 @@
   }
   .cat-section-title:first-of-type { border-top: none; margin-top: 4px; padding-top: 0; }
 
-  /* Imagen preview */
+  /* Imagen: preview + tabs URL / archivo */
   .cat-image-preview {
-    width: 100%; height: 140px; border-radius: 10px; background: #f1f1f1;
+    width: 100%; height: 160px; border-radius: 10px; background: #f1f1f1;
     display: flex; align-items: center; justify-content: center; overflow: hidden;
-    margin-bottom: 8px; border: 1px dashed #ddd;
+    margin-bottom: 10px; border: 1px dashed #ddd;
   }
   .cat-image-preview img { width: 100%; height: 100%; object-fit: cover; }
   .cat-image-preview span { font-size: 12px; color: #999; }
+
+  .cat-image-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .cat-image-tab {
+    flex: 1; text-align: center; padding: 8px 10px; border: 1.5px solid #ddd; border-radius: 8px;
+    font-size: 12.5px; font-weight: 700; color: #666; cursor: pointer; background: #fff;
+  }
+  .cat-image-tab.active { border-color: #046C3B; background: #DCFCE7; color: #046C3B; }
+  .cat-image-tab-panel { display: none; }
+  .cat-image-tab-panel.active { display: block; }
+
+  .cat-upload-dropzone {
+    border: 1.5px dashed #ccc; border-radius: 10px; padding: 18px; text-align: center;
+    background: #fafafa; cursor: pointer;
+  }
+  .cat-upload-dropzone:hover { border-color: #046C3B; background: #f3fbf6; }
+  .cat-upload-dropzone strong { display: block; font-size: 13px; color: #333; margin-bottom: 4px; }
+  .cat-upload-dropzone small { font-size: 11.5px; color: #999; }
+  .cat-upload-status { font-size: 12px; margin-top: 8px; text-align: center; display: none; }
+  .cat-upload-status.uploading { display: block; color: #046C3B; }
+  .cat-upload-status.error { display: block; color: #B91C1C; }
+  .cat-upload-status.success { display: block; color: #046C3B; }
 
   /* Autores dinámicos */
   .cat-authors-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
@@ -115,205 +183,31 @@
   .cat-form-msg.error { display: block; color: #B91C1C; }
   .cat-form-msg.success { display: block; color: #046C3B; }
 
-  /* ---------- Contenido principal ---------- */
-  .cat-main { flex: 1; padding: 28px 32px 80px; max-width: 1100px; }
-  .cat-main__header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; gap: 16px; flex-wrap: wrap; }
-  .cat-main__header h1 { margin: 0 0 6px; font-size: 22px; }
-  .cat-main__header p { margin: 0; font-size: 13px; color: #777; max-width: 560px; }
-  .cat-refresh-btn { background: #fff; border: 1.5px solid #ddd; border-radius: 8px; padding: 9px 16px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
-  .cat-refresh-btn:hover { border-color: #046C3B; color: #046C3B; }
+  .cat-view { display: none; }
+  .cat-view.active { display: block; }
 
-  .cat-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
-  .cat-stat-card { background: #fff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-  .cat-stat-card span { display: block; font-size: 12.5px; color: #777; margin-bottom: 6px; }
-  .cat-stat-card strong { font-size: 26px; }
-  .cat-stat-card small { display: block; font-size: 11.5px; color: #999; margin-top: 4px; }
-
-  .cat-books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
-  .cat-book-card {
-    background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    display: flex; flex-direction: column; border: 2px solid transparent;
-  }
-  .cat-book-card.is-editing { border-color: #046C3B; }
-  .cat-book-card.is-inactive { opacity: .55; }
-  .cat-book-card__img { width: 100%; height: 150px; background: #f1f1f1; display: flex; align-items: center; justify-content: center; position: relative; }
-  .cat-book-card__img img { width: 100%; height: 100%; object-fit: cover; }
-  .cat-book-card__img span { font-size: 11px; color: #aaa; }
-  .cat-book-card__badge { position: absolute; top: 8px; left: 8px; background: #046C3B; color: #fff; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; }
-  .cat-book-card__inactive-badge { position: absolute; top: 8px; right: 8px; background: #6B7280; color: #fff; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
-  .cat-book-card__body { padding: 12px 14px 14px; flex: 1; display: flex; flex-direction: column; }
-  .cat-book-card__body h4 { font-size: 13.5px; margin: 0 0 4px; line-height: 1.3; }
-  .cat-book-card__body p { font-size: 12px; color: #888; margin: 0 0 8px; }
-  .cat-book-card__price { font-size: 13px; font-weight: 800; color: #046C3B; margin-bottom: 10px; }
-  .cat-book-card__price .old { color: #aaa; text-decoration: line-through; font-weight: 500; margin-right: 6px; font-size: 11.5px; }
-  .cat-book-card__actions { display: flex; gap: 6px; margin-top: auto; }
-  .cat-book-card__actions button {
-    flex: 1; border: none; padding: 7px 6px; border-radius: 7px; font-size: 11.5px; font-weight: 700; cursor: pointer;
-  }
-  .cat-btn-edit { background: #EFF6FF; color: #1D4ED8; }
-  .cat-btn-toggle { background: #FEF3C7; color: #92400E; }
-  .cat-btn-delete { background: #FEE2E2; color: #991B1B; }
-
-  .cat-empty { text-align: center; padding: 60px 20px; color: #999; font-size: 13.5px; }
-
-  @media (max-width: 980px) {
-    .cat-shell { flex-direction: column; }
-    .cat-sidebar { width: 100%; min-width: 0; position: relative; max-height: none; }
+  @media (max-width: 700px) {
+    .cat-row2 { grid-template-columns: 1fr; }
+    .cat-form-page { padding: 24px 18px 30px; }
   }
 </style>
 </head>
 <body>
 
-  <div class="cat-shell">
-    <!-- ============ SIDEBAR IZQUIERDO: formulario de actualización ============ -->
-    <aside class="cat-sidebar">
-      <div class="cat-sidebar__header">
-        <h2 id="formTitle">Añadir libro</h2>
-        <p>Todo lo que llenes aquí se refleja directamente en catalogo.html y descripcionLibro.html.</p>
-        <button type="button" class="cat-sidebar__logout" id="btnLogout">Cerrar sesión</button>
-      </div>
+  <div class="cat-page">
 
-      <form id="bookForm">
-        <input type="hidden" id="bookId" value="">
-
-        <div class="cat-section-title">Imagen y datos básicos</div>
-
-        <div class="cat-field">
-          <label for="fieldImageUrl">URL de la imagen (portada)</label>
-          <div class="cat-image-preview" id="imagePreview"><span>Sin imagen</span></div>
-          <input type="url" id="fieldImageUrl" placeholder="https://... o assets/mi-libro.png">
-          <p class="hint">Pega el link de la imagen, o el nombre de un archivo dentro de /public/assets/.</p>
-        </div>
-
-        <div class="cat-field">
-          <label for="fieldTitle">Título del libro *</label>
-          <input type="text" id="fieldTitle" placeholder="Ej: Sipán, descubrimiento e investigación" required>
-        </div>
-
-        <div class="cat-field">
-          <label>Autores *</label>
-          <div class="cat-authors-list" id="authorsList"></div>
-          <button type="button" class="cat-add-btn" id="btnAddAuthor">+ Añadir autor</button>
-        </div>
-
-        <div class="cat-section-title">Precio y descuento</div>
-
-        <div class="cat-field">
-          <label for="fieldPrice">Precio regular (S/) *</label>
-          <input type="number" id="fieldPrice" min="0" step="0.01" placeholder="120.00" required>
-        </div>
-
-        <div class="cat-toggle-row">
-          <label class="switch">
-            <input type="checkbox" id="fieldHasDiscount">
-            <span class="slider"></span>
-          </label>
-          <span class="toggle-label">¿Tiene descuento?</span>
-        </div>
-
-        <div class="cat-discount-block" id="discountBlock">
-          <div class="cat-field">
-            <label for="fieldDiscountPercent">Porcentaje de descuento (%)</label>
-            <input type="number" id="fieldDiscountPercent" min="1" max="99" step="1" placeholder="25">
-          </div>
-          <div class="cat-discount-preview" id="discountPreview">Ingresa el % para ver el precio final.</div>
-        </div>
-
-        <div class="cat-section-title">Reseña (se muestra en descripcionLibro.html)</div>
-
-        <div class="cat-field">
-          <label for="fieldReviewText">Texto de la reseña</label>
-          <textarea id="fieldReviewText" placeholder="Escribe la reseña completa del libro..."></textarea>
-        </div>
-
-        <div class="cat-section-title">Detalles del producto</div>
-
-        <div class="cat-row2">
-          <div class="cat-field">
-            <label for="fieldIsbn">ISBN</label>
-            <input type="text" id="fieldIsbn" placeholder="978-...">
-          </div>
-          <div class="cat-field">
-            <label for="fieldPublisher">Editorial</label>
-            <input type="text" id="fieldPublisher" placeholder="USS - Fondo Editorial">
-          </div>
-        </div>
-
-        <div class="cat-row2">
-          <div class="cat-field">
-            <label for="fieldCoverType">Tapa</label>
-            <select id="fieldCoverType">
-              <option value="">Selecciona</option>
-              <option value="Dura">Dura</option>
-              <option value="Blanda">Blanda</option>
-            </select>
-          </div>
-          <div class="cat-field">
-            <label for="fieldSize">Tamaño</label>
-            <input type="text" id="fieldSize" placeholder="20.5 X 29 cm">
-          </div>
-        </div>
-
-        <div class="cat-row2">
-          <div class="cat-field">
-            <label for="fieldYear">Año de publicación</label>
-            <input type="text" id="fieldYear" placeholder="2026">
-          </div>
-          <div class="cat-field">
-            <label for="fieldPages">Páginas</label>
-            <input type="text" id="fieldPages" placeholder="312">
-          </div>
-        </div>
-
-        <div class="cat-row2">
-          <div class="cat-field">
-            <label for="fieldEdition">Edición</label>
-            <input type="text" id="fieldEdition" placeholder="Primera edición">
-          </div>
-          <div class="cat-field">
-            <label for="fieldCategory">Categoría</label>
-            <input type="text" id="fieldCategory" placeholder="Derecho, Arqueología">
-          </div>
-        </div>
-
-        <div class="cat-field">
-          <label for="fieldLanguage">Idioma</label>
-          <input type="text" id="fieldLanguage" placeholder="Español">
-        </div>
-
-        <div class="cat-field">
-          <label>Etiquetas</label>
-          <div class="cat-tags-current" id="tagsCurrent"></div>
-          <div class="cat-tag-input-row">
-            <input type="text" id="fieldTagInput" placeholder="Ej: Arqueología">
-            <button type="button" id="btnAddTag">Añadir etiqueta</button>
-          </div>
-        </div>
-
-        <div class="cat-toggle-row" style="margin-top: 18px;">
-          <label class="switch">
-            <input type="checkbox" id="fieldIsActive" checked>
-            <span class="slider"></span>
-          </label>
-          <span class="toggle-label">Visible en catalogo.html</span>
-        </div>
-
-        <div class="cat-form-actions">
-          <button type="button" class="cat-btn-clear" id="btnClearForm">Limpiar</button>
-          <button type="submit" class="cat-btn-save" id="btnSaveBook">Guardar libro</button>
-        </div>
-        <p class="cat-form-msg" id="formMsg"></p>
-      </form>
-    </aside>
-
-    <!-- ============ CONTENIDO: lista de libros del catálogo ============ -->
-    <main class="cat-main">
-      <div class="cat-main__header">
+    <!-- ============ VISTA 1: LISTADO EN TABLA ============ -->
+    <section class="cat-view active" id="listView">
+      <div class="cat-header">
         <div>
           <h1>Catálogo de libros</h1>
           <p>Cada 6 libros habilitan una página más en catalogo.html. Desactiva un libro para quitarlo del catálogo sin borrarlo, o elimínalo definitivamente.</p>
         </div>
-        <button type="button" class="cat-refresh-btn" id="btnRefresh">⟳ Refrescar</button>
+        <div class="cat-header__actions">
+          <button type="button" class="cat-btn-add" id="btnAddBook">+ Añadir libro</button>
+          <button type="button" class="cat-btn-refresh" id="btnRefresh">⟳ Refrescar</button>
+          <button type="button" class="cat-btn-logout" id="btnLogout">Cerrar sesión</button>
+        </div>
       </div>
 
       <div class="cat-stats">
@@ -332,10 +226,177 @@
         </div>
       </div>
 
-      <div class="cat-books-grid" id="booksGrid">
-        <div class="cat-empty">Cargando catálogo...</div>
+      <div class="cat-table-wrap">
+        <h2>Libros registrados</h2>
+        <p class="hint">Edita, oculta o elimina cualquier libro. Los cambios se reflejan de inmediato en catalogo.html y descripcionLibro.html.</p>
+        <div id="booksTableArea">
+          <div class="cat-loading">Cargando catálogo...</div>
+        </div>
       </div>
-    </main>
+    </section>
+
+    <!-- ============ VISTA 2: FORMULARIO (Añadir / Editar libro) ============ -->
+    <section class="cat-view" id="formView">
+      <div class="cat-form-page">
+        <div class="cat-form-page__header">
+          <div>
+            <h2 id="formTitle">Añadir libro</h2>
+            <p>Todo lo que llenes aquí se refleja directamente en catalogo.html y descripcionLibro.html.</p>
+          </div>
+          <button type="button" class="cat-btn-back" id="btnBackToList">← Volver al listado</button>
+        </div>
+
+        <form id="bookForm">
+          <input type="hidden" id="bookId" value="">
+
+          <div class="cat-section-title">Imagen y datos básicos</div>
+
+          <div class="cat-field">
+            <label>Portada del libro</label>
+            <div class="cat-image-preview" id="imagePreview"><span>Sin imagen</span></div>
+
+            <div class="cat-image-tabs">
+              <div class="cat-image-tab active" id="tabUrl" data-tab="url">Pegar URL</div>
+              <div class="cat-image-tab" id="tabUpload" data-tab="upload">Subir desde mi computador</div>
+            </div>
+
+            <div class="cat-image-tab-panel active" id="panelUrl">
+              <input type="url" id="fieldImageUrl" placeholder="https://... o assets/mi-libro.png">
+              <p class="hint">Pega el link de la imagen, o el nombre de un archivo dentro de /public/assets/.</p>
+            </div>
+
+            <div class="cat-image-tab-panel" id="panelUpload">
+              <div class="cat-upload-dropzone" id="uploadDropzone">
+                <strong>Haz clic para elegir una imagen</strong>
+                <small>Admite PNG, JPG o SVG desde tu computador · máx. 5 MB</small>
+              </div>
+              <input type="file" id="fieldImageFile" accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml" style="display:none;">
+              <p class="cat-upload-status" id="uploadStatus"></p>
+            </div>
+          </div>
+
+          <div class="cat-field">
+            <label for="fieldTitle">Título del libro *</label>
+            <input type="text" id="fieldTitle" placeholder="Ej: Sipán, descubrimiento e investigación" required>
+          </div>
+
+          <div class="cat-field">
+            <label>Autores *</label>
+            <div class="cat-authors-list" id="authorsList"></div>
+            <button type="button" class="cat-add-btn" id="btnAddAuthor">+ Añadir autor</button>
+          </div>
+
+          <div class="cat-section-title">Precio y descuento</div>
+
+          <div class="cat-field">
+            <label for="fieldPrice">Precio regular (S/) *</label>
+            <input type="number" id="fieldPrice" min="0" step="0.01" placeholder="120.00" required>
+          </div>
+
+          <div class="cat-toggle-row">
+            <label class="switch">
+              <input type="checkbox" id="fieldHasDiscount">
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label">¿Tiene descuento?</span>
+          </div>
+
+          <div class="cat-discount-block" id="discountBlock">
+            <div class="cat-field">
+              <label for="fieldDiscountPercent">Porcentaje de descuento (%)</label>
+              <input type="number" id="fieldDiscountPercent" min="1" max="99" step="1" placeholder="25">
+            </div>
+            <div class="cat-discount-preview" id="discountPreview">Ingresa el % para ver el precio final.</div>
+          </div>
+
+          <div class="cat-section-title">Reseña (se muestra en descripcionLibro.html)</div>
+
+          <div class="cat-field">
+            <label for="fieldReviewText">Texto de la reseña</label>
+            <textarea id="fieldReviewText" placeholder="Escribe la reseña completa del libro..."></textarea>
+          </div>
+
+          <div class="cat-section-title">Detalles del producto</div>
+
+          <div class="cat-row2">
+            <div class="cat-field">
+              <label for="fieldIsbn">ISBN</label>
+              <input type="text" id="fieldIsbn" placeholder="978-...">
+            </div>
+            <div class="cat-field">
+              <label for="fieldPublisher">Editorial</label>
+              <input type="text" id="fieldPublisher" placeholder="USS - Fondo Editorial">
+            </div>
+          </div>
+
+          <div class="cat-row2">
+            <div class="cat-field">
+              <label for="fieldCoverType">Tapa</label>
+              <select id="fieldCoverType">
+                <option value="">Selecciona</option>
+                <option value="Dura">Dura</option>
+                <option value="Blanda">Blanda</option>
+              </select>
+            </div>
+            <div class="cat-field">
+              <label for="fieldSize">Tamaño</label>
+              <input type="text" id="fieldSize" placeholder="20.5 X 29 cm">
+            </div>
+          </div>
+
+          <div class="cat-row2">
+            <div class="cat-field">
+              <label for="fieldYear">Año de publicación</label>
+              <input type="text" id="fieldYear" placeholder="2026">
+            </div>
+            <div class="cat-field">
+              <label for="fieldPages">Páginas</label>
+              <input type="text" id="fieldPages" placeholder="312">
+            </div>
+          </div>
+
+          <div class="cat-row2">
+            <div class="cat-field">
+              <label for="fieldEdition">Edición</label>
+              <input type="text" id="fieldEdition" placeholder="Primera edición">
+            </div>
+            <div class="cat-field">
+              <label for="fieldCategory">Categoría</label>
+              <input type="text" id="fieldCategory" placeholder="Derecho, Arqueología">
+            </div>
+          </div>
+
+          <div class="cat-field">
+            <label for="fieldLanguage">Idioma</label>
+            <input type="text" id="fieldLanguage" placeholder="Español">
+          </div>
+
+          <div class="cat-field">
+            <label>Etiquetas</label>
+            <div class="cat-tags-current" id="tagsCurrent"></div>
+            <div class="cat-tag-input-row">
+              <input type="text" id="fieldTagInput" placeholder="Ej: Arqueología">
+              <button type="button" id="btnAddTag">Añadir etiqueta</button>
+            </div>
+          </div>
+
+          <div class="cat-toggle-row" style="margin-top: 18px;">
+            <label class="switch">
+              <input type="checkbox" id="fieldIsActive" checked>
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label">Visible en catalogo.html</span>
+          </div>
+
+          <div class="cat-form-actions">
+            <button type="button" class="cat-btn-clear" id="btnClearForm">Limpiar</button>
+            <button type="submit" class="cat-btn-save" id="btnSaveBook">Guardar libro</button>
+          </div>
+          <p class="cat-form-msg" id="formMsg"></p>
+        </form>
+      </div>
+    </section>
+
   </div>
 
   <script>
@@ -344,6 +405,7 @@
       var editingId = null;
       var currentAuthors = [];
       var currentTags = [];
+      var uploadedImageUrl = ''; // última imagen subida por archivo (si se usó esa pestaña)
 
       var authorsList = document.getElementById('authorsList');
       var tagsCurrent = document.getElementById('tagsCurrent');
@@ -352,12 +414,101 @@
       var bookForm = document.getElementById('bookForm');
       var btnSaveBook = document.getElementById('btnSaveBook');
       var formTitle = document.getElementById('formTitle');
+      var listView = document.getElementById('listView');
+      var formView = document.getElementById('formView');
+
+      // ---------------- Navegación entre vistas ----------------
+      function showListView() {
+        formView.classList.remove('active');
+        listView.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      function showFormView() {
+        listView.classList.remove('active');
+        formView.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      document.getElementById('btnAddBook').addEventListener('click', function () {
+        resetForm();
+        showFormView();
+      });
+      document.getElementById('btnBackToList').addEventListener('click', function () {
+        resetForm();
+        showListView();
+      });
 
       // ---------------- Sesión / logout ----------------
       document.getElementById('btnLogout').addEventListener('click', function () {
         fetch('/api/catalog/auth/logout', { method: 'POST' }).finally(function () {
           window.location.href = '/catalog-admin-login.html';
         });
+      });
+
+      // ---------------- Pestañas de imagen: URL vs subir archivo ----------------
+      var tabUrl = document.getElementById('tabUrl');
+      var tabUpload = document.getElementById('tabUpload');
+      var panelUrl = document.getElementById('panelUrl');
+      var panelUpload = document.getElementById('panelUpload');
+
+      function setImageTab(which) {
+        var isUrl = which === 'url';
+        tabUrl.classList.toggle('active', isUrl);
+        tabUpload.classList.toggle('active', !isUrl);
+        panelUrl.classList.toggle('active', isUrl);
+        panelUpload.classList.toggle('active', !isUrl);
+      }
+      tabUrl.addEventListener('click', function () { setImageTab('url'); });
+      tabUpload.addEventListener('click', function () { setImageTab('upload'); });
+
+      // ---------------- Subir imagen desde el computador ----------------
+      var uploadDropzone = document.getElementById('uploadDropzone');
+      var fieldImageFile = document.getElementById('fieldImageFile');
+      var uploadStatus = document.getElementById('uploadStatus');
+      var fieldImageUrl = document.getElementById('fieldImageUrl');
+
+      uploadDropzone.addEventListener('click', function () { fieldImageFile.click(); });
+
+      fieldImageFile.addEventListener('change', function () {
+        var file = fieldImageFile.files && fieldImageFile.files[0];
+        if (!file) return;
+
+        var allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+        if (allowedTypes.indexOf(file.type) === -1) {
+          uploadStatus.textContent = 'Formato no permitido. Usa PNG, JPG o SVG.';
+          uploadStatus.className = 'cat-upload-status error';
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          uploadStatus.textContent = 'La imagen pesa más de 5 MB. Elige un archivo más liviano.';
+          uploadStatus.className = 'cat-upload-status error';
+          return;
+        }
+
+        uploadStatus.textContent = 'Subiendo imagen...';
+        uploadStatus.className = 'cat-upload-status uploading';
+
+        var formData = new FormData();
+        formData.append('image', file);
+
+        fetch('/api/catalog/admin/upload-image', { method: 'POST', body: formData })
+          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (res) {
+            if (res.data.ok) {
+              uploadedImageUrl = res.data.url;
+              fieldImageUrl.value = res.data.url;
+              uploadStatus.textContent = 'Imagen subida correctamente.';
+              uploadStatus.className = 'cat-upload-status success';
+              imagePreview.innerHTML = '<img src="' + escapeAttr(res.data.url) + '">';
+            } else {
+              uploadStatus.textContent = res.data.message || 'No se pudo subir la imagen.';
+              uploadStatus.className = 'cat-upload-status error';
+            }
+          })
+          .catch(function () {
+            uploadStatus.textContent = 'Error de conexión al subir la imagen.';
+            uploadStatus.className = 'cat-upload-status error';
+          });
       });
 
       // ---------------- Autores dinámicos ----------------
@@ -444,8 +595,7 @@
       fieldPrice.addEventListener('input', updateDiscountPreview);
       fieldDiscountPercent.addEventListener('input', updateDiscountPreview);
 
-      // ---------------- Imagen preview ----------------
-      var fieldImageUrl = document.getElementById('fieldImageUrl');
+      // ---------------- Imagen preview (pestaña URL) ----------------
       function resolveImageSrc(url) {
         if (!url) return '';
         if (/^https?:\/\//i.test(url) || url.indexOf('/') === 0) return url;
@@ -475,10 +625,15 @@
 
       function resetForm() {
         editingId = null;
+        uploadedImageUrl = '';
         formTitle.textContent = 'Añadir libro';
         document.getElementById('bookId').value = '';
         document.getElementById('fieldTitle').value = '';
         document.getElementById('fieldImageUrl').value = '';
+        document.getElementById('fieldImageFile').value = '';
+        uploadStatus.textContent = '';
+        uploadStatus.className = 'cat-upload-status';
+        setImageTab('url');
         imagePreview.innerHTML = '<span>Sin imagen</span>';
         document.getElementById('fieldPrice').value = '';
         fieldHasDiscount.checked = false;
@@ -505,10 +660,15 @@
 
       function loadBookIntoForm(book) {
         editingId = book.id;
+        uploadedImageUrl = '';
         formTitle.textContent = 'Editar: ' + book.title;
         document.getElementById('bookId').value = book.id;
         document.getElementById('fieldTitle').value = book.title || '';
         document.getElementById('fieldImageUrl').value = book.imageUrl || '';
+        document.getElementById('fieldImageFile').value = '';
+        uploadStatus.textContent = '';
+        uploadStatus.className = 'cat-upload-status';
+        setImageTab('url');
         var src = resolveImageSrc(book.imageUrl || '');
         imagePreview.innerHTML = src ? ('<img src="' + escapeAttr(src) + '" onerror="this.parentNode.innerHTML=\'<span>No se pudo cargar la imagen</span>\'">') : '<span>Sin imagen</span>';
         document.getElementById('fieldPrice').value = book.price != null ? book.price : '';
@@ -532,7 +692,6 @@
         syncDiscountUI();
         showFormMsg('', '');
         btnSaveBook.textContent = 'Actualizar libro';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
       document.getElementById('btnClearForm').addEventListener('click', resetForm);
@@ -584,9 +743,11 @@
           .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
           .then(function (res) {
             if (res.data.ok) {
-              showFormMsg(editingId ? 'Libro actualizado correctamente.' : 'Libro añadido correctamente.', 'success');
+              var wasEditing = !!editingId;
               resetForm();
               loadBooks();
+              showListView();
+              showFormMsg('', '');
             } else {
               showFormMsg(res.data.message || 'No se pudo guardar el libro.', 'error');
             }
@@ -597,24 +758,24 @@
           });
       });
 
-      // ---------------- Lista de libros ----------------
-      var booksGrid = document.getElementById('booksGrid');
+      // ---------------- Lista de libros (tabla) ----------------
+      var booksTableArea = document.getElementById('booksTableArea');
 
       function loadBooks() {
-        booksGrid.innerHTML = '<div class="cat-empty">Cargando catálogo...</div>';
+        booksTableArea.innerHTML = '<div class="cat-loading">Cargando catálogo...</div>';
         fetch('/api/catalog/admin/books')
           .then(function (r) { return r.json(); })
           .then(function (data) {
             if (!data.ok) {
-              booksGrid.innerHTML = '<div class="cat-empty">No se pudo cargar el catálogo.</div>';
+              booksTableArea.innerHTML = '<div class="cat-loading">No se pudo cargar el catálogo.</div>';
               return;
             }
             books = data.books;
             renderStats();
-            renderBooksGrid();
+            renderBooksTable();
           })
           .catch(function () {
-            booksGrid.innerHTML = '<div class="cat-empty">Error de conexión con el servidor.</div>';
+            booksTableArea.innerHTML = '<div class="cat-loading">Error de conexión con el servidor.</div>';
           });
       }
 
@@ -629,46 +790,69 @@
           active + ' libro(s) activo(s) = ' + pages + ' página(s) habilitada(s) en catalogo.html (6 por página)';
       }
 
-      function renderBooksGrid() {
+      function renderBooksTable() {
         if (books.length === 0) {
-          booksGrid.innerHTML = '<div class="cat-empty">Todavía no has añadido ningún libro. Usa el formulario de la izquierda para comenzar.</div>';
+          booksTableArea.innerHTML =
+            '<div class="cat-empty-state">' +
+              '<p>No hay libros registrados.</p>' +
+              '<button type="button" id="btnEmptyRegister">Registrar libro</button>' +
+            '</div>';
+          document.getElementById('btnEmptyRegister').addEventListener('click', function () {
+            resetForm();
+            showFormView();
+          });
           return;
         }
-        booksGrid.innerHTML = books.map(function (b) {
+
+        var rows = books.map(function (b) {
           var src = resolveImageSrc(b.imageUrl || '');
-          var imgHtml = src ? ('<img src="' + escapeAttr(src) + '" onerror="this.style.display=\'none\'">') : '<span>Sin imagen</span>';
+          var imgHtml = src ? ('<img src="' + escapeAttr(src) + '" onerror="this.parentNode.innerHTML=\'<span>Sin imagen</span>\'">') : '<span>Sin imagen</span>';
           var priceHtml = b.hasDiscount && b.discountPercent
             ? '<span class="old">S/ ' + Number(b.price).toFixed(2) + '</span>S/ ' + (b.price - (b.price * b.discountPercent / 100)).toFixed(2)
             : 'S/ ' + Number(b.price).toFixed(2);
           var authorsText = (b.authors || []).join(', ');
+          var statusPill = b.isActive
+            ? '<span class="cat-pill cat-pill--green">Activo</span>'
+            : '<span class="cat-pill cat-pill--gray">Oculto</span>';
+
           return (
-            '<div class="cat-book-card' + (editingId === b.id ? ' is-editing' : '') + (b.isActive ? '' : ' is-inactive') + '">' +
-              '<div class="cat-book-card__img">' + imgHtml +
-                (b.hasDiscount && b.discountPercent ? '<span class="cat-book-card__badge">' + b.discountPercent + '%</span>' : '') +
-                (!b.isActive ? '<span class="cat-book-card__inactive-badge">Oculto</span>' : '') +
-              '</div>' +
-              '<div class="cat-book-card__body">' +
-                '<h4>' + escapeHtml(b.title) + '</h4>' +
-                '<p>' + escapeHtml(authorsText) + '</p>' +
-                '<div class="cat-book-card__price">' + priceHtml + '</div>' +
-                '<div class="cat-book-card__actions">' +
+            '<tr>' +
+              '<td><div class="cat-row-thumb">' + imgHtml + '</div></td>' +
+              '<td>' +
+                '<p class="cat-row-title">' + escapeHtml(b.title) + '</p>' +
+                '<p class="cat-row-authors">' + escapeHtml(authorsText) + '</p>' +
+              '</td>' +
+              '<td><span class="cat-row-price">' + priceHtml + '</span></td>' +
+              '<td>' + escapeHtml(b.category || '—') + '</td>' +
+              '<td>' + statusPill + '</td>' +
+              '<td>' +
+                '<div class="cat-row-actions">' +
                   '<button type="button" class="cat-btn-edit" data-edit="' + b.id + '">Editar</button>' +
                   '<button type="button" class="cat-btn-toggle" data-toggle="' + b.id + '">' + (b.isActive ? 'Ocultar' : 'Mostrar') + '</button>' +
                   '<button type="button" class="cat-btn-delete" data-delete="' + b.id + '">Eliminar</button>' +
                 '</div>' +
-              '</div>' +
-            '</div>'
+              '</td>' +
+            '</tr>'
           );
         }).join('');
 
-        booksGrid.querySelectorAll('[data-edit]').forEach(function (btn) {
+        booksTableArea.innerHTML =
+          '<table class="cat-table">' +
+            '<thead><tr><th>Portada</th><th>Título / Autores</th><th>Precio</th><th>Categoría</th><th>Estado</th><th>Acciones</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody>' +
+          '</table>';
+
+        booksTableArea.querySelectorAll('[data-edit]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var id = Number(btn.getAttribute('data-edit'));
             var book = books.filter(function (b) { return b.id === id; })[0];
-            if (book) loadBookIntoForm(book);
+            if (book) {
+              loadBookIntoForm(book);
+              showFormView();
+            }
           });
         });
-        booksGrid.querySelectorAll('[data-toggle]').forEach(function (btn) {
+        booksTableArea.querySelectorAll('[data-toggle]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var id = btn.getAttribute('data-toggle');
             btn.disabled = true;
@@ -678,7 +862,7 @@
               .finally(function () { btn.disabled = false; });
           });
         });
-        booksGrid.querySelectorAll('[data-delete]').forEach(function (btn) {
+        booksTableArea.querySelectorAll('[data-delete]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var id = btn.getAttribute('data-delete');
             if (!window.confirm('¿Eliminar este libro definitivamente del catálogo? Esta acción no se puede deshacer.')) return;

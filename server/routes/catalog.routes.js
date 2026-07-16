@@ -1,5 +1,8 @@
 const express = require('express');
+const path = require('path');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
 const rateLimit = require('express-rate-limit');
 const pool = require('../config/db');
 const { requireCatalogAdmin } = require('../middleware/auth');
@@ -7,6 +10,61 @@ const { requireCatalogAdmin } = require('../middleware/auth');
 const router = express.Router();
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// ---------------------------------------------------------------------
+// Subida de portadas (imagen) desde el explorador de archivos del admin
+// ---------------------------------------------------------------------
+const UPLOAD_DIR = path.join(__dirname, '..', '..', 'public', 'assets', 'catalog');
+const ALLOWED_IMAGE_MIME = {
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/svg+xml': '.svg',
+};
+
+const imageStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, UPLOAD_DIR);
+  },
+  filename: function (req, file, cb) {
+    const ext = ALLOWED_IMAGE_MIME[file.mimetype] || path.extname(file.originalname || '').toLowerCase();
+    const unique = Date.now() + '-' + crypto.randomBytes(6).toString('hex');
+    cb(null, 'libro-' + unique + ext);
+  },
+});
+
+const uploadImage = multer({
+  storage: imageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter: function (req, file, cb) {
+    if (!ALLOWED_IMAGE_MIME[file.mimetype]) {
+      return cb(new Error('INVALID_FILE_TYPE'));
+    }
+    cb(null, true);
+  },
+});
+
+// POST /api/catalog/admin/upload-image { image: <archivo> } -> sube portada desde el computador
+// Acepta PNG, JPG/JPEG o SVG (máx. 5 MB). Devuelve la URL pública ya lista para guardar el libro.
+router.post('/admin/upload-image', requireCatalogAdmin, function (req, res) {
+  uploadImage.single('image')(req, res, function (err) {
+    if (err) {
+      if (err.message === 'INVALID_FILE_TYPE') {
+        return res.status(400).json({ ok: false, message: 'Formato no permitido. Sube una imagen PNG, JPG o SVG.' });
+      }
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ ok: false, message: 'La imagen es demasiado pesada. Máximo 5 MB.' });
+      }
+      console.error('[catalog/admin/upload-image]', err);
+      return res.status(500).json({ ok: false, message: 'Error subiendo la imagen.' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ ok: false, message: 'No se recibió ningún archivo.' });
+    }
+    const url = '/assets/catalog/' + req.file.filename;
+    res.json({ ok: true, url: url });
+  });
+});
 
 // Correos autorizados a usar el panel de actualización de catálogo.
 // NO es la misma autorización que /admin: aquí solo se permite crear
