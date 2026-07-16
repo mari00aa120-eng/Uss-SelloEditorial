@@ -3,9 +3,28 @@
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, cc, subject, html, attachments }) {
   if (!process.env.BREVO_API_KEY) {
     throw new Error('Falta la variable de entorno BREVO_API_KEY');
+  }
+
+  const body = {
+    sender: {
+      name: process.env.BREVO_SENDER_NAME || 'USS Sello Editorial',
+      email: process.env.BREVO_SENDER_EMAIL,
+    },
+    to: [{ email: to }],
+    subject,
+    htmlContent: html,
+  };
+
+  if (cc) {
+    body.cc = [{ email: cc }];
+  }
+
+  if (attachments && attachments.length > 0) {
+    // Brevo espera el contenido del archivo en base64 (sin el prefijo data:...;base64,)
+    body.attachment = attachments.map((a) => ({ name: a.name, content: a.content }));
   }
 
   const response = await fetch(BREVO_API_URL, {
@@ -15,15 +34,7 @@ async function sendEmail({ to, subject, html }) {
       Accept: 'application/json',
       'api-key': process.env.BREVO_API_KEY,
     },
-    body: JSON.stringify({
-      sender: {
-        name: process.env.BREVO_SENDER_NAME || 'USS Sello Editorial',
-        email: process.env.BREVO_SENDER_EMAIL,
-      },
-      to: [{ email: to }],
-      subject,
-      htmlContent: html,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -52,4 +63,32 @@ async function sendAdminCodeEmail(email, code) {
   });
 }
 
-module.exports = { sendEmail, sendAdminCodeEmail };
+async function sendInvoiceEmail({ to, cc, customerName, invoiceNumber, total, pdfBuffer }) {
+  return sendEmail({
+    to,
+    cc,
+    subject: `Tu factura ${invoiceNumber} - USS Fondo Editorial`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="color:#046C3B;">¡Gracias por tu compra, ${customerName}!</h2>
+        <p>Tu pedido fue confirmado y ya generamos tu factura electrónica.</p>
+        <p style="font-size: 14px; color:#333;">
+          <strong>Número de factura:</strong> ${invoiceNumber}<br>
+          <strong>Total pagado:</strong> S/ ${Number(total).toFixed(2)}
+        </p>
+        <p>Adjuntamos el PDF de tu factura en este correo.</p>
+        <p style="font-size: 12px; color:#777; margin-top: 24px;">
+          Si tienes alguna duda sobre tu pedido, puedes responder a este correo o escribirnos a través de nuestro canal de contacto.
+        </p>
+      </div>
+    `,
+    attachments: [
+      {
+        name: `${invoiceNumber}.pdf`,
+        content: pdfBuffer.toString('base64'),
+      },
+    ],
+  });
+}
+
+module.exports = { sendEmail, sendAdminCodeEmail, sendInvoiceEmail };

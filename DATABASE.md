@@ -113,6 +113,21 @@ END $$;
 CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
 ```
 
+CREATE TABLE IF NOT EXISTS orders (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    invoice_number  VARCHAR(50) NOT NULL UNIQUE,
+    total           NUMERIC(10, 2) NOT NULL,
+    items           JSONB NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_orders_user ON orders (user_id);
+
+```
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS email_sent BOOLEAN NOT NULL DEFAULT FALSE;4
+```
+
 ## Resumen de las tablas
 
 | Tabla               | Para qué sirve                                                                 |

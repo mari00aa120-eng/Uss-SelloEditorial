@@ -167,7 +167,7 @@
           </div>
 
           <button type="button" class="btn btn--primary pay-methods__submit" id="payButton">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg id="payButtonIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
@@ -273,6 +273,15 @@
 
   <script>
     // ---------- Métodos de pago: selección individual por logo ----------
+    var PAYMENT_METHOD_LABELS = {
+      mastercard: 'Mastercard',
+      visa: 'Visa',
+      bcp: 'BCP',
+      bbva: 'BBVA',
+      yape: 'Yape',
+      plin: 'Plin',
+    };
+
     var payLogoOptions = document.querySelectorAll('.pay-logo-option');
     payLogoOptions.forEach(function (option) {
       option.addEventListener('click', function () {
@@ -283,16 +292,32 @@
       });
     });
 
+    function getSelectedPaymentMethod() {
+      var active = document.querySelector('.pay-logo-option--active');
+      var key = active ? active.getAttribute('data-method') : null;
+      return (key && PAYMENT_METHOD_LABELS[key]) || 'No especificado';
+    }
+
     // ---------- Botón "Pagar": genera la factura real y redirige a confirmación ----------
     var payButton = document.getElementById('payButton');
     var payButtonLabel = document.getElementById('payButtonLabel');
+    var payButtonIcon = document.getElementById('payButtonIcon');
     if (payButton) {
       payButton.addEventListener('click', function () {
         var originalLabel = payButtonLabel ? payButtonLabel.textContent : '';
         payButton.disabled = true;
-        if (payButtonLabel) payButtonLabel.textContent = 'Procesando pago...';
 
-        fetch('/api/orders', { method: 'POST' })
+        // Estado de carga: spinner + texto en verde (el botón ya es verde por defecto)
+        if (payButtonIcon) {
+          payButtonIcon.outerHTML = '<span class="pay-methods__submit__spinner" id="payButtonIcon"></span>';
+        }
+        if (payButtonLabel) payButtonLabel.textContent = 'Generando tu factura...';
+
+        fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentMethod: getSelectedPaymentMethod() }),
+        })
           .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
           .then(function (res) {
             if (res.data.ok) {

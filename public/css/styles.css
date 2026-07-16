@@ -4908,6 +4908,25 @@ margin: 40px 0 32px;
   margin-top: 12px;
 }
 
+.pay-methods__submit:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.pay-methods__submit__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pay-spin 0.7s linear infinite;
+}
+
+@keyframes pay-spin {
+  to { transform: rotate(360deg); }
+}
+
 .pay-methods__back {
   display: flex;
   align-items: center;

@@ -19,7 +19,12 @@
 
   function parsePrice(text) {
     if (!text) return 0;
-    const cleaned = text.replace(/[^0-9.,]/g, '').replace(',', '.');
+    // Quita el prefijo de moneda "S/." o "S/" ANTES de limpiar el resto,
+    // para que el punto de "S/." no se confunda con el punto decimal del precio.
+    let cleaned = text.replace(/S\/\.?/gi, '');
+    cleaned = cleaned.replace(/[^0-9.,]/g, '');
+    // Los precios del sitio usan "." como separador decimal, sin miles con ",".
+    cleaned = cleaned.replace(/,/g, '');
     const value = parseFloat(cleaned);
     return Number.isNaN(value) ? 0 : value;
   }

@@ -107,13 +107,13 @@
 
           <div class="confirm-row">
             <span class="confirm-row__label">Número de pedido</span>
-            <span class="confirm-row__value">#USS-0005638</span>
+            <span class="confirm-row__value" id="confirmInvoiceNumber">Cargando...</span>
           </div>
           <div class="confirm-row__divider"></div>
 
           <div class="confirm-row">
             <span class="confirm-row__label">Fecha</span>
-            <span class="confirm-row__value">01 de Julio de 2026 - 10:35 am</span>
+            <span class="confirm-row__value" id="confirmDate">--</span>
           </div>
           <div class="confirm-row__divider"></div>
 
@@ -121,7 +121,7 @@
             <span class="confirm-row__label">Método de pago</span>
             <span class="confirm-row__value confirm-row__value--method">
               <svg width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              Visa
+              <span id="confirmMethod">--</span>
             </span>
           </div>
           <div class="confirm-row__divider"></div>
@@ -134,7 +134,7 @@
 
           <div class="confirm-row confirm-row--total">
             <span class="confirm-row__label">Total</span>
-            <span class="confirm-row__value confirm-row__value--total">S/ 125.00</span>
+            <span class="confirm-row__value confirm-row__value--total" id="confirmTotal">S/ 0.00</span>
           </div>
         </div>
 
@@ -146,11 +146,9 @@
             </span>
           </div>
 
-          <h2 class="confirm-invoice__title">Factura generada y enviada</h2>
-          <p class="confirm-invoice__text">
-            Hemos enviado la factura electrónica a tu correo
-            <strong>usuario@email.com</strong> con copia a
-            <strong>fondoediorial@uss.edu.pe</strong>
+          <h2 class="confirm-invoice__title" id="confirmInvoiceTitle">Factura generada y enviada</h2>
+          <p class="confirm-invoice__text" id="confirmInvoiceText">
+            Estamos preparando el envío de tu factura electrónica...
           </p>
 
           <div class="confirm-invoice__file">
@@ -158,10 +156,10 @@
               <img src="assets/pdf.svg" alt="PDF" class="confirm-invoice__file-icon">
               <div>
                 <p class="confirm-invoice__file-label">Factura Electrónica</p>
-                <p class="confirm-invoice__file-name">FE-0005638.pdf</p>
+                <p class="confirm-invoice__file-name" id="confirmFileName">--.pdf</p>
               </div>
             </div>
-            <button type="button" class="btn btn--primary confirm-invoice__download">Descargar Factura</button>
+            <button type="button" class="btn btn--primary confirm-invoice__download" id="confirmDownloadBtn" disabled>Descargar Factura</button>
           </div>
 
           <div class="confirm-invoice__note">
@@ -262,13 +260,75 @@
   </script>
 
   <script>
-    // ---------- Confirmación de pago: descarga de factura ----------
-    var downloadBtn = document.querySelector('.confirm-invoice__download');
-    if (downloadBtn) {
-      downloadBtn.addEventListener('click', function () {
-        window.print();
-      });
-    }
+    // ---------- Confirmación de pago: carga el pedido REAL y habilita la descarga del PDF ----------
+    (function () {
+      var invoiceNumberEl = document.getElementById('confirmInvoiceNumber');
+      var dateEl = document.getElementById('confirmDate');
+      var methodEl = document.getElementById('confirmMethod');
+      var totalEl = document.getElementById('confirmTotal');
+      var invoiceTitleEl = document.getElementById('confirmInvoiceTitle');
+      var invoiceTextEl = document.getElementById('confirmInvoiceText');
+      var fileNameEl = document.getElementById('confirmFileName');
+      var downloadBtn = document.getElementById('confirmDownloadBtn');
+
+      function formatSoles(value) {
+        return 'S/ ' + Number(value).toFixed(2);
+      }
+
+      function formatDateEs(isoDate) {
+        var meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        var d = new Date(isoDate);
+        var dia = String(d.getDate()).padStart(2, '0');
+        var mes = meses[d.getMonth()];
+        var horas = d.getHours();
+        var minutos = String(d.getMinutes()).padStart(2, '0');
+        var ampm = horas >= 12 ? 'pm' : 'am';
+        horas = horas % 12 || 12;
+        return dia + ' de ' + mes.charAt(0).toUpperCase() + mes.slice(1) + ' de ' + d.getFullYear() + ' - ' + horas + ':' + minutos + ' ' + ampm;
+      }
+
+      function render(order, userEmail) {
+        invoiceNumberEl.textContent = '#' + order.invoiceNumber;
+        dateEl.textContent = formatDateEs(order.createdAt);
+        methodEl.textContent = order.paymentMethod || 'No especificado';
+        totalEl.textContent = formatSoles(order.total);
+        fileNameEl.textContent = order.invoiceNumber + '.pdf';
+
+        if (order.emailSent) {
+          invoiceTitleEl.textContent = 'Factura generada y enviada';
+          invoiceTextEl.innerHTML = 'Hemos enviado la factura electrónica a tu correo <strong>' + userEmail + '</strong>, con copia a nuestro equipo editorial.';
+        } else {
+          invoiceTitleEl.textContent = 'Factura generada';
+          invoiceTextEl.innerHTML = 'Tu factura ya está lista. Estamos reintentando el envío a <strong>' + userEmail + '</strong>; mientras tanto puedes descargarla aquí abajo.';
+        }
+
+        downloadBtn.disabled = false;
+        downloadBtn.addEventListener('click', function () {
+          window.location.href = '/api/orders/' + order.id + '/invoice.pdf';
+        });
+      }
+
+      function loadLatestOrder() {
+        Promise.all([
+          fetch('/api/orders').then(function (r) { return r.ok ? r.json() : null; }),
+          fetch('/api/auth/me').then(function (r) { return r.ok ? r.json() : null; }),
+        ]).then(function (results) {
+          var ordersData = results[0];
+          var sessionData = results[1];
+          if (!ordersData || !ordersData.ok || !ordersData.orders || ordersData.orders.length === 0) {
+            invoiceNumberEl.textContent = 'Sin pedidos recientes';
+            return;
+          }
+          var latestOrder = ordersData.orders[0];
+          var userEmail = sessionData && sessionData.authenticated ? sessionData.user.email : 'tu correo';
+          render(latestOrder, userEmail);
+        }).catch(function () {
+          invoiceNumberEl.textContent = 'No se pudo cargar tu pedido';
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', loadLatestOrder);
+    })();
   </script>
 
     <!-- Auth Modal: Iniciar Sesión / Registrarse -->
