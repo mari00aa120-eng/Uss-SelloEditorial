@@ -99,50 +99,58 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     // ---------- Catálogo: varias tarjetas de producto ----------
-    document.querySelectorAll('.catalog-product-card__cart').forEach((btn) => {
-      btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        const card = btn.closest('.catalog-product-card');
-        if (!card) return;
-        const name = (card.querySelector('h3') || {}).textContent || 'Producto';
-        const author = (card.querySelector('.catalog-product-card__author') || {}).textContent || '';
-        const priceEl = card.querySelector('.catalog-product-card__price--new') || card.querySelector('.catalog-product-card__price');
-        const price = parsePrice(priceEl ? priceEl.textContent : '0');
-        const imgEl = card.querySelector('img');
-        const image = imgEl ? imgEl.getAttribute('src') : '';
-        const product = {
-          productId: slugify(name.trim()),
-          name: name.trim(),
-          author: author.trim(),
-          price,
-          image,
-        };
-        handleAddToCart(product, 1, btn);
-      });
+    // IMPORTANTE: las tarjetas del catálogo se pintan de forma dinámica
+    // (después de que /api/catalog/books responde), es decir, DESPUÉS de
+    // que este DOMContentLoaded ya se disparó. Por eso NO usamos
+    // querySelectorAll+forEach aquí (esos botones todavía no existen y el
+    // clic quedaba sin ningún listener enganchado). En su lugar, delegamos
+    // el evento en "document", que sí existe desde el inicio, y detectamos
+    // el clic buscando el botón más cercano con closest(). Así funciona sin
+    // importar cuándo se creen las tarjetas.
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.catalog-product-card__cart');
+      if (!btn) return;
+      e.preventDefault();
+      const card = btn.closest('.catalog-product-card');
+      if (!card) return;
+      const name = (card.querySelector('h3') || {}).textContent || 'Producto';
+      const author = (card.querySelector('.catalog-product-card__author') || {}).textContent || '';
+      const priceEl = card.querySelector('.catalog-product-card__price--new') || card.querySelector('.catalog-product-card__price');
+      const price = parsePrice(priceEl ? priceEl.textContent : '0');
+      const imgEl = card.querySelector('img');
+      const image = imgEl ? imgEl.getAttribute('src') : '';
+      const product = {
+        productId: slugify(name.trim()),
+        name: name.trim(),
+        author: author.trim(),
+        price,
+        image,
+      };
+      handleAddToCart(product, 1, btn);
     });
 
     // ---------- Página de detalle de libro ----------
-    const detailBtn = document.querySelector('.book-detail__cart-btn');
-    if (detailBtn) {
-      detailBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        const titleEl = document.querySelector('.book-detail__info h1');
-        const authorEl = document.querySelector('.book-detail__author span');
-        const priceEl = document.querySelector('.book-detail__price-new');
-        const imgEl = document.getElementById('bookMainImage');
-        const qtyEl = document.getElementById('bookQtyValue');
+    // También delegado por consistencia (aunque este botón sí es estático).
+    document.addEventListener('click', function (e) {
+      const detailBtn = e.target.closest('.book-detail__cart-btn');
+      if (!detailBtn) return;
+      e.preventDefault();
+      const titleEl = document.querySelector('.book-detail__info h1');
+      const authorEl = document.querySelector('.book-detail__author span');
+      const priceEl = document.querySelector('.book-detail__price-new');
+      const imgEl = document.getElementById('bookMainImage');
+      const qtyEl = document.getElementById('bookQtyValue');
 
-        const name = titleEl ? titleEl.textContent.trim() : 'Producto';
-        const product = {
-          productId: slugify(name),
-          name,
-          author: authorEl ? authorEl.textContent.trim() : '',
-          price: parsePrice(priceEl ? priceEl.textContent : '0'),
-          image: imgEl ? imgEl.getAttribute('src') : '',
-        };
-        const quantity = qtyEl ? parseInt(qtyEl.textContent, 10) || 1 : 1;
-        handleAddToCart(product, quantity, detailBtn);
-      });
-    }
+      const name = titleEl ? titleEl.textContent.trim() : 'Producto';
+      const product = {
+        productId: slugify(name),
+        name,
+        author: authorEl ? authorEl.textContent.trim() : '',
+        price: parsePrice(priceEl ? priceEl.textContent : '0'),
+        image: imgEl ? imgEl.getAttribute('src') : '',
+      };
+      const quantity = qtyEl ? parseInt(qtyEl.textContent, 10) || 1 : 1;
+      handleAddToCart(product, quantity, detailBtn);
+    });
   });
 })();

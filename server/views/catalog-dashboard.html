@@ -215,7 +215,7 @@
       <div class="cat-header">
         <div>
           <h1>Catálogo de libros</h1>
-          <p>Desactiva un libro para quitarlo del catálogo sin borrarlo, o elimínalo definitivamente.</p>
+          <p>Cada 6 libros habilitan una página más en catalogo.html. Desactiva un libro para quitarlo del catálogo sin borrarlo, o elimínalo definitivamente.</p>
         </div>
         <div class="cat-header__actions">
           <button type="button" class="cat-btn-add" id="btnAddBook">+ Añadir libro</button>
@@ -228,6 +228,7 @@
         <div class="cat-stat-card">
           <span>Libros activos</span>
           <strong id="statActive">–</strong>
+          <small id="statPagesHint">–</small>
         </div>
         <div class="cat-stat-card">
           <span>Libros inactivos</span>
@@ -849,21 +850,49 @@
       // ---------------- Lista de libros (tabla) ----------------
       var booksTableArea = document.getElementById('booksTableArea');
 
+      // Se usa en loadBooks/toggle/delete cuando el servidor responde 401
+      // (sesión de catálogo vencida o cerrada en otra pestaña). Antes esto
+      // se mostraba como un genérico "Error de conexión con el servidor.",
+      // dejando al usuario sin saber qué hacer. Ahora se explica y se manda
+      // de vuelta al login automáticamente.
+      function handleSessionExpired() {
+        booksTableArea.innerHTML =
+          '<div class="cat-loading">Tu sesión expiró o no es válida. Te llevaremos al inicio de sesión en unos segundos…</div>';
+        setTimeout(function () {
+          window.location.href = '/catalog-admin-login.html';
+        }, 2500);
+      }
+
       function loadBooks() {
         booksTableArea.innerHTML = '<div class="cat-loading">Cargando catálogo...</div>';
         fetch('/api/catalog/admin/books')
-          .then(function (r) { return r.json(); })
+          .then(function (r) {
+            if (r.status === 401) {
+              handleSessionExpired();
+              throw new Error('SESSION_EXPIRED');
+            }
+            return r.json().then(
+              function (data) { return data; },
+              function () { throw new Error('INVALID_SERVER_RESPONSE'); }
+            );
+          })
           .then(function (data) {
             if (!data.ok) {
-              booksTableArea.innerHTML = '<div class="cat-loading">No se pudo cargar el catálogo.</div>';
+              booksTableArea.innerHTML = '<div class="cat-loading">' + escapeHtml(data.message || 'No se pudo cargar el catálogo.') + '</div>';
               return;
             }
             books = data.books;
             renderStats();
             renderBooksTable();
           })
-          .catch(function () {
-            booksTableArea.innerHTML = '<div class="cat-loading">Error de conexión con el servidor.</div>';
+          .catch(function (err) {
+            console.error('[panel-catalogo] Error cargando libros:', err);
+            if (err && (err.message === 'SESSION_EXPIRED')) return; // ya se manejó arriba
+            if (err && err.message === 'INVALID_SERVER_RESPONSE') {
+              booksTableArea.innerHTML = '<div class="cat-loading">El servidor respondió de forma inesperada. Revisa la consola (F12) o inténtalo de nuevo en unos segundos.</div>';
+            } else {
+              booksTableArea.innerHTML = '<div class="cat-loading">Error de conexión con el servidor. Revisa tu internet e inténtalo de nuevo.</div>';
+            }
           });
       }
 
@@ -945,8 +974,12 @@
             var id = btn.getAttribute('data-toggle');
             btn.disabled = true;
             fetch('/api/catalog/admin/books/' + id + '/toggle', { method: 'PATCH' })
-              .then(function (r) { return r.json(); })
+              .then(function (r) {
+                if (r.status === 401) { handleSessionExpired(); throw new Error('SESSION_EXPIRED'); }
+                return r.json();
+              })
               .then(function () { loadBooks(); })
+              .catch(function (err) { if (!err || err.message !== 'SESSION_EXPIRED') console.error('[panel-catalogo] Error en toggle:', err); })
               .finally(function () { btn.disabled = false; });
           });
         });
@@ -956,11 +989,15 @@
             if (!window.confirm('¿Eliminar este libro definitivamente del catálogo? Esta acción no se puede deshacer.')) return;
             btn.disabled = true;
             fetch('/api/catalog/admin/books/' + id, { method: 'DELETE' })
-              .then(function (r) { return r.json(); })
+              .then(function (r) {
+                if (r.status === 401) { handleSessionExpired(); throw new Error('SESSION_EXPIRED'); }
+                return r.json();
+              })
               .then(function (res) {
                 if (res.ok && editingId === Number(id)) resetForm();
                 loadBooks();
               })
+              .catch(function (err) { if (!err || err.message !== 'SESSION_EXPIRED') console.error('[panel-catalogo] Error eliminando:', err); })
               .finally(function () { btn.disabled = false; });
           });
         });
