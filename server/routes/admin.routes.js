@@ -149,7 +149,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
         totalCartLines: cartCountRows[0].count,
         totalCartUnits: cartCountRows[0].units,
       },
-      recentUsers: recentUsers.rows,
+      recentUsers: recentUsers,
     });
   } catch (err) {
     console.error('[admin/stats]', err);
