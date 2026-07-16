@@ -100,45 +100,8 @@
         <aside class="cart-summary cart-summary--order">
           <h2>Resumen del Pedido</h2>
 
-          <div class="pay-order-list">
-            <div class="pay-order-item">
-              <img src="assets/sipan-cover.png" alt="Manual de citado y referenciación para trabajos académicos" class="pay-order-item__img">
-              <div class="pay-order-item__info">
-                <h3>Manual de citado y referenciación para trabajos académicos</h3>
-                <p class="pay-order-item__authors">Rivera Lozada de Bonilla&nbsp;Oriana, Cruzata Martinez Alejandro, ....</p>
-                <p class="pay-order-item__qty">Cantidad: 1</p>
-                <p class="pay-order-item__price">
-                  <span class="pay-order-item__price-old">S/ 48.00</span>
-                  <span class="pay-order-item__price-new">S/ 35.00</span>
-                </p>
-              </div>
-            </div>
-
-            <div class="pay-order-item">
-              <img src="assets/sipan-cover.png" alt="Introducción al derecho tributario" class="pay-order-item__img">
-              <div class="pay-order-item__info">
-                <h3>Introducción al derecho tributario</h3>
-                <p class="pay-order-item__authors">Barturen Mondragón, Eliana Maritza ...</p>
-                <p class="pay-order-item__qty">Cantidad: 1</p>
-                <p class="pay-order-item__price">
-                  <span class="pay-order-item__price-old">S/ 67.00</span>
-                  <span class="pay-order-item__price-new">S/ 40.00</span>
-                </p>
-              </div>
-            </div>
-
-            <div class="pay-order-item">
-              <img src="assets/sipan-cover.png" alt="Revisiones sistemáticas y metaanálisis" class="pay-order-item__img">
-              <div class="pay-order-item__info">
-                <h3>Revisiones sistemáticas y metaanálisis</h3>
-                <p class="pay-order-item__authors">Braboza Meca, Joshuan Jordano</p>
-                <p class="pay-order-item__qty">Cantidad: 1</p>
-                <p class="pay-order-item__price">
-                  <span class="pay-order-item__price-old">S/ 67.00</span>
-                  <span class="pay-order-item__price-new">S/ 40.00</span>
-                </p>
-              </div>
-            </div>
+          <div class="pay-order-list" id="payOrderList">
+            <p style="padding: 24px 0; text-align:center; color:#777;">Cargando tu pedido...</p>
           </div>
 
           <div class="cart-summary__divider"></div>
@@ -146,21 +109,21 @@
           <h2>Resumen del Pedido</h2>
 
           <div class="cart-summary__row">
-            <span>Subtotal (3 productos)</span>
-            <span>S/ 115.00</span>
+            <span>Subtotal (<span id="paySubtotalCount">0</span> productos)</span>
+            <span id="paySubtotal">S/ 0.00</span>
           </div>
           <div class="cart-summary__row">
             <span>Envio</span>
-            <span>S/ 10.00</span>
+            <span id="payShipping">S/ 0.00</span>
           </div>
           <div class="cart-summary__row">
             <span>Descuento</span>
-            <span class="cart-summary__value--green">- S/ 67.00</span>
+            <span class="cart-summary__value--green" id="payDiscount">- S/ 0.00</span>
           </div>
 
           <div class="cart-summary__total">
             <span>Total</span>
-            <span>S/ 125.00</span>
+            <span id="payTotal">S/ 0.00</span>
           </div>
         </aside>
 
@@ -208,7 +171,7 @@
               <rect x="3" y="11" width="18" height="11" rx="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
-            Pagar S/ 125.00
+            <span id="payButtonLabel">Pagar S/ 0.00</span>
           </button>
 
           <a href="carrito.html" class="pay-methods__back">
@@ -322,11 +285,12 @@
 
     // ---------- Botón "Pagar": genera la factura real y redirige a confirmación ----------
     var payButton = document.getElementById('payButton');
+    var payButtonLabel = document.getElementById('payButtonLabel');
     if (payButton) {
       payButton.addEventListener('click', function () {
-        var originalText = payButton.textContent;
+        var originalLabel = payButtonLabel ? payButtonLabel.textContent : '';
         payButton.disabled = true;
-        payButton.textContent = 'Procesando pago...';
+        if (payButtonLabel) payButtonLabel.textContent = 'Procesando pago...';
 
         fetch('/api/orders', { method: 'POST' })
           .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
@@ -336,16 +300,113 @@
             } else {
               alert(res.data.message || 'No se pudo procesar el pago.');
               payButton.disabled = false;
-              payButton.textContent = originalText;
+              if (payButtonLabel) payButtonLabel.textContent = originalLabel;
             }
           })
           .catch(function () {
             alert('Error de conexión con el servidor.');
             payButton.disabled = false;
-            payButton.textContent = originalText;
+            if (payButtonLabel) payButtonLabel.textContent = originalLabel;
           });
       });
     }
+  </script>
+
+  <script>
+    // ---------- Resumen del pedido: carga el carrito REAL del usuario ----------
+    (function () {
+      var listEl = document.getElementById('payOrderList');
+      var countEl = document.getElementById('paySubtotalCount');
+      var subtotalEl = document.getElementById('paySubtotal');
+      var shippingEl = document.getElementById('payShipping');
+      var discountEl = document.getElementById('payDiscount');
+      var totalEl = document.getElementById('payTotal');
+      var payButtonLabel = document.getElementById('payButtonLabel');
+      var payButtonEl = document.getElementById('payButton');
+
+      function formatSoles(value) {
+        return 'S/ ' + Number(value).toFixed(2);
+      }
+
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+      }
+
+      function renderEmpty() {
+        listEl.innerHTML =
+          '<div style="padding: 24px 0; text-align:center; color:#777;">' +
+          '<p style="margin-bottom:12px;">Tu carrito está vacío.</p>' +
+          '<a href="catalogo.html" class="btn btn--primary">Ver catálogo</a>' +
+          '</div>';
+        countEl.textContent = '0';
+        subtotalEl.textContent = formatSoles(0);
+        shippingEl.textContent = formatSoles(0);
+        discountEl.textContent = '- ' + formatSoles(0);
+        totalEl.textContent = formatSoles(0);
+        if (payButtonLabel) payButtonLabel.textContent = 'Pagar ' + formatSoles(0);
+        if (payButtonEl) payButtonEl.disabled = true;
+      }
+
+      function renderItems(items, subtotal, count) {
+        if (!items || items.length === 0) {
+          renderEmpty();
+          return;
+        }
+
+        listEl.innerHTML = items
+          .map(function (item) {
+            return (
+              '<div class="pay-order-item">' +
+              '<img src="' + (item.image || 'assets/sipan-cover.png') + '" alt="' + escapeHtml(item.name) + '" class="pay-order-item__img">' +
+              '<div class="pay-order-item__info">' +
+              '<h3>' + escapeHtml(item.name) + '</h3>' +
+              '<p class="pay-order-item__authors">' + escapeHtml(item.author || '') + '</p>' +
+              '<p class="pay-order-item__qty">Cantidad: ' + item.quantity + '</p>' +
+              '<p class="pay-order-item__price">' +
+              '<span class="pay-order-item__price-new">' + formatSoles(item.price) + ' c/u &middot; Subtotal: ' + formatSoles(item.subtotal) + '</span>' +
+              '</p>' +
+              '</div>' +
+              '</div>'
+            );
+          })
+          .join('');
+
+        var shipping = subtotal > 0 ? 10 : 0;
+        var total = subtotal + shipping;
+
+        countEl.textContent = count;
+        subtotalEl.textContent = formatSoles(subtotal);
+        shippingEl.textContent = formatSoles(shipping);
+        discountEl.textContent = '- ' + formatSoles(0);
+        totalEl.textContent = formatSoles(total);
+        if (payButtonLabel) payButtonLabel.textContent = 'Pagar ' + formatSoles(total);
+        if (payButtonEl) payButtonEl.disabled = false;
+      }
+
+      function loadCart() {
+        fetch('/api/cart')
+          .then(function (r) {
+            if (r.status === 401) {
+              window.location.href = 'carrito.html';
+              return null;
+            }
+            return r.json();
+          })
+          .then(function (data) {
+            if (!data) return;
+            if (data.ok) {
+              renderItems(data.items, data.total, data.count);
+            }
+          })
+          .catch(function () {
+            listEl.innerHTML = '<p style="padding:24px; text-align:center; color:#c0392b;">No se pudo cargar tu pedido.</p>';
+          });
+      }
+
+      document.addEventListener('DOMContentLoaded', loadCart);
+    })();
   </script>
 
     <!-- Auth Modal: Iniciar Sesión / Registrarse -->
