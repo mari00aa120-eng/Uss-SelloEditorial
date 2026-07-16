@@ -260,7 +260,7 @@
           <button type="button" class="cat-btn-back" id="btnBackToList">← Volver al listado</button>
         </div>
 
-        <form id="bookForm">
+        <form id="bookForm" novalidate>
           <input type="hidden" id="bookId" value="">
 
           <div class="cat-section-title">Imagen y datos básicos</div>
@@ -275,7 +275,7 @@
             </div>
 
             <div class="cat-image-tab-panel active" id="panelUrl">
-              <input type="url" id="fieldImageUrl" placeholder="https://... o assets/mi-libro.png">
+              <input type="text" id="fieldImageUrl" placeholder="https://... o assets/mi-libro.png">
               <p class="hint">Pega el link de la imagen, o el nombre de un archivo dentro de /public/assets/.</p>
             </div>
 
