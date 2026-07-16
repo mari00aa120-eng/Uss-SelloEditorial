@@ -228,6 +228,7 @@
         <div class="cat-stat-card">
           <span>Libros activos</span>
           <strong id="statActive">–</strong>
+          <small id="statPagesHint">–</small>
         </div>
         <div class="cat-stat-card">
           <span>Libros inactivos</span>
@@ -895,8 +896,12 @@
               return;
             }
             books = data.books;
-            renderStats();
-            renderBooksTable();
+            // Estas dos llamadas van separadas a propósito: si una falla,
+            // la otra igual se ejecuta. Antes, si renderStats() fallaba,
+            // la tabla nunca se llegaba a dibujar y se mostraba un falso
+            // "Error de conexión" aunque los datos sí habían llegado bien.
+            try { renderStats(); } catch (statsErr) { console.error('[panel-catalogo] Error en renderStats:', statsErr); }
+            try { renderBooksTable(); } catch (tableErr) { console.error('[panel-catalogo] Error en renderBooksTable:', tableErr); }
           })
           .catch(function (err) {
             console.error('[panel-catalogo] Error cargando libros:', err);
@@ -909,15 +914,19 @@
           });
       }
 
+      function setStatText(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value;
+      }
+
       function renderStats() {
         var active = books.filter(function (b) { return b.isActive; }).length;
         var inactive = books.length - active;
-        document.getElementById('statActive').textContent = active;
-        document.getElementById('statInactive').textContent = inactive;
-        document.getElementById('statTotal').textContent = books.length;
+        setStatText('statActive', active);
+        setStatText('statInactive', inactive);
+        setStatText('statTotal', books.length);
         var pages = Math.max(1, Math.ceil(active / 6));
-        document.getElementById('statPagesHint').textContent =
-          active + ' libro(s) activo(s) = ' + pages + ' página(s) habilitada(s) en catalogo.html (6 por página)';
+        setStatText('statPagesHint', active + ' libro(s) activo(s) = ' + pages + ' página(s) habilitada(s) en catalogo.html (6 por página)');
       }
 
       function renderBooksTable() {
