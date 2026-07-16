@@ -293,6 +293,7 @@
             <div class="admin-header__actions">
               <button id="btnRefresh" class="btn-secondary" type="button">⟳ Refrescar</button>
               <button id="btnPaymentSettings" class="btn-secondary" type="button">Configurar cuentas de pago</button>
+              <button id="btnStockSettings" class="btn-secondary" type="button">Generar stock</button>
               <button id="btnLogout">Cerrar sesión</button>
             </div>
           </div>
@@ -310,10 +311,10 @@
             <p class="hint">Rojo: aún no se le ha respondido · Amarillo: esperando el pago del usuario · Verde: ya se le respondió. Si otro admin está respondiendo a un usuario, el botón mostrará "Tomado por...". Usa Refrescar para ver los cambios de otros admins.</p>
             <table>
               <thead>
-                <tr><th>Nombre</th><th>Correo</th><th>Registrado</th><th>Proceso de compra</th><th>Factura</th><th>Estado</th></tr>
+                <tr><th>Nombre</th><th>Correo</th><th>Registrado</th><th>Proceso de compra</th><th>Factura</th><th>Stock</th><th>Estado</th></tr>
               </thead>
               <tbody id="usersTableBody">
-                <tr><td colspan="6">Cargando...</td></tr>
+                <tr><td colspan="7">Cargando...</td></tr>
               </tbody>
             </table>
           </div>
@@ -402,6 +403,16 @@
     </div>
   </div>
 
+  <!-- ---------- Modal: generar / editar stock del catálogo ---------- -->
+  <div class="modal-overlay" id="stockModalOverlay">
+    <div class="modal-box pa-modal-box">
+      <button class="modal-close" id="stockModalClose" type="button">&times;</button>
+      <h3>Gestionar stock del catálogo</h3>
+      <p class="modal-sub">Estos son todos los libros actuales del catálogo con su stock disponible. Al marcar un pedido como "Pedido pagado", el stock de los libros comprados baja automáticamente.</p>
+      <div id="stockBooksList">Cargando...</div>
+    </div>
+  </div>
+
   <script>
     var FONDO_EDITORIAL_EMAIL = 'fondoeditorial@uss.edu.pe';
     var currentUserId = null;
@@ -437,6 +448,22 @@
         : '<span class="pill pill--amber">Factura no enviada</span>';
     }
 
+    // Muestra el stock actual de cada libro del último pedido del usuario.
+    // Si un libro se queda sin stock, se resalta en rojo.
+    function stockCellHtml(u) {
+      var order = u.latestOrder;
+      if (!order || !Array.isArray(order.items) || order.items.length === 0) {
+        return '<span class="pill pill--gray">—</span>';
+      }
+      return order.items.map(function (item) {
+        var stock = item.currentStock;
+        var stockLabel = (stock === null || stock === undefined) ? '?' : stock;
+        var cls = (typeof stock === 'number' && stock <= 0) ? 'pill--red' : 'pill--gray';
+        return '<span class="pill ' + cls + '" style="display:block; margin-bottom:4px; white-space:normal;">' +
+          escapeAttr(item.name) + ' (x' + item.quantity + '): ' + stockLabel + '</span>';
+      }).join('');
+    }
+
     function responderButtonHtml(u) {
       var status = (u.ticket && u.ticket.status) || 'pendiente';
       var claimedBy = u.ticket && u.ticket.claimedBy;
@@ -467,7 +494,7 @@
           var data = res.data;
           if (!data.ok) {
             var tbody = document.getElementById('usersTableBody');
-            tbody.innerHTML = '<tr><td colspan="6">Error cargando los datos: ' + (data.message || 'intenta de nuevo en unos segundos.') + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Error cargando los datos: ' + (data.message || 'intenta de nuevo en unos segundos.') + '</td></tr>';
             return;
           }
           document.getElementById('statUsers').textContent = data.stats.totalUsers;
@@ -476,7 +503,7 @@
 
           var tbody = document.getElementById('usersTableBody');
           if (data.recentUsers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6">Aún no hay usuarios registrados.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Aún no hay usuarios registrados.</td></tr>';
             return;
           }
           tbody.innerHTML = data.recentUsers.map(function (u) {
@@ -487,6 +514,7 @@
               '<td>' + fecha + '</td>' +
               '<td>' + statusPillHtml(u) + '</td>' +
               '<td>' + invoicePillHtml(u) + '</td>' +
+              '<td>' + stockCellHtml(u) + '</td>' +
               '<td>' + responderButtonHtml(u) + '</td>' +
               '</tr>';
           }).join('');
@@ -505,7 +533,7 @@
           document.getElementById('lastRefreshedHint').textContent = 'Última actualización: ' + now.toLocaleTimeString('es-PE');
         })
         .catch(function () {
-          document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="6">Error de conexión. Verifica tu internet e intenta de nuevo.</td></tr>';
+          document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="7">Error de conexión. Verifica tu internet e intenta de nuevo.</td></tr>';
         });
     }
 
@@ -884,6 +912,105 @@
     document.getElementById('paModalClose').addEventListener('click', closePaymentSettingsModal);
     paModalOverlay.addEventListener('click', function (e) {
       if (e.target === paModalOverlay) closePaymentSettingsModal();
+    });
+
+    // ---------- Modal: gestionar stock del catálogo ----------
+    var stockModalOverlay = document.getElementById('stockModalOverlay');
+
+    function openStockModal() {
+      stockModalOverlay.classList.add('open');
+      document.getElementById('stockBooksList').innerHTML = 'Cargando...';
+      fetch('/api/admin/catalog-stock')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) {
+            document.getElementById('stockBooksList').innerHTML = '<p class="pa-error" style="display:block;">' + (data.message || 'No se pudo cargar el stock.') + '</p>';
+            return;
+          }
+          renderStockList(data.books);
+        })
+        .catch(function () {
+          document.getElementById('stockBooksList').innerHTML = '<p class="pa-error" style="display:block;">Error de conexión.</p>';
+        });
+    }
+
+    function closeStockModal() {
+      stockModalOverlay.classList.remove('open');
+    }
+
+    function renderStockList(books) {
+      var list = document.getElementById('stockBooksList');
+      if (books.length === 0) {
+        list.innerHTML = '<p>Aún no hay libros en el catálogo.</p>';
+        return;
+      }
+      list.innerHTML = books.map(function (b) {
+        return (
+          '<div class="pa-account-card" data-id="' + b.id + '">' +
+            '<h4>' + escapeAttr(b.title) + (b.isActive ? '' : ' <span style="color:#999; font-weight:400;">(inactivo)</span>') + '<span class="pa-saved-tag">Guardado ✓</span></h4>' +
+            '<div class="pa-account-fields">' +
+              '<div class="pa-field-full"><label>Stock disponible</label><input type="number" min="0" step="1" class="stock-input" value="' + b.stock + '"></div>' +
+            '</div>' +
+            '<p class="pa-error"></p>' +
+            '<div class="pa-save-row"><button type="button" class="pa-save-btn">Guardar</button></div>' +
+          '</div>'
+        );
+      }).join('');
+
+      list.querySelectorAll('.pa-account-card').forEach(function (card) {
+        var id = card.getAttribute('data-id');
+        card.querySelector('.pa-save-btn').addEventListener('click', function () {
+          saveStock(id, card);
+        });
+      });
+    }
+
+    function saveStock(id, card) {
+      var input = card.querySelector('.stock-input');
+      var errorEl = card.querySelector('.pa-error');
+      var savedTag = card.querySelector('.pa-saved-tag');
+      var btn = card.querySelector('.pa-save-btn');
+      var value = parseInt(input.value, 10);
+
+      errorEl.style.display = 'none';
+      if (isNaN(value) || value < 0) {
+        errorEl.textContent = 'Ingresa un número válido (0 o más).';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      fetch('/api/admin/catalog-stock/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stock: value }),
+      })
+        .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+        .then(function (res) {
+          btn.disabled = false;
+          btn.textContent = 'Guardar';
+          if (!res.data.ok) {
+            errorEl.textContent = res.data.message || 'No se pudo guardar.';
+            errorEl.style.display = 'block';
+            return;
+          }
+          savedTag.classList.add('show');
+          setTimeout(function () { savedTag.classList.remove('show'); }, 2000);
+        })
+        .catch(function () {
+          btn.disabled = false;
+          btn.textContent = 'Guardar';
+          errorEl.textContent = 'Error de conexión.';
+          errorEl.style.display = 'block';
+        });
+    }
+
+    document.getElementById('btnStockSettings').addEventListener('click', openStockModal);
+    document.getElementById('stockModalClose').addEventListener('click', closeStockModal);
+    stockModalOverlay.addEventListener('click', function (e) {
+      if (e.target === stockModalOverlay) closeStockModal();
     });
     document.getElementById('btnEditFromResponse').addEventListener('click', function () {
       openPaymentSettingsModal(selectedMethodKey);

@@ -104,6 +104,10 @@ async function runMigrations() {
     CREATE INDEX IF NOT EXISTS idx_catalog_books_active ON catalog_books (is_active, sort_order);
   `);
 
+  // Stock disponible por libro. Se edita desde el panel de admin ("Generar
+  // stock") y baja automáticamente cuando un pedido se marca como "pagado".
+  await pool.query(`ALTER TABLE catalog_books ADD COLUMN IF NOT EXISTS stock INTEGER NOT NULL DEFAULT 0;`);
+
   // Siembra el/los correo(s) autorizados para el panel de catálogo, sin
   // password_hash todavía (se crea la primera vez que el correo entra a
   // "Crear contraseña" en catalog-admin-login.html).

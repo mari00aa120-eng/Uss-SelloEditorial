@@ -154,7 +154,7 @@ router.post('/logout', (req, res) => {
 // GET /api/admin/stats
 router.get('/stats', requireAdmin, async (req, res) => {
   try {
-    const [{ rows: userCountRows }, { rows: cartCountRows }, { rows: recentUsers }] = await Promise.all([
+    const [{ rows: userCountRows }, { rows: cartCountRows }, { rows: recentUsers }, { rows: catalogRows }] = await Promise.all([
       pool.query('SELECT COUNT(*)::int AS count FROM users'),
       pool.query('SELECT COUNT(*)::int AS count, COALESCE(SUM(quantity),0)::int AS units FROM cart_items'),
       pool.query(`
@@ -171,6 +171,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
           o.id AS order_id,
           o.invoice_number AS order_invoice_number,
           o.total AS order_total,
+          o.items AS order_items,
           o.payment_method AS order_payment_method,
           o.email_sent AS order_email_sent,
           o.created_at AS order_created_at
@@ -182,7 +183,12 @@ router.get('/stats', requireAdmin, async (req, res) => {
         ORDER BY u.created_at DESC
         LIMIT 10
       `),
+      // Stock actual de cada libro del catálogo, para mostrar la columna "Stock"
+      // junto a los libros de cada pedido reciente.
+      pool.query('SELECT id, title, stock FROM catalog_books'),
     ]);
+
+    const catalogById = new Map(catalogRows.map((b) => [b.id, b]));
 
     res.json({
       ok: true,
@@ -191,7 +197,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
         totalCartLines: cartCountRows[0].count,
         totalCartUnits: cartCountRows[0].units,
       },
-      recentUsers: recentUsers.map(serializeUserRow),
+      recentUsers: recentUsers.map((row) => serializeUserRow(row, catalogById)),
     });
   } catch (err) {
     console.error('[admin/stats]', err);
@@ -199,7 +205,17 @@ router.get('/stats', requireAdmin, async (req, res) => {
   }
 });
 
-function serializeUserRow(row) {
+function serializeUserRow(row, catalogById) {
+  const items = Array.isArray(row.order_items) ? row.order_items : [];
+  const itemsWithStock = items.map((item) => {
+    const book = catalogById && item.productId != null ? catalogById.get(Number(item.productId)) : null;
+    return {
+      name: item.name,
+      quantity: item.quantity,
+      currentStock: book ? book.stock : null,
+    };
+  });
+
   return {
     id: row.id,
     firstName: row.first_name,
@@ -224,6 +240,7 @@ function serializeUserRow(row) {
           paymentMethod: row.order_payment_method,
           emailSent: row.order_email_sent,
           createdAt: row.order_created_at,
+          items: itemsWithStock,
         }
       : null,
   };
@@ -360,6 +377,16 @@ router.post('/users/:id/respond', requireAdmin, async (req, res) => {
     }
     const customer = userResult.rows[0];
 
+    // Estado anterior del pedido, para saber si esta respuesta es la que
+    // recién confirma el pago (y por lo tanto hay que descontar stock) o si
+    // el pedido ya estaba pagado antes (para no descontar dos veces).
+    const previousTicketResult = await pool.query(
+      'SELECT order_status FROM admin_tickets WHERE user_id = $1',
+      [id]
+    );
+    const previousOrderStatus = previousTicketResult.rows[0] ? previousTicketResult.rows[0].order_status : null;
+
+
     let paymentInfo = null;
     let paymentMethodLabel = null;
     let paymentAmount = null;
@@ -409,12 +436,42 @@ router.post('/users/:id/respond', requireAdmin, async (req, res) => {
       [id, newStatus, orderStatus, message || null, paymentMethodLabel, paymentAmount]
     );
 
+    // Si esta respuesta es la que recién marca el pedido como "pagado" (y no
+    // lo estaba ya), descontamos del stock del catálogo las cantidades del
+    // último pedido del usuario.
+    if (orderStatus === 'pagado' && previousOrderStatus !== 'pagado') {
+      await decrementStockForUser(id);
+    }
+
     res.json({ ok: true, ticket: upsertResult.rows[0] });
   } catch (err) {
     console.error('[admin/users/:id/respond]', err);
     res.status(500).json({ ok: false, message: 'Error enviando la respuesta al usuario.' });
   }
 });
+
+// Descuenta del stock del catálogo las cantidades compradas en el último
+// pedido del usuario indicado. No baja el stock por debajo de 0.
+async function decrementStockForUser(userId) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT items FROM orders WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+    if (rows.length === 0) return;
+    const items = Array.isArray(rows[0].items) ? rows[0].items : [];
+    for (const item of items) {
+      const qty = Number(item.quantity) || 0;
+      if (!item.productId || qty <= 0) continue;
+      await pool.query(
+        `UPDATE catalog_books SET stock = GREATEST(stock - $1, 0), updated_at = NOW() WHERE id = $2`,
+        [qty, item.productId]
+      );
+    }
+  } catch (err) {
+    console.error('[admin/decrementStockForUser]', err);
+  }
+}
 
 // GET /api/admin/dashboard -> métricas agregadas para el panel "Dashboard"
 // Una "venta confirmada" = un admin_ticket con order_status = 'pagado'.
@@ -626,6 +683,57 @@ router.put('/payment-accounts/:key', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('[admin/payment-accounts/put]', err);
     res.status(400).json({ ok: false, message: err.message || 'Error actualizando la cuenta de pago.' });
+  }
+});
+
+// ---------- Gestión de stock del catálogo (botón "Generar stock") ----------
+
+// GET /api/admin/catalog-stock -> lista de libros del catálogo con su stock actual
+router.get('/catalog-stock', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, title, category, stock, is_active FROM catalog_books ORDER BY title ASC`
+    );
+    res.json({
+      ok: true,
+      books: rows.map((b) => ({
+        id: b.id,
+        title: b.title,
+        category: b.category,
+        stock: b.stock,
+        isActive: b.is_active,
+      })),
+    });
+  } catch (err) {
+    console.error('[admin/catalog-stock/get]', err);
+    res.status(500).json({ ok: false, message: 'Error obteniendo el stock del catálogo.' });
+  }
+});
+
+// PUT /api/admin/catalog-stock/:id  body: { stock }
+router.put('/catalog-stock/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { stock } = req.body;
+    const stockValue = Number(stock);
+
+    if (!Number.isFinite(stockValue) || stockValue < 0 || !Number.isInteger(stockValue)) {
+      return res.status(400).json({ ok: false, message: 'Indica un stock válido (número entero, 0 o más).' });
+    }
+
+    const result = await pool.query(
+      `UPDATE catalog_books SET stock = $1, updated_at = NOW() WHERE id = $2 RETURNING id, title, stock`,
+      [stockValue, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ ok: false, message: 'Libro no encontrado.' });
+    }
+
+    res.json({ ok: true, book: result.rows[0] });
+  } catch (err) {
+    console.error('[admin/catalog-stock/put]', err);
+    res.status(500).json({ ok: false, message: 'Error actualizando el stock.' });
   }
 });
 
