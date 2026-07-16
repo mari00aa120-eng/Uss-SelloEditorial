@@ -416,6 +416,188 @@ router.post('/users/:id/respond', requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/dashboard -> métricas agregadas para el panel "Dashboard"
+// Una "venta confirmada" = un admin_ticket con order_status = 'pagado'.
+// Se usa el pedido más reciente del usuario (misma lógica que /stats) como
+// la orden asociada a esa venta, y se desglosan sus "items" (JSONB) para
+// sacar libros más vendidos / categorías más vendidas cruzando con catalog_books.
+router.get('/dashboard', requireAdmin, async (req, res) => {
+  try {
+    const [
+      { rows: paidOrders },
+      { rows: usersByMonth },
+      { rows: catalogRows },
+      { rows: totals },
+    ] = await Promise.all([
+      // Todas las "ventas confirmadas" (pedido con estado pagado), con su fecha,
+      // total, monto solicitado por el admin (si aplica) e items comprados.
+      pool.query(`
+        SELECT
+          t.user_id,
+          t.updated_at AS confirmed_at,
+          o.id AS order_id,
+          o.invoice_number,
+          o.total AS order_total,
+          o.items AS order_items,
+          o.payment_method,
+          t.payment_amount AS ticket_amount,
+          u.first_name, u.last_name, u.email
+        FROM admin_tickets t
+        JOIN users u ON u.id = t.user_id
+        LEFT JOIN LATERAL (
+          SELECT * FROM orders WHERE orders.user_id = t.user_id ORDER BY created_at DESC LIMIT 1
+        ) o ON TRUE
+        WHERE t.order_status = 'pagado'
+        ORDER BY t.updated_at DESC
+      `),
+      // Usuarios registrados, para el histórico de registros por mes/año.
+      pool.query(`SELECT id, first_name, last_name, email, created_at FROM users ORDER BY created_at ASC`),
+      // Catálogo completo (para "libros subidos por mes/año" y cruce de tags/categoría).
+      pool.query(`SELECT id, title, category, tags, is_active, created_at FROM catalog_books ORDER BY created_at ASC`),
+      pool.query(`
+        SELECT
+          (SELECT COUNT(*)::int FROM users) AS total_users,
+          (SELECT COUNT(*)::int FROM catalog_books) AS total_books,
+          (SELECT COUNT(*)::int FROM catalog_books WHERE is_active) AS active_books,
+          (SELECT COUNT(*)::int FROM catalog_books WHERE NOT is_active) AS inactive_books
+      `),
+    ]);
+
+    // Cada "venta" real: usamos payment_amount si el admin lo indicó al marcar
+    // "Pedido pagado" (viene del flujo pendiente_pago -> pagado), si no, el
+    // total del último pedido (o.total) generado por el propio usuario.
+    const sales = paidOrders.map((row) => {
+      const amount = row.ticket_amount !== null && row.ticket_amount !== undefined
+        ? Number(row.ticket_amount)
+        : (row.order_total !== null ? Number(row.order_total) : 0);
+      return {
+        userId: row.user_id,
+        customerName: [row.first_name, row.last_name].filter(Boolean).join(' '),
+        email: row.email,
+        confirmedAt: row.confirmed_at,
+        invoiceNumber: row.invoice_number,
+        amount,
+        paymentMethod: row.payment_method,
+        items: Array.isArray(row.order_items) ? row.order_items : [],
+      };
+    });
+
+    const catalogById = new Map(catalogRows.map((b) => [b.id, b]));
+
+    // ---- Ventas por día/mes (serie temporal) ----
+    const salesByDay = {};
+    const salesByMonth = {};
+    let totalRevenue = 0;
+    sales.forEach((s) => {
+      const d = new Date(s.confirmedAt);
+      const dayKey = d.toISOString().slice(0, 10); // YYYY-MM-DD
+      const monthKey = d.toISOString().slice(0, 7); // YYYY-MM
+      salesByDay[dayKey] = salesByDay[dayKey] || { date: dayKey, count: 0, revenue: 0 };
+      salesByDay[dayKey].count += 1;
+      salesByDay[dayKey].revenue += s.amount;
+      salesByMonth[monthKey] = salesByMonth[monthKey] || { month: monthKey, count: 0, revenue: 0 };
+      salesByMonth[monthKey].count += 1;
+      salesByMonth[monthKey].revenue += s.amount;
+      totalRevenue += s.amount;
+    });
+
+    // ---- Libros más vendidos y categorías/etiquetas más vendidas ----
+    // Cuando la orden no trae "items" desglosados (o el producto ya no existe
+    // en catálogo), igual contamos la venta a nivel general.
+    const bookSales = {}; // productId -> { title, qty, revenue }
+    const categorySales = {}; // category -> { qty, revenue }
+    const tagSales = {}; // tag -> { qty, revenue }
+
+    sales.forEach((s) => {
+      s.items.forEach((item) => {
+        const qty = Number(item.quantity) || 0;
+        const rev = Number(item.subtotal) || (Number(item.price) || 0) * qty;
+        const key = item.productId != null ? String(item.productId) : ('name:' + item.name);
+        bookSales[key] = bookSales[key] || { title: item.name || 'Libro eliminado', qty: 0, revenue: 0 };
+        bookSales[key].qty += qty;
+        bookSales[key].revenue += rev;
+
+        const catalogBook = item.productId != null ? catalogById.get(Number(item.productId)) : null;
+        const category = catalogBook && catalogBook.category ? catalogBook.category : 'Sin categoría';
+        categorySales[category] = categorySales[category] || { qty: 0, revenue: 0 };
+        categorySales[category].qty += qty;
+        categorySales[category].revenue += rev;
+
+        const tags = catalogBook && Array.isArray(catalogBook.tags) ? catalogBook.tags : [];
+        tags.forEach((tag) => {
+          tagSales[tag] = tagSales[tag] || { qty: 0, revenue: 0 };
+          tagSales[tag].qty += qty;
+          tagSales[tag].revenue += rev;
+        });
+      });
+    });
+
+    const topBooks = Object.values(bookSales).sort((a, b) => b.qty - a.qty).slice(0, 10);
+    const topCategories = Object.entries(categorySales)
+      .map(([category, v]) => ({ category, qty: v.qty, revenue: v.revenue }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 10);
+    const topTags = Object.entries(tagSales)
+      .map(([tag, v]) => ({ tag, qty: v.qty, revenue: v.revenue }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 12);
+
+    // ---- Usuarios registrados por mes ----
+    const usersByMonthMap = {};
+    usersByMonth.forEach((u) => {
+      const monthKey = new Date(u.created_at).toISOString().slice(0, 7);
+      usersByMonthMap[monthKey] = (usersByMonthMap[monthKey] || 0) + 1;
+    });
+
+    // ---- Libros subidos al catálogo por mes ----
+    const booksByMonthMap = {};
+    catalogRows.forEach((b) => {
+      const monthKey = new Date(b.created_at).toISOString().slice(0, 7);
+      booksByMonthMap[monthKey] = (booksByMonthMap[monthKey] || 0) + 1;
+    });
+
+    // ---- Medios de pago usados en ventas confirmadas ----
+    const paymentMethodCounts = {};
+    sales.forEach((s) => {
+      const label = s.paymentMethod || 'No especificado';
+      paymentMethodCounts[label] = (paymentMethodCounts[label] || 0) + 1;
+    });
+
+    const last30 = sales.filter((s) => (Date.now() - new Date(s.confirmedAt).getTime()) < 30 * 24 * 60 * 60 * 1000);
+    const currentMonthKey = new Date().toISOString().slice(0, 7);
+    const usersThisMonth = usersByMonthMap[currentMonthKey] || 0;
+    const booksThisMonth = booksByMonthMap[currentMonthKey] || 0;
+
+    res.json({
+      ok: true,
+      totals: {
+        totalUsers: totals[0].total_users,
+        totalBooks: totals[0].total_books,
+        activeBooks: totals[0].active_books,
+        inactiveBooks: totals[0].inactive_books,
+        totalSales: sales.length,
+        totalRevenue,
+        salesLast30Days: last30.length,
+        revenueLast30Days: last30.reduce((sum, s) => sum + s.amount, 0),
+        usersThisMonth,
+        booksThisMonth,
+      },
+      salesByDay: Object.values(salesByDay).sort((a, b) => a.date.localeCompare(b.date)),
+      salesByMonth: Object.values(salesByMonth).sort((a, b) => a.month.localeCompare(b.month)),
+      usersByMonth: Object.entries(usersByMonthMap).map(([month, count]) => ({ month, count })).sort((a, b) => a.month.localeCompare(b.month)),
+      booksByMonth: Object.entries(booksByMonthMap).map(([month, count]) => ({ month, count })).sort((a, b) => a.month.localeCompare(b.month)),
+      topBooks,
+      topCategories,
+      topTags,
+      paymentMethods: Object.entries(paymentMethodCounts).map(([method, count]) => ({ method, count })).sort((a, b) => b.count - a.count),
+      recentSales: sales.slice(0, 15),
+    });
+  } catch (err) {
+    console.error('[admin/dashboard]', err);
+    res.status(500).json({ ok: false, message: 'Error obteniendo el dashboard.' });
+  }
+});
+
 // ---------- Configuración editable de cuentas de pago (Yape/Plin/BCP/BBVA) ----------
 
 // GET /api/admin/payment-accounts -> lista los 4 medios con sus datos actuales

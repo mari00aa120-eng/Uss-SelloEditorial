@@ -7,8 +7,32 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
-  body { background: #f6f6f6; font-family: 'Inter', sans-serif; }
+  body { background: #f6f6f6; font-family: 'Inter', sans-serif; margin: 0; }
+
+  /* ---------- Layout con panel lateral ---------- */
+  .app-shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 220px; flex-shrink: 0; background: #101512; color: #fff;
+    display: flex; flex-direction: column; padding: 22px 14px; position: sticky; top: 0; height: 100vh;
+  }
+  .sidebar__logo { font-size: 15px; font-weight: 800; padding: 6px 10px 22px; color: #fff; letter-spacing: .01em; }
+  .sidebar__logo span { display: block; font-size: 11px; font-weight: 600; color: #9CA3AF; margin-top: 2px; letter-spacing: .03em; }
+  .sidebar__nav { display: flex; flex-direction: column; gap: 4px; }
+  .sidebar__link {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 9px;
+    color: #D1D5DB; text-decoration: none; font-size: 13.5px; font-weight: 600; cursor: pointer;
+    border: none; background: none; text-align: left; width: 100%; font-family: inherit;
+  }
+  .sidebar__link:hover { background: #1E2620; color: #fff; }
+  .sidebar__link.active { background: #046C3B; color: #fff; }
+  .sidebar__link .ic { width: 16px; text-align: center; flex-shrink: 0; }
+  .sidebar__spacer { flex: 1; }
+  .sidebar__foot { font-size: 11px; color: #6B7280; padding: 10px 12px 0; border-top: 1px solid #1E2620; margin-top: 10px; }
+
+  .main-area { flex: 1; min-width: 0; }
   .admin-wrap { max-width: 1150px; margin: 0 auto; padding: 40px 24px 80px; }
   .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
   .admin-header h1 { font-size: 24px; margin: 0; }
@@ -108,39 +132,194 @@
   .pa-account-card .pa-save-row button { background: #046C3B; color: #fff; border: none; padding: 7px 14px; border-radius: 7px; font-weight: 700; font-size: 12.5px; cursor: pointer; }
   .pa-account-card .pa-save-row button:disabled { opacity: .6; cursor: not-allowed; }
   .pa-error { color: #B91C1C; font-size: 12px; margin-top: 6px; display: none; }
+
+  /* ---------- Vista: Dashboard ---------- */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .dash-header h1 { font-size: 24px; margin: 0; }
+  .dash-header p { margin: 4px 0 0; font-size: 13px; color: #777; }
+
+  .dash-filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .dash-filters select {
+    padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-family: inherit;
+    font-size: 13px; font-weight: 600; color: #333; background: #fff; cursor: pointer;
+  }
+  .dash-filters .live-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #046C3B; margin-left: auto; }
+  .dash-filters .live-dot .pulse { width: 8px; height: 8px; border-radius: 50%; background: #16A34A; animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(22,163,74,.5);} 70% { box-shadow: 0 0 0 6px rgba(22,163,74,0);} 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0);} }
+
+  .dash-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .dash-kpi { background: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+  .dash-kpi span { display: block; font-size: 12px; color: #777; margin-bottom: 6px; font-weight: 600; }
+  .dash-kpi strong { font-size: 23px; display: block; }
+  .dash-kpi small { display: block; font-size: 11px; color: #046C3B; font-weight: 700; margin-top: 4px; }
+
+  .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .dash-grid--thirds { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 900px) { .dash-grid, .dash-grid--thirds { grid-template-columns: 1fr; } }
+
+  .dash-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+  .dash-card h3 { margin: 0 0 2px; font-size: 14.5px; }
+  .dash-card p.sub { margin: 0 0 14px; font-size: 12px; color: #888; }
+  .dash-card .chart-wrap { position: relative; height: 260px; }
+  .dash-card .chart-wrap.short { height: 210px; }
+
+  .dash-empty { text-align: center; padding: 40px 10px; color: #999; font-size: 13px; }
+
+  .dash-list { display: flex; flex-direction: column; gap: 10px; }
+  .dash-list-row { display: flex; align-items: center; gap: 10px; }
+  .dash-list-row .rank { width: 20px; font-size: 12px; font-weight: 800; color: #999; flex-shrink: 0; }
+  .dash-list-row .bar-track { flex: 1; height: 8px; border-radius: 999px; background: #f1f1f1; overflow: hidden; }
+  .dash-list-row .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#046C3B,#0e9c5a); }
+  .dash-list-row .label { flex: 1; font-size: 12.5px; font-weight: 700; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dash-list-row .value { font-size: 12px; font-weight: 800; color: #046C3B; flex-shrink: 0; }
+
+  .dash-tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dash-tag-chip {
+    background: #DCFCE7; color: #046C3B; font-size: 12px; font-weight: 700;
+    padding: 6px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .dash-tag-chip .n { background: #046C3B; color: #fff; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; }
+
+  table.dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.dash-table th, table.dash-table td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #eee; }
+  table.dash-table th { color: #777; font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .02em; }
+  table.dash-table tr:last-child td { border-bottom: none; }
 </style>
 </head>
 <body>
 
-  <div class="admin-wrap">
-    <div class="admin-header">
-      <h1>Panel de administración</h1>
-      <div class="admin-header__actions">
-        <button id="btnRefresh" class="btn-secondary" type="button">⟳ Refrescar</button>
-        <button id="btnPaymentSettings" class="btn-secondary" type="button">Configurar cuentas de pago</button>
-        <button id="btnLogout">Cerrar sesión</button>
+  <div class="app-shell">
+    <!-- ============ PANEL LATERAL ============ -->
+    <aside class="sidebar">
+      <div class="sidebar__logo">USS Sello Editorial<span>Panel de administración</span></div>
+      <nav class="sidebar__nav">
+        <button type="button" class="sidebar__link" id="navDashboard"><span class="ic">📊</span> Dashboard</button>
+        <button type="button" class="sidebar__link active" id="navUsuarios"><span class="ic">👥</span> Usuarios y pedidos</button>
+      </nav>
+      <div class="sidebar__spacer"></div>
+      <div class="sidebar__foot">USS Sello Editorial</div>
+    </aside>
+
+    <div class="main-area">
+      <div class="admin-wrap">
+
+        <!-- ============ VISTA: DASHBOARD ============ -->
+        <section class="view" id="dashboardView">
+          <div class="dash-header">
+            <div>
+              <h1>Dashboard</h1>
+              <p>Ventas, catálogo y usuarios en tiempo real. Se actualiza cada vez que se marca un pedido como "Pedido pagado".</p>
+            </div>
+            <div class="admin-header__actions">
+              <button id="btnRefreshDash" class="btn-secondary" type="button">⟳ Refrescar</button>
+              <button id="btnLogoutDash">Cerrar sesión</button>
+            </div>
+          </div>
+
+          <div class="dash-filters">
+            <select id="dashFilterYear"></select>
+            <select id="dashFilterMonth">
+              <option value="all">Todos los meses</option>
+            </select>
+            <span class="live-dot"><span class="pulse"></span> En tiempo real</span>
+          </div>
+
+          <div class="dash-kpis" id="dashKpis">
+            <div class="dash-kpi"><span>Ventas confirmadas</span><strong id="kpiSales">–</strong><small id="kpiSalesSub">&nbsp;</small></div>
+            <div class="dash-kpi"><span>Ingresos totales (S/)</span><strong id="kpiRevenue">–</strong><small id="kpiRevenueSub">&nbsp;</small></div>
+            <div class="dash-kpi"><span>Usuarios registrados</span><strong id="kpiUsers">–</strong><small id="kpiUsersSub">&nbsp;</small></div>
+            <div class="dash-kpi"><span>Libros en catálogo</span><strong id="kpiBooks">–</strong><small id="kpiBooksSub">&nbsp;</small></div>
+          </div>
+
+          <div class="dash-grid">
+            <div class="dash-card">
+              <h3 id="salesChartTitle">Ventas a lo largo del año</h3>
+              <p class="sub" id="salesChartSub">Monto vendido (S/) por período, según el filtro seleccionado.</p>
+              <div class="chart-wrap"><canvas id="chartSales"></canvas></div>
+            </div>
+            <div class="dash-card">
+              <h3>Medios de pago usados</h3>
+              <p class="sub">Distribución de las ventas confirmadas por método de pago.</p>
+              <div class="chart-wrap"><canvas id="chartPaymentMethods"></canvas></div>
+            </div>
+          </div>
+
+          <div class="dash-grid">
+            <div class="dash-card">
+              <h3>Libros más vendidos</h3>
+              <p class="sub">Unidades vendidas por título (ventas confirmadas).</p>
+              <div class="dash-list" id="topBooksList"><div class="dash-empty">Cargando...</div></div>
+            </div>
+            <div class="dash-card">
+              <h3>Categorías más vendidas</h3>
+              <p class="sub">Para saber qué tipo de libros sacar más al público.</p>
+              <div class="chart-wrap short"><canvas id="chartCategories"></canvas></div>
+            </div>
+          </div>
+
+          <div class="dash-card" style="margin-bottom:16px;">
+            <h3>Etiquetas más vendidas</h3>
+            <p class="sub">Todas las etiquetas de los libros vendidos, por unidades.</p>
+            <div class="dash-tag-cloud" id="topTagsCloud"><div class="dash-empty">Cargando...</div></div>
+          </div>
+
+          <div class="dash-grid--thirds">
+            <div class="dash-card">
+              <h3>Usuarios registrados por mes</h3>
+              <p class="sub">Nuevos registros a lo largo del año.</p>
+              <div class="chart-wrap short"><canvas id="chartUsersByMonth"></canvas></div>
+            </div>
+            <div class="dash-card">
+              <h3>Libros subidos al catálogo por mes</h3>
+              <p class="sub">Conectado con lo publicado desde /panel-catalogo.</p>
+              <div class="chart-wrap short"><canvas id="chartBooksByMonth"></canvas></div>
+            </div>
+          </div>
+
+          <div class="dash-card">
+            <h3>Últimas ventas confirmadas</h3>
+            <p class="sub">Las 15 ventas más recientes marcadas como "Pedido pagado".</p>
+            <div id="recentSalesTableArea"><div class="dash-empty">Cargando...</div></div>
+          </div>
+        </section>
+
+        <!-- ============ VISTA: USUARIOS Y PEDIDOS ============ -->
+        <section class="view active" id="usersView">
+          <div class="admin-header">
+            <h1>Panel de administración</h1>
+            <div class="admin-header__actions">
+              <button id="btnRefresh" class="btn-secondary" type="button">⟳ Refrescar</button>
+              <button id="btnPaymentSettings" class="btn-secondary" type="button">Configurar cuentas de pago</button>
+              <button id="btnLogout">Cerrar sesión</button>
+            </div>
+          </div>
+
+          <div class="admin-cards" id="adminCards">
+            <div class="admin-card"><span>Usuarios registrados</span><strong id="statUsers">–</strong></div>
+            <div class="admin-card"><span>Líneas en carritos</span><strong id="statCartLines">–</strong></div>
+            <div class="admin-card"><span>Unidades en carritos</span><strong id="statCartUnits">–</strong></div>
+          </div>
+
+          <p class="hint" id="lastRefreshedHint" style="text-align:right; margin-top:-6px;"></p>
+
+          <div class="admin-table-wrap">
+            <h2>Últimos usuarios registrados</h2>
+            <p class="hint">Rojo: aún no se le ha respondido · Amarillo: esperando el pago del usuario · Verde: ya se le respondió. Si otro admin está respondiendo a un usuario, el botón mostrará "Tomado por...". Usa Refrescar para ver los cambios de otros admins.</p>
+            <table>
+              <thead>
+                <tr><th>Nombre</th><th>Correo</th><th>Registrado</th><th>Proceso de compra</th><th>Factura</th><th>Estado</th></tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="6">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
       </div>
-    </div>
-
-    <div class="admin-cards" id="adminCards">
-      <div class="admin-card"><span>Usuarios registrados</span><strong id="statUsers">–</strong></div>
-      <div class="admin-card"><span>Líneas en carritos</span><strong id="statCartLines">–</strong></div>
-      <div class="admin-card"><span>Unidades en carritos</span><strong id="statCartUnits">–</strong></div>
-    </div>
-
-    <p class="hint" id="lastRefreshedHint" style="text-align:right; margin-top:-6px;"></p>
-
-    <div class="admin-table-wrap">
-      <h2>Últimos usuarios registrados</h2>
-      <p class="hint">Rojo: aún no se le ha respondido · Amarillo: esperando el pago del usuario · Verde: ya se le respondió. Si otro admin está respondiendo a un usuario, el botón mostrará "Tomado por...". Usa Refrescar para ver los cambios de otros admins.</p>
-      <table>
-        <thead>
-          <tr><th>Nombre</th><th>Correo</th><th>Registrado</th><th>Proceso de compra</th><th>Factura</th><th>Estado</th></tr>
-        </thead>
-        <tbody id="usersTableBody">
-          <tr><td colspan="6">Cargando...</td></tr>
-        </tbody>
-      </table>
     </div>
   </div>
 
@@ -717,11 +896,362 @@
     // ---------- Carga inicial ----------
     loadStats();
 
-    document.getElementById('btnLogout').addEventListener('click', function () {
+    function doLogout() {
       fetch('/api/admin/logout', { method: 'POST' }).finally(function () {
         window.location.href = '/admin-login.html';
       });
-    });
+    }
+    document.getElementById('btnLogout').addEventListener('click', doLogout);
+    document.getElementById('btnLogoutDash').addEventListener('click', doLogout);
+
+    // =====================================================================
+    // ---------- Navegación del panel lateral (Dashboard / Usuarios) ----------
+    // =====================================================================
+    var navDashboard = document.getElementById('navDashboard');
+    var navUsuarios = document.getElementById('navUsuarios');
+    var dashboardView = document.getElementById('dashboardView');
+    var usersView = document.getElementById('usersView');
+    var dashboardLoadedOnce = false;
+
+    function showView(name) {
+      var isDash = name === 'dashboard';
+      dashboardView.classList.toggle('active', isDash);
+      usersView.classList.toggle('active', !isDash);
+      navDashboard.classList.toggle('active', isDash);
+      navUsuarios.classList.toggle('active', !isDash);
+      if (isDash) {
+        if (!dashboardLoadedOnce) {
+          dashboardLoadedOnce = true;
+          loadDashboard();
+        }
+      }
+    }
+    navDashboard.addEventListener('click', function () { showView('dashboard'); });
+    navUsuarios.addEventListener('click', function () { showView('usuarios'); });
+
+    // =====================================================================
+    // ---------- Dashboard: datos, filtros y gráficas ----------
+    // =====================================================================
+    var MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    var dashboardData = null;
+    var dashCharts = {};
+    var dashRefreshTimer = null;
+
+    function destroyChart(key) {
+      if (dashCharts[key]) { dashCharts[key].destroy(); dashCharts[key] = null; }
+    }
+
+    function fmtMoney(n) {
+      return 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function monthLabel(monthKey) {
+      var parts = monthKey.split('-');
+      var idx = parseInt(parts[1], 10) - 1;
+      return (MONTH_NAMES[idx] || monthKey) + ' ' + parts[0];
+    }
+
+    function populateYearFilter(data) {
+      var yearSel = document.getElementById('dashFilterYear');
+      var years = {};
+      (data.salesByMonth || []).forEach(function (m) { years[m.month.slice(0, 4)] = true; });
+      (data.usersByMonth || []).forEach(function (m) { years[m.month.slice(0, 4)] = true; });
+      years[String(new Date().getFullYear())] = true;
+      var yearList = Object.keys(years).sort().reverse();
+      var currentValue = yearSel.value;
+      yearSel.innerHTML = '<option value="all">Todos los años</option>' +
+        yearList.map(function (y) { return '<option value="' + y + '">' + y + '</option>'; }).join('');
+      yearSel.value = yearList.indexOf(currentValue) >= 0 ? currentValue : String(new Date().getFullYear());
+    }
+
+    function currentFilters() {
+      return {
+        year: document.getElementById('dashFilterYear').value,
+        month: document.getElementById('dashFilterMonth').value,
+      };
+    }
+
+    function filterByYearMonth(rows, keyName) {
+      var f = currentFilters();
+      return rows.filter(function (r) {
+        var key = r[keyName]; // 'YYYY-MM' o 'YYYY-MM-DD'
+        var year = key.slice(0, 4);
+        var month = key.slice(5, 7);
+        if (f.year !== 'all' && year !== f.year) return false;
+        if (f.month !== 'all' && month !== f.month) return false;
+        return true;
+      });
+    }
+
+    function loadDashboard() {
+      document.getElementById('recentSalesTableArea').innerHTML = '<div class="dash-empty">Cargando...</div>';
+      fetch('/api/admin/dashboard')
+        .then(function (r) {
+          if (r.status === 401) { window.location.href = '/admin-login.html'; return null; }
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data) return;
+          if (!data.ok) {
+            document.getElementById('recentSalesTableArea').innerHTML = '<div class="dash-empty">Error cargando el dashboard: ' + (data.message || 'intenta de nuevo.') + '</div>';
+            return;
+          }
+          dashboardData = data;
+          populateYearFilter(data);
+          renderDashboard();
+        })
+        .catch(function () {
+          document.getElementById('recentSalesTableArea').innerHTML = '<div class="dash-empty">Error de conexión al cargar el dashboard.</div>';
+        });
+    }
+
+    function renderDashboard() {
+      if (!dashboardData) return;
+      var d = dashboardData;
+      var f = currentFilters();
+
+      // ---- KPIs (los totales generales no cambian con el filtro; el filtro
+      // aplica sobre las series de tiempo y el detalle de ventas recientes) ----
+      document.getElementById('kpiSales').textContent = d.totals.totalSales;
+      document.getElementById('kpiSalesSub').textContent = d.totals.salesLast30Days + ' en los últimos 30 días';
+      document.getElementById('kpiRevenue').textContent = fmtMoney(d.totals.totalRevenue);
+      document.getElementById('kpiRevenueSub').textContent = fmtMoney(d.totals.revenueLast30Days) + ' últimos 30 días';
+      document.getElementById('kpiUsers').textContent = d.totals.totalUsers;
+      document.getElementById('kpiUsersSub').textContent = d.totals.usersThisMonth + ' nuevos este mes';
+      document.getElementById('kpiBooks').textContent = d.totals.totalBooks;
+      document.getElementById('kpiBooksSub').textContent = d.totals.activeBooks + ' activos · ' + d.totals.booksThisMonth + ' subidos este mes';
+
+      renderSalesChart(f);
+      renderPaymentMethodsChart(d.paymentMethods);
+      renderTopBooks(d.topBooks);
+      renderCategoriesChart(d.topCategories);
+      renderTopTags(d.topTags);
+      renderUsersByMonthChart(filterByYearMonth(d.usersByMonth, 'month'), f);
+      renderBooksByMonthChart(filterByYearMonth(d.booksByMonth, 'month'), f);
+      renderRecentSalesTable(d.recentSales);
+    }
+
+    // Ventas: si hay un mes específico seleccionado, mostramos por día (para
+    // ver el detalle diario dentro de ese mes); si no, mostramos por mes.
+    function renderSalesChart(f) {
+      var titleEl = document.getElementById('salesChartTitle');
+      var subEl = document.getElementById('salesChartSub');
+      var ctx = document.getElementById('chartSales');
+      destroyChart('sales');
+
+      var labels, values, isDaily = false;
+      if (f.month !== 'all') {
+        isDaily = true;
+        var rows = filterByYearMonth(dashboardData.salesByDay, 'date');
+        labels = rows.map(function (r) { return r.date.slice(8, 10) + '/' + r.date.slice(5, 7); });
+        values = rows.map(function (r) { return r.revenue; });
+        titleEl.textContent = 'Ventas por día';
+        subEl.textContent = 'Monto vendido (S/) día a día en el mes seleccionado.';
+      } else {
+        var monthRows = filterByYearMonth(dashboardData.salesByMonth, 'month');
+        labels = monthRows.map(function (r) { return monthLabel(r.month); });
+        values = monthRows.map(function (r) { return r.revenue; });
+        titleEl.textContent = 'Ventas a lo largo del año';
+        subEl.textContent = 'Monto vendido (S/) por mes, según el filtro seleccionado.';
+      }
+
+      if (labels.length === 0) {
+        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        return;
+      }
+
+      dashCharts.sales = new Chart(ctx, {
+        type: isDaily ? 'bar' : 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Ventas (S/)',
+            data: values,
+            borderColor: '#046C3B',
+            backgroundColor: isDaily ? 'rgba(4,108,59,0.75)' : 'rgba(4,108,59,0.12)',
+            fill: !isDaily,
+            tension: 0.3,
+            pointRadius: isDaily ? 0 : 3,
+            pointBackgroundColor: '#046C3B',
+            borderRadius: isDaily ? 4 : 0,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { callback: function (v) { return 'S/ ' + v; } } },
+          },
+        },
+      });
+    }
+
+    function renderPaymentMethodsChart(methods) {
+      var ctx = document.getElementById('chartPaymentMethods');
+      destroyChart('pm');
+      if (!methods || methods.length === 0) {
+        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        return;
+      }
+      var palette = ['#046C3B', '#0e9c5a', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6', '#EC4899'];
+      dashCharts.pm = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: methods.map(function (m) { return m.method; }),
+          datasets: [{
+            data: methods.map(function (m) { return m.count; }),
+            backgroundColor: methods.map(function (_, i) { return palette[i % palette.length]; }),
+            borderWidth: 2, borderColor: '#fff',
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+        },
+      });
+    }
+
+    function renderTopBooks(books) {
+      var el = document.getElementById('topBooksList');
+      if (!books || books.length === 0) {
+        el.innerHTML = '<div class="dash-empty">Aún no hay ventas confirmadas con libros identificados.</div>';
+        return;
+      }
+      var max = Math.max.apply(null, books.map(function (b) { return b.qty; }));
+      el.innerHTML = books.map(function (b, i) {
+        var pct = max > 0 ? Math.round((b.qty / max) * 100) : 0;
+        return '<div class="dash-list-row">' +
+          '<span class="rank">#' + (i + 1) + '</span>' +
+          '<span class="label" title="' + escapeAttr(b.title) + '">' + escapeAttr(b.title) + '</span>' +
+          '<span class="bar-track"><span class="bar-fill" style="width:' + pct + '%"></span></span>' +
+          '<span class="value">' + b.qty + ' uds</span>' +
+          '</div>';
+      }).join('');
+    }
+
+    function renderCategoriesChart(categories) {
+      var ctx = document.getElementById('chartCategories');
+      destroyChart('cat');
+      if (!categories || categories.length === 0) {
+        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        return;
+      }
+      dashCharts.cat = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: categories.map(function (c) { return c.category; }),
+          datasets: [{
+            label: 'Unidades vendidas',
+            data: categories.map(function (c) { return c.qty; }),
+            backgroundColor: '#046C3B',
+            borderRadius: 5,
+          }],
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+      });
+    }
+
+    function renderTopTags(tags) {
+      var el = document.getElementById('topTagsCloud');
+      if (!tags || tags.length === 0) {
+        el.innerHTML = '<div class="dash-empty">Aún no hay etiquetas vendidas para mostrar.</div>';
+        return;
+      }
+      el.innerHTML = tags.map(function (t) {
+        return '<span class="dash-tag-chip">' + escapeAttr(t.tag) + '<span class="n">' + t.qty + '</span></span>';
+      }).join('');
+    }
+
+    function renderUsersByMonthChart(rows, f) {
+      var ctx = document.getElementById('chartUsersByMonth');
+      destroyChart('users');
+      if (!rows || rows.length === 0) {
+        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        return;
+      }
+      dashCharts.users = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: rows.map(function (r) { return monthLabel(r.month); }),
+          datasets: [{ label: 'Usuarios nuevos', data: rows.map(function (r) { return r.count; }), backgroundColor: '#3B82F6', borderRadius: 5 }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+      });
+    }
+
+    function renderBooksByMonthChart(rows) {
+      var ctx = document.getElementById('chartBooksByMonth');
+      destroyChart('books');
+      if (!rows || rows.length === 0) {
+        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        return;
+      }
+      dashCharts.books = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: rows.map(function (r) { return monthLabel(r.month); }),
+          datasets: [{ label: 'Libros subidos', data: rows.map(function (r) { return r.count; }), backgroundColor: '#F59E0B', borderRadius: 5 }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+      });
+    }
+
+    function renderRecentSalesTable(sales) {
+      var el = document.getElementById('recentSalesTableArea');
+      if (!sales || sales.length === 0) {
+        el.innerHTML = '<div class="dash-empty">Aún no hay ventas confirmadas ("Pedido pagado").</div>';
+        return;
+      }
+      el.innerHTML =
+        '<table class="dash-table"><thead><tr>' +
+        '<th>Cliente</th><th>Correo</th><th>Fecha</th><th>Monto</th><th>Medio de pago</th><th>Factura</th>' +
+        '</tr></thead><tbody>' +
+        sales.map(function (s) {
+          return '<tr>' +
+            '<td>' + escapeAttr(s.customerName) + '</td>' +
+            '<td>' + escapeAttr(s.email) + '</td>' +
+            '<td>' + new Date(s.confirmedAt).toLocaleString('es-PE') + '</td>' +
+            '<td><strong style="color:#046C3B;">' + fmtMoney(s.amount) + '</strong></td>' +
+            '<td>' + escapeAttr(s.paymentMethod || '—') + '</td>' +
+            '<td>' + escapeAttr(s.invoiceNumber || '—') + '</td>' +
+            '</tr>';
+        }).join('') +
+        '</tbody></table>';
+    }
+
+    document.getElementById('dashFilterYear').addEventListener('change', renderDashboard);
+    document.getElementById('dashFilterMonth').addEventListener('change', renderDashboard);
+    document.getElementById('btnRefreshDash').addEventListener('click', loadDashboard);
+
+    // Meses del selector (independiente del año elegido).
+    (function populateMonthFilter() {
+      var sel = document.getElementById('dashFilterMonth');
+      MONTH_NAMES.forEach(function (name, i) {
+        var opt = document.createElement('option');
+        opt.value = String(i + 1).padStart(2, '0');
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+    })();
+
+    // Auto-actualización en tiempo real cada 30s mientras el dashboard esté visible,
+    // para reflejar sin recargar cuando otro admin marca un "Pedido pagado".
+    dashRefreshTimer = setInterval(function () {
+      if (dashboardView.classList.contains('active')) loadDashboard();
+    }, 30000);
   </script>
 
 </body>
