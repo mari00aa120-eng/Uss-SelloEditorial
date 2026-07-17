@@ -25,4 +25,14 @@ function requireCatalogAdmin(req, res, next) {
   return res.status(401).json({ ok: false, message: 'No autorizado.' });
 }
 
-module.exports = { requireUser, requireAdmin, requireCatalogAdmin };
+// Middleware que exige que la sesión tenga el flag de administrador de
+// BLOG verificado (correo + contraseña propios, distinto de /admin y de
+// /panel-catalogo). Se usa para proteger el CRUD de blog_reviews.
+function requireBlogAdmin(req, res, next) {
+  if (req.session && req.session.isBlogAdmin && req.session.blogAdminEmail) {
+    return next();
+  }
+  return res.status(401).json({ ok: false, message: 'No autorizado.' });
+}
+
+module.exports = { requireUser, requireAdmin, requireCatalogAdmin, requireBlogAdmin };

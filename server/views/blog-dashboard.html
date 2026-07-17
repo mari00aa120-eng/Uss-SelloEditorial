@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Blog | USS Sello Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+<style>
+  * { box-sizing: border-box; }
+  body { background: #f6f6f6; font-family: 'Inter', sans-serif; margin: 0; }
+
+  .cat-page { max-width: 1150px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ---------- Encabezado ---------- */
+  .cat-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+  .cat-header h1 { margin: 0 0 6px; font-size: 24px; }
+  .cat-header p { margin: 0; font-size: 13px; color: #777; max-width: 560px; }
+  .cat-header__actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .cat-header__actions button, .cat-header__actions a { border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13.5px; white-space: nowrap; }
+  .cat-btn-add { background: #046C3B; color: #fff; }
+  .cat-btn-add:hover { background: #035c31; }
+  .cat-btn-refresh { background: #fff; color: #1a1a1a; border: 1.5px solid #ddd !important; }
+  .cat-btn-refresh:hover { border-color: #046C3B !important; color: #046C3B; }
+  .cat-btn-logout { background: #1a1a1a; color: #fff; }
+  .cat-btn-logout:hover { background: #333; }
+
+  /* ---------- Tarjetas de estadísticas ---------- */
+  .cat-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .cat-stat-card { background: #fff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+  .cat-stat-card span { display: block; font-size: 12.5px; color: #777; margin-bottom: 6px; }
+  .cat-stat-card strong { font-size: 26px; }
+  .cat-stat-card small { display: block; font-size: 11.5px; color: #999; margin-top: 4px; }
+
+  /* ---------- Tabla de reseñas ---------- */
+  .cat-table-wrap { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
+  .cat-table-wrap h2 { font-size: 16px; margin: 0 0 4px; }
+  .cat-table-wrap p.hint { font-size: 12.5px; color: #888; margin: 0 0 14px; }
+  table.cat-table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 820px; }
+  table.cat-table th, table.cat-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  table.cat-table th { color: #777; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .02em; }
+  table.cat-table tr:last-child td { border-bottom: none; }
+
+  .cat-row-thumb { width: 44px; height: 60px; border-radius: 6px; background: #f1f1f1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .cat-row-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-row-thumb span { font-size: 9px; color: #aaa; text-align: center; }
+
+  .cat-row-title { font-weight: 700; color: #1a1a1a; margin: 0 0 2px; }
+  .cat-row-authors { font-size: 12px; color: #888; margin: 0; }
+  .cat-row-meta { font-size: 11.5px; color: #999; margin: 2px 0 0; }
+
+  .cat-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .cat-pill--green { background: #DCFCE7; color: #046C3B; }
+  .cat-pill--gray { background: #f1f1f1; color: #555; }
+
+  .cat-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cat-row-actions button { border: none; padding: 6px 10px; border-radius: 7px; font-size: 11.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .cat-btn-edit { background: #EFF6FF; color: #1D4ED8; }
+  .cat-btn-toggle { background: #FEF3C7; color: #92400E; }
+  .cat-btn-delete { background: #FEE2E2; color: #991B1B; }
+
+  .cat-empty-state { text-align: center; padding: 70px 20px; }
+  .cat-empty-state p { font-size: 14px; color: #888; margin: 0 0 18px; }
+  .cat-empty-state button { background: #046C3B; color: #fff; border: none; padding: 12px 22px; border-radius: 9px; font-weight: 700; font-size: 13.5px; cursor: pointer; }
+  .cat-empty-state button:hover { background: #035c31; }
+
+  .cat-loading { text-align: center; padding: 60px 20px; color: #999; font-size: 13.5px; }
+
+  /* ---------- Vista de formulario (Añadir / Editar reseña) ---------- */
+  .cat-form-page { background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 30px 34px 36px; max-width: 760px; margin: 0 auto; }
+  .cat-form-page__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  .cat-form-page__header h2 { margin: 0 0 4px; font-size: 20px; }
+  .cat-form-page__header p { margin: 0; font-size: 12.5px; color: #888; max-width: 480px; }
+  .cat-btn-back { background: #f1f1f1; color: #333; border: none; padding: 9px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .cat-btn-back:hover { background: #e6e6e6; }
+
+  .cat-field { margin-bottom: 14px; }
+  .cat-field label { display: block; font-size: 12.5px; font-weight: 700; color: #444; margin-bottom: 6px; }
+  .cat-field input[type="text"],
+  .cat-field input[type="number"],
+  .cat-field input[type="url"],
+  .cat-field select,
+  .cat-field textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 8px;
+    font-family: inherit; font-size: 13.3px; background: #fafafa;
+  }
+  .cat-field textarea { min-height: 70px; resize: vertical; }
+  .cat-field .hint { font-size: 11px; color: #999; margin-top: 4px; }
+
+  .cat-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .cat-section-title {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #046C3B;
+    font-weight: 800; margin: 22px 0 10px; padding-top: 14px; border-top: 1px solid #eee;
+  }
+  .cat-section-title:first-of-type { border-top: none; margin-top: 4px; padding-top: 0; }
+
+  /* Selector de libro del catálogo */
+  .cat-book-picker { border: 1.5px dashed #ddd; border-radius: 10px; padding: 12px; max-height: 260px; overflow-y: auto; background: #fafafa; }
+  .cat-book-picker__search { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 13px; margin-bottom: 10px; background: #fff; }
+  .cat-book-picker__item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; }
+  .cat-book-picker__item:hover { background: #eef7f1; }
+  .cat-book-picker__item.is-selected { background: #DCFCE7; }
+  .cat-book-picker__thumb { width: 34px; height: 46px; border-radius: 5px; background: #f1f1f1; flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .cat-book-picker__thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-book-picker__thumb span { font-size: 8px; color: #aaa; }
+  .cat-book-picker__title { font-size: 13px; font-weight: 700; color: #1a1a1a; margin: 0; }
+  .cat-book-picker__authors { font-size: 11.5px; color: #888; margin: 1px 0 0; }
+  .cat-book-picker__empty { text-align: center; font-size: 12.5px; color: #999; padding: 18px; }
+  .cat-selected-book { display: none; align-items: center; gap: 10px; background: #DCFCE7; border-radius: 10px; padding: 10px 12px; margin-top: 10px; }
+  .cat-selected-book.is-visible { display: flex; }
+  .cat-selected-book__text { flex: 1; }
+  .cat-selected-book__text strong { display: block; font-size: 13.5px; color: #046C3B; }
+  .cat-selected-book__text span { font-size: 11.5px; color: #046C3B; opacity: .85; }
+  .cat-selected-book button { background: #fff; color: #046C3B; border: none; border-radius: 7px; padding: 6px 10px; font-weight: 700; font-size: 11.5px; cursor: pointer; }
+
+  /* Imagen: preview + tabs URL / archivo */
+  .cat-image-preview {
+    width: 100%; height: 160px; border-radius: 10px; background: #f1f1f1;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    margin-bottom: 10px; border: 1px dashed #ddd;
+  }
+  .cat-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-image-preview span { font-size: 12px; color: #999; }
+
+  .cat-image-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .cat-image-tab {
+    flex: 1; text-align: center; padding: 8px 10px; border: 1.5px solid #ddd; border-radius: 8px;
+    font-size: 12.5px; font-weight: 700; color: #666; cursor: pointer; background: #fff;
+  }
+  .cat-image-tab.active { border-color: #046C3B; background: #DCFCE7; color: #046C3B; }
+  .cat-image-tab-panel { display: none; }
+  .cat-image-tab-panel.active { display: block; }
+
+  .cat-upload-dropzone {
+    border: 1.5px dashed #ccc; border-radius: 10px; padding: 18px; text-align: center;
+    background: #fafafa; cursor: pointer;
+  }
+  .cat-upload-dropzone:hover { border-color: #046C3B; background: #f3fbf6; }
+  .cat-upload-dropzone strong { display: block; font-size: 13px; color: #333; margin-bottom: 4px; }
+  .cat-upload-dropzone small { font-size: 11.5px; color: #999; }
+  .cat-upload-status { font-size: 12px; margin-top: 8px; text-align: center; display: none; }
+  .cat-upload-status.uploading { display: block; color: #046C3B; }
+  .cat-upload-status.error { display: block; color: #B91C1C; }
+  .cat-upload-status.success { display: block; color: #046C3B; }
+
+  /* Autores del libro (dinámicos) */
+  .cat-authors-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+  .cat-author-row { display: flex; gap: 6px; }
+  .cat-author-row input { flex: 1; }
+  .cat-author-row button { background: #FEE2E2; color: #991B1B; border: none; border-radius: 7px; padding: 0 10px; cursor: pointer; font-weight: 700; }
+  .cat-add-btn {
+    background: #f1f1f1; color: #333; border: 1px dashed #ccc; border-radius: 8px;
+    padding: 8px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; width: 100%;
+  }
+  .cat-add-btn:hover { background: #e9e9e9; }
+
+  /* "Sobre los Autores" (tarjetas con foto + nombre + descripción) */
+  .cat-about-author-card { border: 1px solid #eee; border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #fafafa; }
+  .cat-about-author-card__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .cat-about-author-card__head strong { font-size: 12.5px; color: #046C3B; text-transform: uppercase; letter-spacing: .03em; }
+  .cat-about-author-card__remove { background: #FEE2E2; color: #991B1B; border: none; border-radius: 7px; padding: 4px 9px; font-size: 11px; font-weight: 700; cursor: pointer; }
+  .cat-about-author-thumb { width: 100%; height: 100px; border-radius: 8px; background: #f1f1f1; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 8px; border: 1px dashed #ddd; }
+  .cat-about-author-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-about-author-thumb span { font-size: 11px; color: #999; }
+  .cat-about-author-upload { font-size: 11.5px; color: #046C3B; font-weight: 700; cursor: pointer; text-align: center; margin-bottom: 8px; }
+
+  .cat-form-actions { display: flex; gap: 10px; margin-top: 22px; }
+  .cat-form-actions button { flex: 1; border: none; padding: 12px; border-radius: 9px; font-weight: 700; cursor: pointer; font-size: 13.5px; }
+  .cat-btn-save { background: #046C3B; color: #fff; }
+  .cat-btn-save:disabled { opacity: .6; cursor: not-allowed; }
+  .cat-btn-clear { background: #eee; color: #444; }
+  .cat-form-msg {
+    font-size: 14px; margin-top: 12px; text-align: center; display: none;
+    padding: 10px 12px; border-radius: 8px; font-weight: 700;
+  }
+  .cat-form-msg.error { display: block; color: #B91C1C; background: #FEE2E2; border: 1px solid #FCA5A5; }
+  .cat-form-msg.success { display: block; color: #046C3B; background: #DCFCE7; border: 1px solid #86EFAC; }
+
+  .cat-field.has-error input,
+  .cat-field.has-error select,
+  .cat-field.has-error textarea {
+    border-color: #B91C1C !important; background: #FEF2F2 !important;
+  }
+  .cat-field-error {
+    display: none; font-size: 11.5px; color: #B91C1C; font-weight: 700; margin-top: 4px;
+  }
+  .cat-field.has-error .cat-field-error { display: block; }
+
+  .cat-view { display: none; }
+  .cat-view.active { display: block; }
+
+  @media (max-width: 700px) {
+    .cat-row2 { grid-template-columns: 1fr; }
+    .cat-form-page { padding: 24px 18px 30px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="cat-page">
+
+    <!-- ============ VISTA 1: LISTADO EN TABLA ============ -->
+    <section class="cat-view active" id="listView">
+      <div class="cat-header">
+        <div>
+          <h1>Reseñas del Blog</h1>
+          <p>Las 4 reseñas más recientes aparecen en el carrusel de Blog.html. Oculta una reseña para quitarla sin borrarla, o elimínala definitivamente.</p>
+        </div>
+        <div class="cat-header__actions">
+          <a href="/admin" class="cat-btn-refresh" style="text-decoration:none; display:inline-flex; align-items:center;">📊 Ver dashboard</a>
+          <button type="button" class="cat-btn-add" id="btnAddReview">+ Nueva reseña</button>
+          <button type="button" class="cat-btn-refresh" id="btnRefresh">⟳ Refrescar</button>
+          <button type="button" class="cat-btn-logout" id="btnLogout">Cerrar sesión</button>
+        </div>
+      </div>
+
+      <div class="cat-stats">
+        <div class="cat-stat-card">
+          <span>Reseñas activas</span>
+          <strong id="statActive">–</strong>
+        </div>
+        <div class="cat-stat-card">
+          <span>Reseñas ocultas</span>
+          <strong id="statInactive">–</strong>
+        </div>
+        <div class="cat-stat-card">
+          <span>Total en el sistema</span>
+          <strong id="statTotal">–</strong>
+        </div>
+      </div>
+
+      <div class="cat-table-wrap">
+        <h2>Reseñas registradas</h2>
+        <p class="hint">Edita, oculta o elimina cualquier reseña. Los cambios se reflejan de inmediato en Blog.html y en la página de detalle.</p>
+        <div id="reviewsTableArea">
+          <div class="cat-loading">Cargando reseñas...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA 2: FORMULARIO (Añadir / Editar reseña) ============ -->
+    <section class="cat-view" id="formView">
+      <div class="cat-form-page">
+        <div class="cat-form-page__header">
+          <div>
+            <h2 id="formTitle">Nueva reseña</h2>
+            <p>Elige un libro del catálogo y completa el contenido de su página de reseña.</p>
+          </div>
+          <button type="button" class="cat-btn-back" id="btnBackToList">← Volver al listado</button>
+        </div>
+
+        <form id="reviewForm" novalidate>
+          <input type="hidden" id="reviewId" value="">
+          <input type="hidden" id="fieldCatalogBookId" value="">
+
+          <div class="cat-section-title">1. Elige el libro del catálogo</div>
+
+          <div class="cat-field" id="fieldWrapBookPicker">
+            <label>Libro a reseñar *</label>
+            <div class="cat-book-picker">
+              <input type="text" class="cat-book-picker__search" id="bookPickerSearch" placeholder="Buscar libro por título o autor...">
+              <div id="bookPickerList"><div class="cat-book-picker__empty">Cargando catálogo...</div></div>
+            </div>
+            <div class="cat-selected-book" id="selectedBookBox">
+              <div class="cat-selected-book__text">
+                <strong id="selectedBookTitle"></strong>
+                <span id="selectedBookAuthors"></span>
+              </div>
+              <button type="button" id="btnClearSelectedBook">Quitar</button>
+            </div>
+            <div class="cat-field-error" id="errorBookPicker">Debes seleccionar un libro del catálogo.</div>
+            <p class="hint">Al elegir el libro, el título y los autores se completan automáticamente. También puedes ajustarlos abajo si lo necesitas.</p>
+          </div>
+
+          <div class="cat-section-title">2. Título y autores de la reseña</div>
+
+          <div class="cat-field" id="fieldWrapTitle">
+            <label for="fieldBookTitle">Título del libro *</label>
+            <input type="text" id="fieldBookTitle" placeholder="Se completa al elegir el libro" required>
+            <div class="cat-field-error" id="errorTitle">El título es obligatorio.</div>
+          </div>
+
+          <div class="cat-field" id="fieldWrapAuthors">
+            <label>Autores * (se muestra como "Autor: ...")</label>
+            <div class="cat-authors-list" id="authorsList"></div>
+            <button type="button" class="cat-add-btn" id="btnAddAuthor">+ Añadir autor</button>
+            <div class="cat-field-error" id="errorAuthors">Ingresa al menos un autor.</div>
+          </div>
+
+          <div class="cat-row2">
+            <div class="cat-field">
+              <label for="fieldCategory">Categoría / etiqueta (ej: Arqueología)</label>
+              <input type="text" id="fieldCategory" placeholder="Arqueología">
+            </div>
+            <div class="cat-field">
+              <label for="fieldCountry">País del autor</label>
+              <input type="text" id="fieldCountry" placeholder="Perú" value="Perú">
+            </div>
+          </div>
+          <p class="hint" style="margin-top:-6px;">La fecha se llena sola con el día en que publiques esta reseña (ej: "15 Marzo 2026 • Arqueología").</p>
+
+          <div class="cat-section-title">3. Imagen de Testimonio</div>
+
+          <div class="cat-field">
+            <label>Fotografía que se ve al fondo del botón "Testimonio"</label>
+            <div class="cat-image-preview" id="imagePreview"><span>Sin imagen</span></div>
+
+            <div class="cat-image-tabs">
+              <div class="cat-image-tab active" id="tabUrl" data-tab="url">Pegar URL</div>
+              <div class="cat-image-tab" id="tabUpload" data-tab="upload">Subir desde mi computador</div>
+            </div>
+
+            <div class="cat-image-tab-panel active" id="panelUrl">
+              <input type="text" id="fieldImageUrl" placeholder="https://... o assets/mi-imagen.png">
+            </div>
+
+            <div class="cat-image-tab-panel" id="panelUpload">
+              <div class="cat-upload-dropzone" id="uploadDropzone">
+                <strong>Haz clic para elegir una imagen</strong>
+                <small>Admite PNG, JPG, WEBP o SVG · máx. 5 MB</small>
+              </div>
+              <input type="file" id="fieldImageFile" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml" style="display:none;">
+              <p class="cat-upload-status" id="uploadStatus"></p>
+            </div>
+          </div>
+
+          <div class="cat-section-title">4. Reseña, cita destacada y palabras clave</div>
+
+          <div class="cat-field">
+            <label for="fieldReviewText">Texto de la reseña (cuerpo del artículo)</label>
+            <textarea id="fieldReviewText" placeholder="Escribe la reseña completa del libro..." style="min-height:120px;"></textarea>
+          </div>
+
+          <div class="cat-field">
+            <label for="fieldQuoteText">Cita destacada (se muestra en comillas grandes)</label>
+            <textarea id="fieldQuoteText" placeholder='Ej: "Lorem ipsum dolor sit amet..."'></textarea>
+          </div>
+
+          <div class="cat-field">
+            <label for="fieldKeywords">Palabras clave (separadas por coma)</label>
+            <textarea id="fieldKeywords" placeholder="Sipán, Arqueólogos, Peruanos, Saqueo, Mochica..."></textarea>
+          </div>
+
+          <div class="cat-section-title">5. Invitación del autor a opinar</div>
+
+          <div class="cat-row2">
+            <div class="cat-field">
+              <label for="fieldAuthorName">Nombre a mostrar (ej: "Walter")</label>
+              <input type="text" id="fieldAuthorName" placeholder="Se completa con el primer autor">
+            </div>
+          </div>
+          <div class="cat-field">
+            <label for="fieldAuthorInvite">Mensaje invitando a opinar</label>
+            <textarea id="fieldAuthorInvite" placeholder="Me encantaría conocer tu opinión detallada sobre esta obra..."></textarea>
+          </div>
+
+          <div class="cat-section-title">6. Sobre los Autores (foto + descripción de cada uno)</div>
+          <p class="hint" style="margin-top:-6px; margin-bottom:10px;">Se muestra en la tarjeta lateral "Sobre los Autores" de la reseña.</p>
+
+          <div id="aboutAuthorsList"></div>
+          <button type="button" class="cat-add-btn" id="btnAddAboutAuthor">+ Añadir autor a "Sobre los Autores"</button>
+
+          <div class="cat-form-actions">
+            <button type="button" class="cat-btn-clear" id="btnCancelForm">Cancelar</button>
+            <button type="submit" class="cat-btn-save" id="btnSaveReview">Publicar reseña</button>
+          </div>
+          <p class="cat-form-msg" id="formMsg"></p>
+        </form>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    (function () {
+      var listView = document.getElementById('listView');
+      var formView = document.getElementById('formView');
+      var reviewsTableArea = document.getElementById('reviewsTableArea');
+      var statActive = document.getElementById('statActive');
+      var statInactive = document.getElementById('statInactive');
+      var statTotal = document.getElementById('statTotal');
+
+      var allReviews = [];
+      var catalogBooks = [];
+      var selectedBook = null;
+      var uploadedTestimonialUrl = '';
+      var aboutAuthors = []; // { name, description, imageUrl }
+
+      // ---------------------------------------------------------------
+      // Utilidades
+      // ---------------------------------------------------------------
+      function escapeHTML(str) {
+        var div = document.createElement('div');
+        div.textContent = str == null ? '' : str;
+        return div.innerHTML;
+      }
+
+      function showView(view) {
+        [listView, formView].forEach(function (v) { v.classList.toggle('active', v === view); });
+      }
+
+      function apiFetch(url, options) {
+        options = options || {};
+        options.headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+        return fetch(url, options).then(function (r) {
+          return r.json().then(function (data) { return { status: r.status, data: data }; });
+        });
+      }
+
+      // ---------------------------------------------------------------
+      // Cerrar sesión
+      // ---------------------------------------------------------------
+      document.getElementById('btnLogout').addEventListener('click', function () {
+        apiFetch('/api/blog/auth/logout', { method: 'POST' }).finally(function () {
+          window.location.href = '/blog-admin-login.html';
+        });
+      });
+
+      // ---------------------------------------------------------------
+      // Listado de reseñas
+      // ---------------------------------------------------------------
+      function loadReviews() {
+        reviewsTableArea.innerHTML = '<div class="cat-loading">Cargando reseñas...</div>';
+        apiFetch('/api/blog/admin/reviews').then(function (res) {
+          if (!res.data.ok) {
+            reviewsTableArea.innerHTML = '<div class="cat-loading">No se pudieron cargar las reseñas.</div>';
+            return;
+          }
+          allReviews = res.data.reviews;
+          renderStats();
+          renderTable();
+        });
+      }
+
+      function renderStats() {
+        var active = allReviews.filter(function (r) { return r.isActive; }).length;
+        statActive.textContent = active;
+        statInactive.textContent = allReviews.length - active;
+        statTotal.textContent = allReviews.length;
+      }
+
+      function renderTable() {
+        if (allReviews.length === 0) {
+          reviewsTableArea.innerHTML =
+            '<div class="cat-empty-state"><p>Todavía no has publicado ninguna reseña.</p>' +
+            '<button type="button" id="btnEmptyAdd">+ Crear la primera reseña</button></div>';
+          document.getElementById('btnEmptyAdd').addEventListener('click', openNewReviewForm);
+          return;
+        }
+
+        var html = '<table class="cat-table"><thead><tr>' +
+          '<th>Libro</th><th>Categoría</th><th>Calificación</th><th>Comentarios</th><th>Estado</th><th>Acciones</th>' +
+          '</tr></thead><tbody>';
+
+        allReviews.forEach(function (r) {
+          var authorsText = (r.bookAuthors || []).join(', ');
+          html += '<tr>';
+          html += '<td><div style="display:flex; align-items:center; gap:10px;">';
+          html += '<div class="cat-row-thumb">' + (r.testimonialImageUrl ? '<img src="' + escapeHTML(r.testimonialImageUrl) + '" alt="">' : '<span>Sin imagen</span>') + '</div>';
+          html += '<div><p class="cat-row-title">' + escapeHTML(r.bookTitle) + '</p><p class="cat-row-authors">' + escapeHTML(authorsText) + '</p><p class="cat-row-meta">' + escapeHTML(r.dateLabel) + '</p></div>';
+          html += '</div></td>';
+          html += '<td>' + escapeHTML(r.category || '—') + '</td>';
+          html += '<td>' + (r.ratingCount > 0 ? '★ ' + r.avgRating.toFixed(1) + ' (' + r.ratingCount + ')' : 'Sin calificar') + '</td>';
+          html += '<td>' + r.commentCount + '</td>';
+          html += '<td>' + (r.isActive ? '<span class="cat-pill cat-pill--green">Activa</span>' : '<span class="cat-pill cat-pill--gray">Oculta</span>') + '</td>';
+          html += '<td><div class="cat-row-actions">';
+          html += '<button type="button" class="cat-btn-edit" data-edit="' + r.id + '">Editar</button>';
+          html += '<button type="button" class="cat-btn-toggle" data-toggle="' + r.id + '">' + (r.isActive ? 'Ocultar' : 'Activar') + '</button>';
+          html += '<button type="button" class="cat-btn-delete" data-delete="' + r.id + '">Eliminar</button>';
+          html += '</div></td>';
+          html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        reviewsTableArea.innerHTML = html;
+
+        reviewsTableArea.querySelectorAll('[data-edit]').forEach(function (btn) {
+          btn.addEventListener('click', function () { openEditReviewForm(btn.getAttribute('data-edit')); });
+        });
+        reviewsTableArea.querySelectorAll('[data-toggle]').forEach(function (btn) {
+          btn.addEventListener('click', function () { toggleReview(btn.getAttribute('data-toggle')); });
+        });
+        reviewsTableArea.querySelectorAll('[data-delete]').forEach(function (btn) {
+          btn.addEventListener('click', function () { deleteReview(btn.getAttribute('data-delete')); });
+        });
+      }
+
+      function toggleReview(id) {
+        apiFetch('/api/blog/admin/reviews/' + id + '/toggle', { method: 'PATCH' }).then(function (res) {
+          if (res.data.ok) loadReviews();
+          else alert(res.data.message || 'No se pudo cambiar el estado.');
+        });
+      }
+
+      function deleteReview(id) {
+        if (!confirm('¿Eliminar esta reseña definitivamente? Esta acción no se puede deshacer.')) return;
+        apiFetch('/api/blog/admin/reviews/' + id, { method: 'DELETE' }).then(function (res) {
+          if (res.data.ok) loadReviews();
+          else alert(res.data.message || 'No se pudo eliminar la reseña.');
+        });
+      }
+
+      document.getElementById('btnAddReview').addEventListener('click', openNewReviewForm);
+      document.getElementById('btnRefresh').addEventListener('click', loadReviews);
+      document.getElementById('btnBackToList').addEventListener('click', function () { showView(listView); });
+      document.getElementById('btnCancelForm').addEventListener('click', function (e) { e.preventDefault(); showView(listView); });
+
+      // ---------------------------------------------------------------
+      // Selector de libro del catálogo
+      // ---------------------------------------------------------------
+      var bookPickerList = document.getElementById('bookPickerList');
+      var bookPickerSearch = document.getElementById('bookPickerSearch');
+      var selectedBookBox = document.getElementById('selectedBookBox');
+      var selectedBookTitle = document.getElementById('selectedBookTitle');
+      var selectedBookAuthors = document.getElementById('selectedBookAuthors');
+
+      function loadCatalogBooks() {
+        apiFetch('/api/catalog/admin/books').then(function (res) {
+          if (res.data.ok) {
+            catalogBooks = res.data.books;
+          } else {
+            // Sin sesión de catálogo: intenta el endpoint público (solo libros activos)
+            return apiFetch('/api/catalog/books').then(function (r2) {
+              if (r2.data.ok) catalogBooks = r2.data.books;
+            });
+          }
+        }).finally(renderBookPicker);
+      }
+
+      function renderBookPicker() {
+        var q = bookPickerSearch.value.trim().toLowerCase();
+        var filtered = catalogBooks.filter(function (b) {
+          if (!q) return true;
+          var hay = (b.title + ' ' + (b.authors || []).join(' ')).toLowerCase();
+          return hay.indexOf(q) !== -1;
+        });
+
+        if (filtered.length === 0) {
+          bookPickerList.innerHTML = '<div class="cat-book-picker__empty">No se encontraron libros en el catálogo.</div>';
+          return;
+        }
+
+        bookPickerList.innerHTML = filtered.map(function (b) {
+          var selectedClass = selectedBook && selectedBook.id === b.id ? ' is-selected' : '';
+          return '<div class="cat-book-picker__item' + selectedClass + '" data-book-id="' + b.id + '">' +
+            '<div class="cat-book-picker__thumb">' + (b.imageUrl ? '<img src="' + escapeHTML(b.imageUrl) + '" alt="">' : '<span>Sin<br>imagen</span>') + '</div>' +
+            '<div><p class="cat-book-picker__title">' + escapeHTML(b.title) + '</p><p class="cat-book-picker__authors">' + escapeHTML((b.authors || []).join(', ')) + '</p></div>' +
+            '</div>';
+        }).join('');
+
+        bookPickerList.querySelectorAll('[data-book-id]').forEach(function (item) {
+          item.addEventListener('click', function () {
+            var id = Number(item.getAttribute('data-book-id'));
+            var book = catalogBooks.find(function (b) { return b.id === id; });
+            if (book) selectBook(book);
+          });
+        });
+      }
+
+      function selectBook(book) {
+        selectedBook = book;
+        document.getElementById('fieldCatalogBookId').value = book.id;
+        selectedBookTitle.textContent = book.title;
+        selectedBookAuthors.textContent = (book.authors || []).join(', ');
+        selectedBookBox.classList.add('is-visible');
+        document.getElementById('fieldWrapBookPicker').classList.remove('has-error');
+
+        // Autocompleta título y autores (editable después)
+        document.getElementById('fieldBookTitle').value = book.title;
+        setAuthorsList(book.authors && book.authors.length ? book.authors : ['']);
+        if (!document.getElementById('fieldAuthorName').value) {
+          document.getElementById('fieldAuthorName').value = (book.authors || [])[0] || '';
+        }
+        if (!document.getElementById('fieldCategory').value && book.category) {
+          document.getElementById('fieldCategory').value = book.category;
+        }
+        if (!document.getElementById('fieldKeywords').value && book.tags && book.tags.length) {
+          document.getElementById('fieldKeywords').value = book.tags.join(', ');
+        }
+        renderBookPicker();
+      }
+
+      document.getElementById('btnClearSelectedBook').addEventListener('click', function () {
+        selectedBook = null;
+        document.getElementById('fieldCatalogBookId').value = '';
+        selectedBookBox.classList.remove('is-visible');
+        renderBookPicker();
+      });
+
+      bookPickerSearch.addEventListener('input', renderBookPicker);
+
+      // ---------------------------------------------------------------
+      // Autores del libro (lista dinámica)
+      // ---------------------------------------------------------------
+      var authorsList = document.getElementById('authorsList');
+
+      function setAuthorsList(authors) {
+        authorsList.innerHTML = '';
+        (authors.length ? authors : ['']).forEach(addAuthorRow);
+      }
+
+      function addAuthorRow(value) {
+        var row = document.createElement('div');
+        row.className = 'cat-author-row';
+        row.innerHTML = '<input type="text" placeholder="Nombre del autor" value="' + escapeHTML(value || '') + '">' +
+          '<button type="button" title="Quitar">✕</button>';
+        row.querySelector('button').addEventListener('click', function () {
+          if (authorsList.children.length > 1) row.remove();
+        });
+        authorsList.appendChild(row);
+      }
+
+      document.getElementById('btnAddAuthor').addEventListener('click', function () { addAuthorRow(''); });
+
+      function getAuthorsValues() {
+        return Array.prototype.slice.call(authorsList.querySelectorAll('input'))
+          .map(function (i) { return i.value.trim(); })
+          .filter(Boolean);
+      }
+
+      // ---------------------------------------------------------------
+      // Imagen de testimonio: tabs URL / archivo
+      // ---------------------------------------------------------------
+      var imagePreview = document.getElementById('imagePreview');
+      var fieldImageUrl = document.getElementById('fieldImageUrl');
+      var tabUrl = document.getElementById('tabUrl');
+      var tabUpload = document.getElementById('tabUpload');
+      var panelUrl = document.getElementById('panelUrl');
+      var panelUpload = document.getElementById('panelUpload');
+      var uploadDropzone = document.getElementById('uploadDropzone');
+      var fieldImageFile = document.getElementById('fieldImageFile');
+      var uploadStatus = document.getElementById('uploadStatus');
+
+      function setTab(tab) {
+        var isUrl = tab === 'url';
+        tabUrl.classList.toggle('active', isUrl);
+        tabUpload.classList.toggle('active', !isUrl);
+        panelUrl.classList.toggle('active', isUrl);
+        panelUpload.classList.toggle('active', !isUrl);
+      }
+      tabUrl.addEventListener('click', function () { setTab('url'); });
+      tabUpload.addEventListener('click', function () { setTab('upload'); });
+
+      function updatePreview() {
+        var url = uploadedTestimonialUrl || fieldImageUrl.value.trim();
+        if (url) {
+          imagePreview.innerHTML = '<img src="' + escapeHTML(url) + '" alt="">';
+        } else {
+          imagePreview.innerHTML = '<span>Sin imagen</span>';
+        }
+      }
+      fieldImageUrl.addEventListener('input', function () { uploadedTestimonialUrl = ''; updatePreview(); });
+
+      uploadDropzone.addEventListener('click', function () { fieldImageFile.click(); });
+      fieldImageFile.addEventListener('change', function () {
+        var file = fieldImageFile.files[0];
+        if (!file) return;
+        uploadStatus.className = 'cat-upload-status uploading';
+        uploadStatus.textContent = 'Subiendo imagen...';
+
+        var formData = new FormData();
+        formData.append('image', file);
+
+        fetch('/api/blog/admin/upload-image', { method: 'POST', body: formData })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.ok) {
+              uploadedTestimonialUrl = data.url;
+              fieldImageUrl.value = '';
+              updatePreview();
+              uploadStatus.className = 'cat-upload-status success';
+              uploadStatus.textContent = 'Imagen subida correctamente.';
+            } else {
+              uploadStatus.className = 'cat-upload-status error';
+              uploadStatus.textContent = data.message || 'No se pudo subir la imagen.';
+            }
+          })
+          .catch(function () {
+            uploadStatus.className = 'cat-upload-status error';
+            uploadStatus.textContent = 'Error de conexión al subir la imagen.';
+          });
+      });
+
+      // ---------------------------------------------------------------
+      // "Sobre los Autores" (tarjetas dinámicas con foto + descripción)
+      // ---------------------------------------------------------------
+      var aboutAuthorsListEl = document.getElementById('aboutAuthorsList');
+
+      function setAboutAuthors(list) {
+        aboutAuthors = (list && list.length) ? list.map(function (a) {
+          return { name: a.name || '', description: a.description || '', imageUrl: a.imageUrl || '' };
+        }) : [{ name: '', description: '', imageUrl: '' }];
+        renderAboutAuthors();
+      }
+
+      function renderAboutAuthors() {
+        aboutAuthorsListEl.innerHTML = '';
+        aboutAuthors.forEach(function (author, index) {
+          var card = document.createElement('div');
+          card.className = 'cat-about-author-card';
+          card.innerHTML =
+            '<div class="cat-about-author-card__head"><strong>Autor ' + (index + 1) + '</strong>' +
+            (aboutAuthors.length > 1 ? '<button type="button" class="cat-about-author-card__remove">Quitar</button>' : '') +
+            '</div>' +
+            '<div class="cat-about-author-thumb" data-thumb>' + (author.imageUrl ? '<img src="' + escapeHTML(author.imageUrl) + '" alt="">' : '<span>Sin foto</span>') + '</div>' +
+            '<div class="cat-about-author-upload" data-upload-trigger>📷 Subir / cambiar foto</div>' +
+            '<input type="file" data-file-input accept=".png,.jpg,.jpeg,.webp,.svg,image/*" style="display:none;">' +
+            '<div class="cat-field" style="margin-bottom:8px;"><input type="text" data-name placeholder="Nombre (ej: Walter)" value="' + escapeHTML(author.name) + '"></div>' +
+            '<div class="cat-field" style="margin-bottom:0;"><textarea data-description placeholder="Breve descripción del autor..." style="min-height:56px;">' + escapeHTML(author.description) + '</textarea></div>';
+
+          var removeBtn = card.querySelector('.cat-about-author-card__remove');
+          if (removeBtn) {
+            removeBtn.addEventListener('click', function () {
+              aboutAuthors.splice(index, 1);
+              renderAboutAuthors();
+            });
+          }
+
+          card.querySelector('[data-name]').addEventListener('input', function (e) { aboutAuthors[index].name = e.target.value; });
+          card.querySelector('[data-description]').addEventListener('input', function (e) { aboutAuthors[index].description = e.target.value; });
+
+          var fileInput = card.querySelector('[data-file-input]');
+          card.querySelector('[data-upload-trigger]').addEventListener('click', function () { fileInput.click(); });
+          fileInput.addEventListener('change', function () {
+            var file = fileInput.files[0];
+            if (!file) return;
+            var thumb = card.querySelector('[data-thumb]');
+            thumb.innerHTML = '<span>Subiendo...</span>';
+
+            var formData = new FormData();
+            formData.append('image', file);
+            fetch('/api/blog/admin/upload-image', { method: 'POST', body: formData })
+              .then(function (r) { return r.json(); })
+              .then(function (data) {
+                if (data.ok) {
+                  aboutAuthors[index].imageUrl = data.url;
+                  thumb.innerHTML = '<img src="' + escapeHTML(data.url) + '" alt="">';
+                } else {
+                  thumb.innerHTML = '<span>Error al subir</span>';
+                }
+              })
+              .catch(function () { thumb.innerHTML = '<span>Error al subir</span>'; });
+          });
+
+          aboutAuthorsListEl.appendChild(card);
+        });
+      }
+
+      document.getElementById('btnAddAboutAuthor').addEventListener('click', function () {
+        aboutAuthors.push({ name: '', description: '', imageUrl: '' });
+        renderAboutAuthors();
+      });
+
+      // ---------------------------------------------------------------
+      // Abrir formulario: nuevo / editar
+      // ---------------------------------------------------------------
+      var reviewForm = document.getElementById('reviewForm');
+      var formMsg = document.getElementById('formMsg');
+      var btnSaveReview = document.getElementById('btnSaveReview');
+
+      function clearFormErrors() {
+        document.querySelectorAll('.cat-field.has-error').forEach(function (el) { el.classList.remove('has-error'); });
+        formMsg.className = 'cat-form-msg';
+        formMsg.textContent = '';
+      }
+
+      function resetForm() {
+        clearFormErrors();
+        reviewForm.reset();
+        document.getElementById('reviewId').value = '';
+        document.getElementById('fieldCatalogBookId').value = '';
+        document.getElementById('fieldCountry').value = 'Perú';
+        selectedBook = null;
+        selectedBookBox.classList.remove('is-visible');
+        uploadedTestimonialUrl = '';
+        uploadStatus.className = 'cat-upload-status';
+        uploadStatus.textContent = '';
+        setTab('url');
+        updatePreview();
+        setAuthorsList(['']);
+        setAboutAuthors([{ name: '', description: '', imageUrl: '' }]);
+        renderBookPicker();
+      }
+
+      function openNewReviewForm() {
+        resetForm();
+        document.getElementById('formTitle').textContent = 'Nueva reseña';
+        btnSaveReview.textContent = 'Publicar reseña';
+        showView(formView);
+      }
+
+      function openEditReviewForm(id) {
+        var review = allReviews.find(function (r) { return String(r.id) === String(id); });
+        if (!review) return;
+        resetForm();
+
+        document.getElementById('formTitle').textContent = 'Editar reseña';
+        btnSaveReview.textContent = 'Guardar cambios';
+        document.getElementById('reviewId').value = review.id;
+        document.getElementById('fieldCatalogBookId').value = review.catalogBookId || '';
+        document.getElementById('fieldBookTitle').value = review.bookTitle || '';
+        setAuthorsList(review.bookAuthors && review.bookAuthors.length ? review.bookAuthors : ['']);
+        document.getElementById('fieldCategory').value = review.category || '';
+        document.getElementById('fieldCountry').value = review.country || 'Perú';
+        document.getElementById('fieldImageUrl').value = review.testimonialImageUrl || '';
+        document.getElementById('fieldReviewText').value = review.reviewText || '';
+        document.getElementById('fieldQuoteText').value = review.quoteText || '';
+        document.getElementById('fieldKeywords').value = review.keywords || '';
+        document.getElementById('fieldAuthorName').value = review.authorName || '';
+        document.getElementById('fieldAuthorInvite').value = review.authorInviteText || '';
+        setAboutAuthors(review.authorsAbout && review.authorsAbout.length ? review.authorsAbout : [{ name: '', description: '', imageUrl: '' }]);
+        updatePreview();
+
+        if (review.catalogBookId) {
+          var book = catalogBooks.find(function (b) { return b.id === review.catalogBookId; });
+          if (book) {
+            selectedBook = book;
+            selectedBookTitle.textContent = book.title;
+            selectedBookAuthors.textContent = (book.authors || []).join(', ');
+            selectedBookBox.classList.add('is-visible');
+          }
+        }
+        renderBookPicker();
+
+        showView(formView);
+      }
+
+      // ---------------------------------------------------------------
+      // Guardar (crear o editar)
+      // ---------------------------------------------------------------
+      reviewForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        clearFormErrors();
+
+        var id = document.getElementById('reviewId').value;
+        var bookTitle = document.getElementById('fieldBookTitle').value.trim();
+        var authors = getAuthorsValues();
+        var catalogBookId = document.getElementById('fieldCatalogBookId').value || null;
+
+        var hasError = false;
+        if (!catalogBookId) {
+          document.getElementById('fieldWrapBookPicker').classList.add('has-error');
+          hasError = true;
+        }
+        if (!bookTitle) {
+          document.getElementById('fieldWrapTitle').classList.add('has-error');
+          hasError = true;
+        }
+        if (authors.length === 0) {
+          document.getElementById('fieldWrapAuthors').classList.add('has-error');
+          hasError = true;
+        }
+        if (hasError) {
+          formMsg.className = 'cat-form-msg error';
+          formMsg.textContent = 'Revisa los campos marcados en rojo.';
+          return;
+        }
+
+        var payload = {
+          catalogBookId: catalogBookId,
+          bookTitle: bookTitle,
+          bookAuthors: authors,
+          category: document.getElementById('fieldCategory').value.trim(),
+          country: document.getElementById('fieldCountry').value.trim() || 'Perú',
+          testimonialImageUrl: uploadedTestimonialUrl || document.getElementById('fieldImageUrl').value.trim(),
+          reviewText: document.getElementById('fieldReviewText').value.trim(),
+          quoteText: document.getElementById('fieldQuoteText').value.trim(),
+          keywords: document.getElementById('fieldKeywords').value.trim(),
+          authorName: document.getElementById('fieldAuthorName').value.trim() || authors[0],
+          authorInviteText: document.getElementById('fieldAuthorInvite').value.trim(),
+          authorsAbout: aboutAuthors.filter(function (a) { return a.name || a.description; }),
+        };
+
+        btnSaveReview.disabled = true;
+        btnSaveReview.textContent = 'Guardando...';
+
+        var url = id ? '/api/blog/admin/reviews/' + id : '/api/blog/admin/reviews';
+        var method = id ? 'PUT' : 'POST';
+
+        apiFetch(url, { method: method, body: JSON.stringify(payload) }).then(function (res) {
+          if (res.data.ok) {
+            formMsg.className = 'cat-form-msg success';
+            formMsg.textContent = id ? 'Reseña actualizada correctamente.' : 'Reseña publicada correctamente.';
+            loadReviews();
+            setTimeout(function () { showView(listView); }, 700);
+          } else {
+            formMsg.className = 'cat-form-msg error';
+            formMsg.textContent = res.data.message || 'No se pudo guardar la reseña.';
+          }
+        }).catch(function () {
+          formMsg.className = 'cat-form-msg error';
+          formMsg.textContent = 'Error de conexión con el servidor.';
+        }).finally(function () {
+          btnSaveReview.disabled = false;
+          btnSaveReview.textContent = id ? 'Guardar cambios' : 'Publicar reseña';
+        });
+      });
+
+      // ---------------------------------------------------------------
+      // Inicio
+      // ---------------------------------------------------------------
+      setAuthorsList(['']);
+      setAboutAuthors([{ name: '', description: '', imageUrl: '' }]);
+      loadCatalogBooks();
+      loadReviews();
+    })();
+  </script>
+
+  <script src="/assets/js/session.js"></script>
+  <script src="/assets/js/account-panel.js"></script>
+</body>
+</html>

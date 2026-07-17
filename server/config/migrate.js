@@ -123,6 +123,105 @@ async function runMigrations() {
     );
   }
 
+  // ---------------------------------------------------------------------
+  // Panel de Blog (reseñas) - acceso separado de /admin y de /panel-catalogo.
+  // Solo correos incluidos en BLOG_ADMIN_EMAILS pueden crear su contraseña
+  // y entrar a /panel-blog para publicar reseñas.
+  // ---------------------------------------------------------------------
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS blog_admins (
+        id               SERIAL PRIMARY KEY,
+        email            VARCHAR(255) NOT NULL UNIQUE,
+        password_hash    VARCHAR(255),
+        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  const blogAuthorizedEmails = (process.env.BLOG_ADMIN_EMAILS || 'isabellacastrocamacho117@outlook.com')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  for (const email of blogAuthorizedEmails) {
+    await pool.query(
+      `INSERT INTO blog_admins (email) VALUES ($1) ON CONFLICT (email) DO NOTHING`,
+      [email]
+    );
+  }
+
+  // Reseñas del blog. Cada una corresponde a un libro del catálogo
+  // (catalog_book_id) y contiene todo el contenido de la página de detalle
+  // (resenaSipan.html original, ahora genérica para cualquier libro).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS blog_reviews (
+        id                    SERIAL PRIMARY KEY,
+        catalog_book_id       INTEGER REFERENCES catalog_books(id) ON DELETE SET NULL,
+        book_title            VARCHAR(500) NOT NULL,
+        book_authors          JSONB NOT NULL DEFAULT '[]',
+        slug                  VARCHAR(600),
+        category              VARCHAR(150),
+        review_text           TEXT,
+        quote_text            TEXT,
+        keywords              TEXT,
+        testimonial_image_url TEXT,
+        author_name           VARCHAR(255),
+        author_invite_text    TEXT,
+        authors_about         JSONB NOT NULL DEFAULT '[]',
+        country               VARCHAR(120) NOT NULL DEFAULT 'Perú',
+        is_active             BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_blog_reviews_active ON blog_reviews (is_active, created_at);
+  `);
+
+  // Comentarios públicos de cada reseña (cualquier visitante puede comentar,
+  // con o sin sesión iniciada, tal como en el resenaSipan.html original).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS blog_review_comments (
+        id            SERIAL PRIMARY KEY,
+        review_id     INTEGER NOT NULL REFERENCES blog_reviews(id) ON DELETE CASCADE,
+        parent_id     INTEGER REFERENCES blog_review_comments(id) ON DELETE CASCADE,
+        name          VARCHAR(120) NOT NULL,
+        text          TEXT NOT NULL,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_blog_review_comments_review ON blog_review_comments (review_id);
+  `);
+
+  // Calificación general del libro (estrellas arriba, junto al título).
+  // Un voto por "visitante" identificado por voter_key (guardado en localStorage
+  // del navegador), igual que el sistema anterior pero ahora compartido entre todos.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS blog_review_ratings (
+        id            SERIAL PRIMARY KEY,
+        review_id     INTEGER NOT NULL REFERENCES blog_reviews(id) ON DELETE CASCADE,
+        voter_key     VARCHAR(100) NOT NULL,
+        value         SMALLINT NOT NULL CHECK (value BETWEEN 1 AND 5),
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (review_id, voter_key)
+    );
+  `);
+
+  // Calificación por estrellas de cada comentario individual.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS blog_comment_ratings (
+        id            SERIAL PRIMARY KEY,
+        comment_id    INTEGER NOT NULL REFERENCES blog_review_comments(id) ON DELETE CASCADE,
+        voter_key     VARCHAR(100) NOT NULL,
+        value         SMALLINT NOT NULL CHECK (value BETWEEN 1 AND 5),
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (comment_id, voter_key)
+    );
+  `);
+
   console.log('[migrate] Esquema verificado/actualizado correctamente.');
 }
 

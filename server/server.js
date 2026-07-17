@@ -13,6 +13,7 @@ const cartRoutes = require('./routes/cart.routes');
 const adminRoutes = require('./routes/admin.routes');
 const ordersRoutes = require('./routes/orders.routes');
 const catalogRoutes = require('./routes/catalog.routes');
+const blogRoutes = require('./routes/blog.routes');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -51,6 +52,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/catalog', catalogRoutes);
+app.use('/api/blog', blogRoutes);
 
 // ------------------ Panel de administración (protegido) ------------------
 // El HTML del dashboard vive FUERA de /public para que nadie pueda acceder
@@ -70,6 +72,16 @@ app.get('/panel-catalogo', (req, res) => {
     return res.sendFile(path.join(__dirname, 'views', 'catalog-dashboard.html'));
   }
   return res.redirect('/catalog-admin-login.html');
+});
+
+// ------------------ Panel de gestión del Blog / Reseñas (protegido) ------------------
+// Acceso SEPARADO de /admin y de /panel-catalogo: usa su propia sesión
+// (isBlogAdmin) y su propio login por correo + contraseña (blog-admin-login.html).
+app.get('/panel-blog', (req, res) => {
+  if (req.session && req.session.isBlogAdmin && req.session.blogAdminEmail) {
+    return res.sendFile(path.join(__dirname, 'views', 'blog-dashboard.html'));
+  }
+  return res.redirect('/blog-admin-login.html');
 });
 
 // ------------------ Página raíz ------------------

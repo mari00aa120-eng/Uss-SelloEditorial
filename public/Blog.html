@@ -90,71 +90,8 @@
 
         <div class="blog-carousel__viewport">
           <div class="blog-carousel__track" id="blogCarouselTrack">
-
-            <!-- Libro 1 -->
-            <article class="blog-card blog-card--purple">
-              <div class="blog-card__text">
-                <h3 class="blog-card__title">Sipán, descubrimiento e investigación</h3>
-                <p class="blog-card__author">Autor: Alva, Walter</p>
-                <div class="blog-card__stars" aria-label="4 de 5 estrellas">
-                  <span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--empty">★</span>
-                </div>
-                <p class="blog-card__desc">Un viaje visual desde la excavación inicial hasta la publicación. Incluye fotos inéditas del descubrimiento, primeros bocetos de diseño y entrevistas sobre los desafíos de recopilación.</p>
-                <a href="resenaSipan.html" class="btn blog-card__btn">Dejar una opinión del Libro</a>
-              </div>
-              <div class="blog-card__cover">
-                <!-- Espacio reservado para la portada del libro (agregar aquí manualmente) -->
-              </div>
-            </article>
-
-            <!-- Libro 2 -->
-            <article class="blog-card blog-card--green">
-              <div class="blog-card__text">
-                <h3 class="blog-card__title">Manual de citado y referenciación para trabajos académicos</h3>
-                <p class="blog-card__author">Autor: Rivera Lozada de Bonilla Oriana, Cru..</p>
-                <div class="blog-card__stars" aria-label="4 de 5 estrellas">
-                  <span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--empty">★</span>
-                </div>
-                <p class="blog-card__desc">Conoce el riguroso proceso de validación para la 7ma Edición APA. Diagramas de flujo de datos, análisis de fuentes y entrevistas sobre la estructuración de la información.</p>
-                <button type="button" class="btn blog-card__btn">Dejar una opinión del Libro</button>
-              </div>
-              <div class="blog-card__cover">
-                <!-- Espacio reservado para la portada del libro (agregar aquí manualmente) -->
-              </div>
-            </article>
-
-            <!-- Libro 3 (ejemplo de relleno, reemplazar por un libro real) -->
-            <article class="blog-card blog-card--purple">
-              <div class="blog-card__text">
-                <h3 class="blog-card__title">Historia de la USS: 50 años de legado</h3>
-                <p class="blog-card__author">Autor: Fondo Editorial USS</p>
-                <div class="blog-card__stars" aria-label="5 de 5 estrellas">
-                  <span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--full">★</span>
-                </div>
-                <p class="blog-card__desc">Recorre la memoria institucional a través de documentos, testimonios y fotografías inéditas que reconstruyen medio siglo de historia universitaria.</p>
-                <button type="button" class="btn blog-card__btn">Dejar una opinión del Libro</button>
-              </div>
-              <div class="blog-card__cover">
-                <!-- Espacio reservado para la portada del libro (agregar aquí manualmente) -->
-              </div>
-            </article>
-
-            <!-- Libro 4 (ejemplo de relleno, reemplazar por un libro real) -->
-            <article class="blog-card blog-card--green">
-              <div class="blog-card__text">
-                <h3 class="blog-card__title">Diseño editorial: del boceto a la portada final</h3>
-                <p class="blog-card__author">Autor: Equipo de Diseño USS</p>
-                <div class="blog-card__stars" aria-label="4 de 5 estrellas">
-                  <span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--full">★</span><span class="star star--empty">★</span>
-                </div>
-                <p class="blog-card__desc">Un vistazo al taller de diseño: bocetos, paletas de color y decisiones tipográficas detrás de cada portada del Fondo Editorial.</p>
-                <button type="button" class="btn blog-card__btn">Dejar una opinión del Libro</button>
-              </div>
-              <div class="blog-card__cover">
-                <!-- Espacio reservado para la portada del libro (agregar aquí manualmente) -->
-              </div>
-            </article>
-
+            <!-- Las 4 reseñas más recientes se insertan aquí dinámicamente -->
+            <p class="blog-carousel__empty" id="blogCarouselEmpty" style="padding:30px; color:#999; font-size:13.5px;">Cargando reseñas...</p>
           </div>
         </div>
 
@@ -175,80 +112,14 @@
         <h3 class="blog-sidebar__title">Autores de la semana</h3>
         <ul class="blog-sidebar__authors">
           <li class="blog-sidebar__author">
-            <img src="assets/avatar-1.svg" alt="Walter">
-            <span>Walter</span>
-          </li>
-          <li class="blog-sidebar__author">
-            <img src="assets/avatar-2.svg" alt="Rivera Lozada de Bonilla">
-            <span>Rivera Lozada de Bonilla</span>
-          </li>
-          <li class="blog-sidebar__author">
-            <img src="assets/avatar-3.svg" alt="Barboza Meca">
-            <span>Barboza Meca</span>
-          </li>
-          <li class="blog-sidebar__author">
-            <img src="assets/avatar-4.svg" alt="Joshuan Jordano">
-            <span>Joshuan Jordano</span>
-          </li>
-          <li class="blog-sidebar__author">
-            <img src="assets/avatar-1.svg" alt="ELsa Lusila">
-            <span>ELsa Lusila</span>
-          </li>
-          <li class="blog-sidebar__author">
-            <img src="assets/avatar-3.svg" alt="Noe Humberto">
-            <span>Noe Humberto</span>
+          <li class="blog-sidebar__author-placeholder" id="blogAuthorsWeekList" style="display:contents;">
+            <!-- Autores de la semana insertados dinámicamente según el catálogo -->
           </li>
         </ul>
 
         <h3 class="blog-sidebar__title blog-sidebar__title--books">Libros del año</h3>
-        <ul class="blog-sidebar__books">
-          <li class="blog-sidebar__book">
-            <a href="resenaSipan.html" class="blog-sidebar__book-link">
-              <div class="blog-sidebar__book-cover">
-                <!-- Espacio reservado para la portada del libro (agregar aquí manualmente) -->
-              </div>
-              <div class="blog-sidebar__book-info">
-                <p class="blog-sidebar__book-title">Sipán, descubrimeinto e investigación</p>
-                <p class="blog-sidebar__book-author">Autor: Walter Ava</p>
-              </div>
-            </a>
-          </li>
-          <li class="blog-sidebar__book">
-            <div class="blog-sidebar__book-cover">
-              <!-- Espacio reservado para la portada del libro (agregar aquí manualmente) -->
-            </div>
-            <div class="blog-sidebar__book-info">
-              <p class="blog-sidebar__book-title">Manual de citado y referenciación para trabajos académicos</p>
-              <p class="blog-sidebar__book-author">Autor: Walter Ava</p>
-            </div>
-          </li>
-          <li class="blog-sidebar__book">
-            <div class="blog-sidebar__book-cover">
-              <!-- Espacio reservado para la portada del libro (agregar aquí manualmente) -->
-            </div>
-            <div class="blog-sidebar__book-info">
-              <p class="blog-sidebar__book-title">Revisiones sistemáticas y metaanálisis</p>
-              <p class="blog-sidebar__book-author">Autor: Barboza Meca, Josh...</p>
-            </div>
-          </li>
-          <li class="blog-sidebar__book">
-            <div class="blog-sidebar__book-cover">
-              <!-- Espacio reservado para la portada del libro (agregar aquí manualmente) -->
-            </div>
-            <div class="blog-sidebar__book-info">
-              <p class="blog-sidebar__book-title">Introducción al derecho tributario</p>
-              <p class="blog-sidebar__book-author">Autor: Barturen Mondragón ...</p>
-            </div>
-          </li>
-          <li class="blog-sidebar__book">
-            <div class="blog-sidebar__book-cover">
-              <!-- Espacio reservado para la portada del libro (agregar aquí manualmente) -->
-            </div>
-            <div class="blog-sidebar__book-info">
-              <p class="blog-sidebar__book-title">Mujeres: soberanas, sacerdotistas y ancestras</p>
-              <p class="blog-sidebar__book-author">Autor: Yuji, Seki; Franco ...</p>
-            </div>
-          </li>
+        <ul class="blog-sidebar__books" id="blogBooksYearList">
+          <!-- Libros del año insertados dinámicamente según el catálogo -->
         </ul>
 
       </aside>
@@ -257,159 +128,12 @@
       <section class="blog-process-grid-wrap">
         <h2 class="blog-process-grid__title">Conoce el proceso detrás de nuestras páginas</h2>
 
-        <div class="blog-process-grid">
-
-          <article class="blog-process-card">
-            <div class="blog-process-card__image">
-              <a href="resenaSipan.html" class="blog-process-card__badge">Ver proceso</a>
-              <!-- Espacio reservado para la fotografía del proceso (agregar aquí manualmente) -->
-            </div>
-            <h4 class="blog-process-card__title">Sipán, descubrimeinto e investigación</h4>
-            <p class="blog-process-card__desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.</p>
-            <div class="blog-process-card__meta">
-              <img src="assets/avatar-1.svg" alt="">
-              <div>
-                <p class="blog-process-card__author">Alva, Walter</p>
-                <p class="blog-process-card__country">Perú</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="blog-process-card">
-            <div class="blog-process-card__image">
-              <button type="button" class="blog-process-card__badge">Ver proceso</button>
-              <!-- Espacio reservado para la fotografía del proceso (agregar aquí manualmente) -->
-            </div>
-            <h4 class="blog-process-card__title">Manual de citado y referenciación para trabajos académicos</h4>
-            <p class="blog-process-card__desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.</p>
-            <div class="blog-process-card__meta">
-              <img src="assets/avatar-2.svg" alt="">
-              <div>
-                <p class="blog-process-card__author">Rivera Lozada de Bonilla Oriana, Cru..</p>
-                <p class="blog-process-card__country">Perú</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="blog-process-card">
-            <div class="blog-process-card__image">
-              <button type="button" class="blog-process-card__badge">Ver proceso</button>
-              <!-- Espacio reservado para la fotografía del proceso (agregar aquí manualmente) -->
-            </div>
-            <h4 class="blog-process-card__title">Revisiones sistemáticas y metaanálisis</h4>
-            <p class="blog-process-card__desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.</p>
-            <div class="blog-process-card__meta">
-              <img src="assets/avatar-3.svg" alt="">
-              <div>
-                <p class="blog-process-card__author">Barboza Meca, Joshuan Jordano</p>
-                <p class="blog-process-card__country">Perú</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="blog-process-card">
-            <div class="blog-process-card__image">
-              <button type="button" class="blog-process-card__badge">Ver proceso</button>
-              <!-- Espacio reservado para la fotografía del proceso (agregar aquí manualmente) -->
-            </div>
-            <h4 class="blog-process-card__title">Introducción al derecho tributario</h4>
-            <p class="blog-process-card__desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.</p>
-            <div class="blog-process-card__meta">
-              <img src="assets/avatar-4.svg" alt="">
-              <div>
-                <p class="blog-process-card__author">Barturen Mondragón, Eliana Maritza</p>
-                <p class="blog-process-card__country">Perú</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="blog-process-card">
-            <div class="blog-process-card__image">
-              <button type="button" class="blog-process-card__badge">Ver proceso</button>
-              <!-- Espacio reservado para la fotografía del proceso (agregar aquí manualmente) -->
-            </div>
-            <h4 class="blog-process-card__title">Mujeres: soberanas, sacerdotistas y ancestras</h4>
-            <p class="blog-process-card__desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.</p>
-            <div class="blog-process-card__meta">
-              <img src="assets/avatar-1.svg" alt="">
-              <div>
-                <p class="blog-process-card__author">Yuji, Seki; Franco Jordan, Régulo ...</p>
-                <p class="blog-process-card__country">Perú</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="blog-process-card">
-            <div class="blog-process-card__image">
-              <button type="button" class="blog-process-card__badge">Ver proceso</button>
-              <!-- Espacio reservado para la fotografía del proceso (agregar aquí manualmente) -->
-            </div>
-            <h4 class="blog-process-card__title">Metodología de la investigación aplicada a la Ingeniería Civil</h4>
-            <p class="blog-process-card__desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.</p>
-            <div class="blog-process-card__meta">
-              <img src="assets/avatar-2.svg" alt="">
-              <div>
-                <p class="blog-process-card__author">Marín Bardales, Noe Humberto; Arr...</p>
-                <p class="blog-process-card__country">Perú</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="blog-process-card">
-            <div class="blog-process-card__image">
-              <button type="button" class="blog-process-card__badge">Ver proceso</button>
-              <!-- Espacio reservado para la fotografía del proceso (agregar aquí manualmente) -->
-            </div>
-            <h4 class="blog-process-card__title">Introducción al derecho tributario</h4>
-            <p class="blog-process-card__desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.</p>
-            <div class="blog-process-card__meta">
-              <img src="assets/avatar-4.svg" alt="">
-              <div>
-                <p class="blog-process-card__author">Barturen Mondragón, Eliana Maritza</p>
-                <p class="blog-process-card__country">Perú</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="blog-process-card">
-            <div class="blog-process-card__image">
-              <button type="button" class="blog-process-card__badge">Ver proceso</button>
-              <!-- Espacio reservado para la fotografía del proceso (agregar aquí manualmente) -->
-            </div>
-            <h4 class="blog-process-card__title">Mujeres: soberanas, sacerdotistas y ancestras</h4>
-            <p class="blog-process-card__desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.</p>
-            <div class="blog-process-card__meta">
-              <img src="assets/avatar-1.svg" alt="">
-              <div>
-                <p class="blog-process-card__author">Yuji, Seki; Franco Jordan, Régulo ...</p>
-                <p class="blog-process-card__country">Perú</p>
-              </div>
-            </div>
-          </article>
-
-          <article class="blog-process-card">
-            <div class="blog-process-card__image">
-              <button type="button" class="blog-process-card__badge">Ver proceso</button>
-              <!-- Espacio reservado para la fotografía del proceso (agregar aquí manualmente) -->
-            </div>
-            <h4 class="blog-process-card__title">Metodología de la investigación aplicada a la Ingeniería Civil</h4>
-            <p class="blog-process-card__desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent.</p>
-            <div class="blog-process-card__meta">
-              <img src="assets/avatar-2.svg" alt="">
-              <div>
-                <p class="blog-process-card__author">Marín Bardales, Noe Humberto; Arr...</p>
-                <p class="blog-process-card__country">Perú</p>
-              </div>
-            </div>
-          </article>
-
+        <div class="blog-process-grid" id="blogProcessGrid">
+          <p style="padding:30px; color:#999; font-size:13.5px;">Cargando reseñas...</p>
         </div>
 
-        <nav class="blog-pagination" aria-label="Paginación de artículos de proceso">
-          <a href="#" class="blog-pagination__item blog-pagination__item--active">1</a>
-          <a href="#" class="blog-pagination__item">2</a>
-          <a href="#" class="blog-pagination__item">3</a>
-          <span class="blog-pagination__dots">…</span>
+        <nav class="blog-pagination" aria-label="Paginación de artículos de proceso" id="blogPagination">
+          <!-- Botones de paginación insertados dinámicamente -->
         </nav>
       </section>
       <!-- ================= Fin Blog: Conoce el proceso ================= -->
@@ -490,7 +214,6 @@
       var nextBtn = document.getElementById('blogCarouselNext');
       if (!track || !prevBtn || !nextBtn) return;
 
-      var totalCards = track.children.length;
       var currentPage = 0;
 
       function getCardsPerPage() {
@@ -499,7 +222,8 @@
       }
 
       function totalPages() {
-        return Math.ceil(totalCards / getCardsPerPage());
+        var totalCards = track.querySelectorAll('.blog-card').length;
+        return Math.max(1, Math.ceil(totalCards / getCardsPerPage()));
       }
 
       function update() {
@@ -522,6 +246,12 @@
         if (currentPage > totalPages() - 1) currentPage = 0;
         update();
       });
+
+      // Se llama de nuevo después de que las reseñas dinámicas terminen de cargar.
+      window.USS_updateBlogCarousel = function () {
+        currentPage = 0;
+        update();
+      };
 
       update();
     })();
@@ -873,6 +603,193 @@
           closeModal();
         });
       }
+    })();
+  </script>
+
+  <script>
+    // =====================================================================
+    // Blog.html dinámico: carrusel de reseñas recientes, "Autores de la
+    // semana" y "Libros del año" según el catálogo, y grilla paginada
+    // (9 reseñas por página) conectada a /api/blog/reviews.
+    // =====================================================================
+    (function () {
+      function escapeHTML(str) {
+        var div = document.createElement('div');
+        div.textContent = str == null ? '' : str;
+        return div.innerHTML;
+      }
+
+      function starsMarkup(avg) {
+        var rounded = Math.round(avg || 0);
+        var html = '';
+        for (var i = 1; i <= 5; i++) {
+          html += '<span class="star ' + (i <= rounded ? 'star--full' : 'star--empty') + '">★</span>';
+        }
+        return html;
+      }
+
+      // ---------------- Carrusel: 4 reseñas más recientes ----------------
+      function loadCarousel() {
+        var track = document.getElementById('blogCarouselTrack');
+        if (!track) return;
+
+        fetch('/api/blog/reviews/latest?limit=4')
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.ok || !data.reviews || data.reviews.length === 0) {
+              track.innerHTML = '<p style="padding:30px; color:#999; font-size:13.5px;">Todavía no hay reseñas publicadas. ¡Vuelve pronto!</p>';
+              return;
+            }
+            track.innerHTML = data.reviews.map(function (r, index) {
+              var colorClass = index % 2 === 0 ? 'blog-card--purple' : 'blog-card--green';
+              var coverStyle = r.testimonialImageUrl ? ' style="background-image:url(' + JSON.stringify(r.testimonialImageUrl).replace(/"/g, "'") + '); background-size:cover; background-position:center;"' : '';
+              var authorsText = (r.bookAuthors || []).join(', ');
+              return '<article class="blog-card ' + colorClass + '">' +
+                '<div class="blog-card__text">' +
+                '<h3 class="blog-card__title">' + escapeHTML(r.bookTitle) + '</h3>' +
+                '<p class="blog-card__author">Autor: ' + escapeHTML(authorsText) + '</p>' +
+                '<div class="blog-card__stars" aria-label="' + Math.round(r.avgRating || 0) + ' de 5 estrellas">' + starsMarkup(r.avgRating) + '</div>' +
+                '<p class="blog-card__desc">' + escapeHTML((r.reviewText || '').slice(0, 220)) + (r.reviewText && r.reviewText.length > 220 ? '…' : '') + '</p>' +
+                '<a href="resena.html?id=' + r.id + '" class="btn blog-card__btn">Dejar una opinión del Libro</a>' +
+                '</div>' +
+                '<div class="blog-card__cover"' + coverStyle + '></div>' +
+                '</article>';
+            }).join('');
+
+            if (window.USS_updateBlogCarousel) window.USS_updateBlogCarousel();
+          })
+          .catch(function () {
+            track.innerHTML = '<p style="padding:30px; color:#999; font-size:13.5px;">No se pudieron cargar las reseñas.</p>';
+          });
+      }
+
+      // ---------------- Autores de la semana y Libros del año (catálogo) ----------------
+      function loadSidebar() {
+        var authorsList = document.getElementById('blogAuthorsWeekList');
+        var booksList = document.getElementById('blogBooksYearList');
+        if (!authorsList && !booksList) return;
+
+        fetch('/api/catalog/books')
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.ok || !data.books) return;
+            var books = data.books;
+
+            if (authorsList) {
+              var uniqueAuthors = [];
+              books.forEach(function (b) {
+                (b.authors || []).forEach(function (a) {
+                  var name = a.trim();
+                  if (name && uniqueAuthors.indexOf(name) === -1) uniqueAuthors.push(name);
+                });
+              });
+              // Selección "de la semana": aleatoria a partir del catálogo actual, máximo 6.
+              var shuffled = uniqueAuthors.slice().sort(function () { return Math.random() - 0.5; }).slice(0, 6);
+              var avatars = ['assets/avatar-1.svg', 'assets/avatar-2.svg', 'assets/avatar-3.svg', 'assets/avatar-4.svg'];
+              if (shuffled.length === 0) {
+                authorsList.innerHTML = '<li style="font-size:12.5px; color:#999;">Aún no hay autores en el catálogo.</li>';
+              } else {
+                authorsList.innerHTML = shuffled.map(function (name, i) {
+                  return '<li class="blog-sidebar__author"><img src="' + avatars[i % avatars.length] + '" alt="' + escapeHTML(name) + '"><span>' + escapeHTML(name) + '</span></li>';
+                }).join('');
+              }
+            }
+
+            if (booksList) {
+              var shuffledBooks = books.slice().sort(function () { return Math.random() - 0.5; }).slice(0, 5);
+              if (shuffledBooks.length === 0) {
+                booksList.innerHTML = '<li style="font-size:12.5px; color:#999; padding:8px 0;">Aún no hay libros en el catálogo.</li>';
+              } else {
+                booksList.innerHTML = shuffledBooks.map(function (b) {
+                  var coverStyle = b.imageUrl ? ' style="background-image:url(' + JSON.stringify(b.imageUrl).replace(/"/g, "'") + '); background-size:cover; background-position:center;"' : '';
+                  var authorsText = (b.authors || []).join(', ');
+                  return '<li class="blog-sidebar__book">' +
+                    '<a href="descripcionLibro.html?id=' + b.id + '" class="blog-sidebar__book-link">' +
+                    '<div class="blog-sidebar__book-cover"' + coverStyle + '></div>' +
+                    '<div class="blog-sidebar__book-info">' +
+                    '<p class="blog-sidebar__book-title">' + escapeHTML(b.title) + '</p>' +
+                    '<p class="blog-sidebar__book-author">Autor: ' + escapeHTML(authorsText) + '</p>' +
+                    '</div></a></li>';
+                }).join('');
+              }
+            }
+          })
+          .catch(function () {});
+      }
+
+      // ---------------- Grilla 3x3 paginada de reseñas ("Conoce el proceso") ----------------
+      var currentGridPage = 1;
+
+      function loadGrid(page) {
+        var grid = document.getElementById('blogProcessGrid');
+        var pagination = document.getElementById('blogPagination');
+        if (!grid) return;
+        currentGridPage = page;
+
+        fetch('/api/blog/reviews?page=' + page)
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.ok) return;
+
+            if (data.reviews.length === 0) {
+              grid.innerHTML = '<p style="padding:30px; color:#999; font-size:13.5px;">Todavía no hay reseñas publicadas.</p>';
+              if (pagination) pagination.innerHTML = '';
+              return;
+            }
+
+            var avatars = ['assets/avatar-1.svg', 'assets/avatar-2.svg', 'assets/avatar-3.svg', 'assets/avatar-4.svg'];
+
+            grid.innerHTML = data.reviews.map(function (r, i) {
+              var imageStyle = r.testimonialImageUrl ? ' style="background-image:url(' + JSON.stringify(r.testimonialImageUrl).replace(/"/g, "'") + '); background-size:cover; background-position:center;"' : '';
+              var authorsText = (r.bookAuthors || []).join(', ');
+              return '<article class="blog-process-card">' +
+                '<div class="blog-process-card__image"' + imageStyle + '>' +
+                '<a href="resena.html?id=' + r.id + '" class="blog-process-card__badge">Ver proceso</a>' +
+                '</div>' +
+                '<h4 class="blog-process-card__title">' + escapeHTML(r.bookTitle) + '</h4>' +
+                '<p class="blog-process-card__desc">' + escapeHTML((r.reviewText || '').slice(0, 90)) + (r.reviewText && r.reviewText.length > 90 ? '…' : '') + '</p>' +
+                '<div class="blog-process-card__meta">' +
+                '<img src="' + avatars[i % avatars.length] + '" alt="">' +
+                '<div><p class="blog-process-card__author">' + escapeHTML(authorsText) + '</p>' +
+                '<p class="blog-process-card__country">' + escapeHTML(r.country || 'Perú') + '</p></div>' +
+                '</div></article>';
+            }).join('');
+
+            renderPagination(data.page, data.totalPages);
+          })
+          .catch(function () {
+            grid.innerHTML = '<p style="padding:30px; color:#999; font-size:13.5px;">No se pudieron cargar las reseñas.</p>';
+          });
+      }
+
+      function renderPagination(page, totalPages) {
+        var pagination = document.getElementById('blogPagination');
+        if (!pagination) return;
+
+        if (totalPages <= 1) {
+          pagination.innerHTML = '';
+          return;
+        }
+
+        var html = '';
+        for (var p = 1; p <= totalPages; p++) {
+          html += '<a href="#" class="blog-pagination__item' + (p === page ? ' blog-pagination__item--active' : '') + '" data-page="' + p + '">' + p + '</a>';
+        }
+        pagination.innerHTML = html;
+
+        pagination.querySelectorAll('[data-page]').forEach(function (link) {
+          link.addEventListener('click', function (e) {
+            e.preventDefault();
+            var p = parseInt(link.getAttribute('data-page'), 10);
+            loadGrid(p);
+            document.getElementById('blogProcessGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+        });
+      }
+
+      loadCarousel();
+      loadSidebar();
+      loadGrid(1);
     })();
   </script>
 
