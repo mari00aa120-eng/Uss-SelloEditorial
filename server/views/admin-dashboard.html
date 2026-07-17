@@ -42,10 +42,7 @@
     border-right: 1px solid var(--w-border);
   }
   .sidebar__logo { font-size: 15.5px; font-weight: 800; padding: 4px 10px 26px; color: var(--w-text); letter-spacing: .01em; display: flex; align-items: center; gap: 10px; }
-  .sidebar__logo::before {
-    content: "📚"; display: inline-flex; align-items: center; justify-content: center;
-    width: 34px; height: 34px; border-radius: 11px; background: var(--w-primary); font-size: 15px;
-  }
+  
   .sidebar__logo span { display: block; font-size: 11px; font-weight: 600; color: var(--w-text-soft); margin-top: 2px; letter-spacing: .03em; }
   .sidebar__nav { display: flex; flex-direction: column; gap: 4px; }
   .sidebar__link {
@@ -235,7 +232,7 @@
   <div class="app-shell">
     <!-- ============ PANEL LATERAL ============ -->
     <aside class="sidebar">
-      <div class="sidebar__logo">USS Sello Editorial<span>Panel de administración</span></div>
+      <div class="sidebar__logo">USS Sello Editorial</div>
       <nav class="sidebar__nav">
         <button type="button" class="sidebar__link" id="navDashboard"><span class="ic">📊</span> Dashboard</button>
         <button type="button" class="sidebar__link active" id="navUsuarios"><span class="ic">👥</span> Usuarios y pedidos</button>
