@@ -198,6 +198,7 @@
       <nav class="sidebar__nav">
         <button type="button" class="sidebar__link" id="navDashboard"><span class="ic">📊</span> Dashboard</button>
         <button type="button" class="sidebar__link active" id="navUsuarios"><span class="ic">👥</span> Usuarios y pedidos</button>
+        <button type="button" class="sidebar__link" id="navCatalogo"><span class="ic">📚</span> Actualizar Catálogo</button>
       </nav>
       <div class="sidebar__spacer"></div>
       <div class="sidebar__foot">USS Sello Editorial</div>
@@ -1055,6 +1056,9 @@
     }
     navDashboard.addEventListener('click', function () { showView('dashboard'); });
     navUsuarios.addEventListener('click', function () { showView('usuarios'); });
+    document.getElementById('navCatalogo').addEventListener('click', function () {
+      window.location.href = '/catalog-admin-login.html';
+    });
 
     // =====================================================================
     // ---------- Dashboard: datos, filtros y gráficas ----------
