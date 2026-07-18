@@ -183,13 +183,10 @@
     content: ""; position: absolute; top: 18px; right: 18px; width: 38px; height: 38px; border-radius: 12px;
     background: var(--kpi-color, var(--w-primary-light));
   }
-  .dash-kpi::after {
-    content: var(--kpi-icon, "💠"); position: absolute; top: 27px; right: 27px; font-size: 16px; line-height: 1;
-  }
-  .dash-kpi:nth-child(1) { --kpi-color: var(--w-primary-light); --kpi-icon: "💰"; }
-  .dash-kpi:nth-child(2) { --kpi-color: var(--w-mint-light); --kpi-icon: "📈"; }
-  .dash-kpi:nth-child(3) { --kpi-color: var(--w-blue-light); --kpi-icon: "👥"; }
-  .dash-kpi:nth-child(4) { --kpi-color: var(--w-coral-light); --kpi-icon: "📚"; }
+  .dash-kpi:nth-child(1) { --kpi-color: var(--w-primary-light); }
+  .dash-kpi:nth-child(2) { --kpi-color: var(--w-mint-light); }
+  .dash-kpi:nth-child(3) { --kpi-color: var(--w-blue-light); }
+  .dash-kpi:nth-child(4) { --kpi-color: var(--w-coral-light); }
   .dash-kpi span { display: block; font-size: 12.5px; color: var(--w-text-soft); margin-bottom: 8px; font-weight: 600; padding-right: 42px; }
   .dash-kpi strong { font-size: 24px; display: block; font-weight: 800; }
   .dash-kpi small { display: block; font-size: 11px; color: #0B9C77; font-weight: 700; margin-top: 4px; }
@@ -244,11 +241,12 @@
     <aside class="sidebar">
       <div class="sidebar__logo">USS Sello Editorial</div>
       <nav class="sidebar__nav">
-        <button type="button" class="sidebar__link" id="navDashboard"><span class="ic">📊</span> Dashboard</button>
-        <button type="button" class="sidebar__link active" id="navUsuarios"><span class="ic">👥</span> Usuarios y pedidos</button>
-        <button type="button" class="sidebar__link" id="navCatalogo"><span class="ic">📚</span> Actualizar Catálogo</button>
-        <button type="button" class="sidebar__link" id="navBlog"><span class="ic">📝</span> Actualizar Blog</button>
-        <button type="button" class="sidebar__link" id="navContacto"><span class="ic">✉️</span> Actualizar Contacto</button>
+        <button type="button" class="sidebar__link" id="navDashboard">Dashboard</button>
+        <button type="button" class="sidebar__link active" id="navUsuarios">Usuarios y pedidos</button>
+        <button type="button" class="sidebar__link" id="navCatalogo">Actualizar Catálogo</button>
+        <button type="button" class="sidebar__link" id="navBlog">Actualizar Blog</button>
+        <button type="button" class="sidebar__link" id="navContacto">Actualizar Contacto</button>
+        <button type="button" class="sidebar__link" id="navPermisos">Permisos</button>
       </nav>
       <div class="sidebar__spacer"></div>
       <div class="sidebar__foot">USS Sello Editorial</div>
@@ -371,11 +369,93 @@
           </div>
         </section>
 
+        <!-- ============ VISTA: PERMISOS ============ -->
+        <section class="view" id="permissionsView">
+          <div class="admin-header">
+            <h1>Permisos</h1>
+            <div class="admin-header__actions">
+              <button id="btnRefreshPermissions" class="btn-secondary" type="button">⟳ Refrescar</button>
+              <button id="btnNewPermission" type="button">+ Nuevo</button>
+              <button id="btnLogoutPermissions">Cerrar sesión</button>
+            </div>
+          </div>
+
+          <div class="admin-cards" id="permissionsCards">
+            <div class="admin-card"><span>Con acceso a Admin</span><strong id="statCanAdmin">–</strong></div>
+            <div class="admin-card"><span>Con acceso a Catálogo</span><strong id="statCanCatalog">–</strong></div>
+            <div class="admin-card"><span>Con acceso a Blog</span><strong id="statCanBlog">–</strong></div>
+          </div>
+
+          <div class="admin-table-wrap">
+            <h2>Correos con permisos</h2>
+            <p class="hint">Controla quién puede entrar a /admin, al panel de actualización de catálogo y al panel de blog. Al quitar un permiso, la persona pierde el acceso a ese panel de inmediato.</p>
+            <table>
+              <thead>
+                <tr><th>Nombre completo</th><th>Correo</th><th>Admin</th><th>Catálogo</th><th>Blog</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="permissionsTableBody">
+                <tr><td colspan="6">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
       </div>
     </div>
   </div>
 
-  <!-- ---------- Modal: detalle del usuario + formato de respuesta ---------- -->
+  <!-- ---------- Modal: Nuevo / Editar permiso ---------- -->
+  <div class="modal-overlay" id="permissionModalOverlay">
+    <div class="modal-box">
+      <button class="modal-close" id="permissionModalClose" type="button">&times;</button>
+      <h3 id="permissionModalTitle">Nuevo permiso</h3>
+      <p class="modal-sub">Otorga acceso a uno o varios paneles para este correo.</p>
+
+      <form id="permissionForm">
+        <div class="field">
+          <label for="fieldPermFirstName">Nombres</label>
+          <input type="text" id="fieldPermFirstName" placeholder="Ej: Isabella">
+          <p class="field-error" id="errorPermFirstName" style="display:none; color:#D92D20; font-size:12.5px; font-weight:600; margin-top:6px;"></p>
+        </div>
+        <div class="field">
+          <label for="fieldPermLastName">Apellidos</label>
+          <input type="text" id="fieldPermLastName" placeholder="Ej: Castro Camacho">
+          <p class="field-error" id="errorPermLastName" style="display:none; color:#D92D20; font-size:12.5px; font-weight:600; margin-top:6px;"></p>
+        </div>
+        <div class="field">
+          <label for="fieldPermEmail">Correo electrónico</label>
+          <input type="email" id="fieldPermEmail" placeholder="correo@ejemplo.com">
+          <p class="field-error" id="errorPermEmail" style="display:none; color:#D92D20; font-size:12.5px; font-weight:600; margin-top:6px;"></p>
+        </div>
+
+        <div class="field">
+          <label>Tipo de permiso</label>
+          <div class="status-options">
+            <div class="status-opt">
+              <input type="checkbox" id="fieldPermCanAdmin">
+              <label for="fieldPermCanAdmin" class="opt-pagado">Entrar a Admin</label>
+            </div>
+            <div class="status-opt">
+              <input type="checkbox" id="fieldPermCanCatalog">
+              <label for="fieldPermCanCatalog" class="opt-procesando">Actualizar Catálogo</label>
+            </div>
+            <div class="status-opt">
+              <input type="checkbox" id="fieldPermCanBlog">
+              <label for="fieldPermCanBlog" class="opt-pendiente_pago">Actualizar Blog</label>
+            </div>
+          </div>
+          <p class="field-error" id="errorPermType" style="display:none; color:#D92D20; font-size:12.5px; font-weight:600; margin-top:8px;"></p>
+        </div>
+
+        <p class="form-error" id="permissionFormError"></p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" id="btnCancelPermission">Cancelar</button>
+          <button type="submit" class="btn-send" id="btnSavePermission">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-box">
       <button class="modal-close" id="modalClose" type="button">&times;</button>
@@ -1103,25 +1183,37 @@
     // =====================================================================
     var navDashboard = document.getElementById('navDashboard');
     var navUsuarios = document.getElementById('navUsuarios');
+    var navPermisos = document.getElementById('navPermisos');
     var dashboardView = document.getElementById('dashboardView');
     var usersView = document.getElementById('usersView');
+    var permissionsView = document.getElementById('permissionsView');
     var dashboardLoadedOnce = false;
+    var permissionsLoadedOnce = false;
 
     function showView(name) {
       var isDash = name === 'dashboard';
+      var isPermisos = name === 'permisos';
+      var isUsers = !isDash && !isPermisos;
+
       dashboardView.classList.toggle('active', isDash);
-      usersView.classList.toggle('active', !isDash);
+      usersView.classList.toggle('active', isUsers);
+      permissionsView.classList.toggle('active', isPermisos);
       navDashboard.classList.toggle('active', isDash);
-      navUsuarios.classList.toggle('active', !isDash);
-      if (isDash) {
-        if (!dashboardLoadedOnce) {
-          dashboardLoadedOnce = true;
-          loadDashboard();
-        }
+      navUsuarios.classList.toggle('active', isUsers);
+      navPermisos.classList.toggle('active', isPermisos);
+
+      if (isDash && !dashboardLoadedOnce) {
+        dashboardLoadedOnce = true;
+        loadDashboard();
+      }
+      if (isPermisos && !permissionsLoadedOnce) {
+        permissionsLoadedOnce = true;
+        loadPermissions();
       }
     }
     navDashboard.addEventListener('click', function () { showView('dashboard'); });
     navUsuarios.addEventListener('click', function () { showView('usuarios'); });
+    navPermisos.addEventListener('click', function () { showView('permisos'); });
     document.getElementById('navCatalogo').addEventListener('click', function () {
       window.location.href = '/catalog-admin-login.html';
     });
@@ -1130,6 +1222,214 @@
     });
     document.getElementById('navContacto').addEventListener('click', function () {
       window.location.href = '/panel-contacto';
+    });
+
+    // =====================================================================
+    // ---------- Permisos: tabla + modal Nuevo/Editar ----------
+    // =====================================================================
+    var allPermissions = [];
+    var currentPermissionId = null;
+
+    function escapeHtmlPerm(str) {
+      var div = document.createElement('div');
+      div.textContent = str == null ? '' : str;
+      return div.innerHTML;
+    }
+
+    function permBadge(active) {
+      return active
+        ? '<span class="pill pill--green">Sí</span>'
+        : '<span class="pill pill--gray">No</span>';
+    }
+
+    function loadPermissions() {
+      var tbody = document.getElementById('permissionsTableBody');
+      tbody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
+
+      fetch('/api/permissions')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) {
+            tbody.innerHTML = '<tr><td colspan="6">No se pudieron cargar los permisos.</td></tr>';
+            return;
+          }
+          allPermissions = data.users;
+
+          document.getElementById('statCanAdmin').textContent = allPermissions.filter(function (u) { return u.canAdmin; }).length;
+          document.getElementById('statCanCatalog').textContent = allPermissions.filter(function (u) { return u.canCatalog; }).length;
+          document.getElementById('statCanBlog').textContent = allPermissions.filter(function (u) { return u.canBlog; }).length;
+
+          if (allPermissions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">Todavía no hay correos con permisos asignados.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = allPermissions.map(function (u) {
+            return '<tr>' +
+              '<td>' + escapeHtmlPerm(u.firstName) + ' ' + escapeHtmlPerm(u.lastName) + '</td>' +
+              '<td>' + escapeHtmlPerm(u.email) + '</td>' +
+              '<td>' + permBadge(u.canAdmin) + '</td>' +
+              '<td>' + permBadge(u.canCatalog) + '</td>' +
+              '<td>' + permBadge(u.canBlog) + '</td>' +
+              '<td>' +
+                '<button type="button" class="cat-btn-edit" data-edit-perm="' + u.id + '" style="border:none; padding:6px 12px; border-radius:7px; font-size:12.5px; font-weight:700; cursor:pointer; background:#EFF6FF; color:#1D4ED8; margin-right:6px;">Editar</button>' +
+                '<button type="button" class="cat-btn-delete" data-delete-perm="' + u.id + '" style="border:none; padding:6px 12px; border-radius:7px; font-size:12.5px; font-weight:700; cursor:pointer; background:#FEE2E2; color:#991B1B;">Quitar</button>' +
+              '</td>' +
+              '</tr>';
+          }).join('');
+
+          tbody.querySelectorAll('[data-edit-perm]').forEach(function (btn) {
+            btn.addEventListener('click', function () { openPermissionModal(btn.getAttribute('data-edit-perm')); });
+          });
+          tbody.querySelectorAll('[data-delete-perm]').forEach(function (btn) {
+            btn.addEventListener('click', function () { deletePermission(btn.getAttribute('data-delete-perm')); });
+          });
+        })
+        .catch(function () {
+          tbody.innerHTML = '<tr><td colspan="6">Error de conexión. Intenta de nuevo.</td></tr>';
+        });
+    }
+
+    document.getElementById('btnRefreshPermissions').addEventListener('click', loadPermissions);
+    document.getElementById('btnLogoutPermissions').addEventListener('click', function () {
+      document.getElementById('btnLogout').click();
+    });
+
+    function deletePermission(id) {
+      if (!confirm('¿Quitar todos los permisos de este correo? Ya no podrá entrar a los paneles que tenía habilitados.')) return;
+      fetch('/api/permissions/' + id, { method: 'DELETE' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.ok) loadPermissions();
+          else showToast(data.message || 'No se pudo quitar el permiso.');
+        })
+        .catch(function () { showToast('Error de conexión al quitar el permiso.'); });
+    }
+
+    // ---------- Modal Nuevo/Editar ----------
+    var permissionModalOverlay = document.getElementById('permissionModalOverlay');
+    var permissionForm = document.getElementById('permissionForm');
+    var permissionFormError = document.getElementById('permissionFormError');
+    var btnSavePermission = document.getElementById('btnSavePermission');
+
+    var fieldPermFirstName = document.getElementById('fieldPermFirstName');
+    var fieldPermLastName = document.getElementById('fieldPermLastName');
+    var fieldPermEmail = document.getElementById('fieldPermEmail');
+    var fieldPermCanAdmin = document.getElementById('fieldPermCanAdmin');
+    var fieldPermCanCatalog = document.getElementById('fieldPermCanCatalog');
+    var fieldPermCanBlog = document.getElementById('fieldPermCanBlog');
+
+    function clearPermissionErrors() {
+      ['errorPermFirstName', 'errorPermLastName', 'errorPermEmail', 'errorPermType'].forEach(function (id) {
+        var el = document.getElementById(id);
+        el.style.display = 'none';
+        el.textContent = '';
+      });
+      permissionFormError.style.display = 'none';
+      permissionFormError.textContent = '';
+    }
+
+    function showPermFieldError(id, message) {
+      var el = document.getElementById(id);
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+
+    function openPermissionModal(id) {
+      clearPermissionErrors();
+      currentPermissionId = id || null;
+
+      if (id) {
+        var user = allPermissions.find(function (u) { return String(u.id) === String(id); });
+        if (!user) return;
+        document.getElementById('permissionModalTitle').textContent = 'Editar permiso';
+        fieldPermFirstName.value = user.firstName;
+        fieldPermLastName.value = user.lastName;
+        fieldPermEmail.value = user.email;
+        fieldPermEmail.readOnly = true;
+        fieldPermCanAdmin.checked = user.canAdmin;
+        fieldPermCanCatalog.checked = user.canCatalog;
+        fieldPermCanBlog.checked = user.canBlog;
+      } else {
+        document.getElementById('permissionModalTitle').textContent = 'Nuevo permiso';
+        permissionForm.reset();
+        fieldPermEmail.readOnly = false;
+      }
+
+      btnSavePermission.disabled = false;
+      btnSavePermission.textContent = 'Guardar';
+      permissionModalOverlay.classList.add('open');
+    }
+
+    function closePermissionModal() {
+      permissionModalOverlay.classList.remove('open');
+      currentPermissionId = null;
+    }
+
+    document.getElementById('btnNewPermission').addEventListener('click', function () { openPermissionModal(null); });
+    document.getElementById('permissionModalClose').addEventListener('click', closePermissionModal);
+    document.getElementById('btnCancelPermission').addEventListener('click', closePermissionModal);
+    permissionModalOverlay.addEventListener('click', function (e) {
+      if (e.target === permissionModalOverlay) closePermissionModal();
+    });
+
+    var EMAIL_REGEX_PERM = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    permissionForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      clearPermissionErrors();
+
+      var firstName = fieldPermFirstName.value.trim();
+      var lastName = fieldPermLastName.value.trim();
+      var email = fieldPermEmail.value.trim().toLowerCase();
+      var canAdmin = fieldPermCanAdmin.checked;
+      var canCatalog = fieldPermCanCatalog.checked;
+      var canBlog = fieldPermCanBlog.checked;
+
+      var isValid = true;
+      if (!firstName) { showPermFieldError('errorPermFirstName', 'Ingresa el nombre.'); isValid = false; }
+      if (!lastName) { showPermFieldError('errorPermLastName', 'Ingresa el apellido.'); isValid = false; }
+      if (!currentPermissionId) {
+        if (!email) { showPermFieldError('errorPermEmail', 'Ingresa un correo electrónico.'); isValid = false; }
+        else if (!EMAIL_REGEX_PERM.test(email)) { showPermFieldError('errorPermEmail', 'Ingresa un correo electrónico válido.'); isValid = false; }
+      }
+      if (!canAdmin && !canCatalog && !canBlog) {
+        showPermFieldError('errorPermType', 'Selecciona al menos un tipo de permiso.');
+        isValid = false;
+      }
+      if (!isValid) return;
+
+      btnSavePermission.disabled = true;
+      btnSavePermission.textContent = 'Guardando...';
+
+      var payload = { firstName: firstName, lastName: lastName, canAdmin: canAdmin, canCatalog: canCatalog, canBlog: canBlog };
+      var url = currentPermissionId ? '/api/permissions/' + currentPermissionId : '/api/permissions';
+      var method = currentPermissionId ? 'PUT' : 'POST';
+      if (!currentPermissionId) payload.email = email;
+
+      fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+        .then(function (res) {
+          if (res.data.ok) {
+            loadPermissions();
+            closePermissionModal();
+          } else {
+            permissionFormError.textContent = res.data.message || 'No se pudo guardar el permiso.';
+            permissionFormError.style.display = 'block';
+            btnSavePermission.disabled = false;
+            btnSavePermission.textContent = 'Guardar';
+          }
+        })
+        .catch(function () {
+          permissionFormError.textContent = 'Error de conexión con el servidor.';
+          permissionFormError.style.display = 'block';
+          btnSavePermission.disabled = false;
+          btnSavePermission.textContent = 'Guardar';
+        });
     });
 
     // =====================================================================

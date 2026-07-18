@@ -15,6 +15,7 @@ const ordersRoutes = require('./routes/orders.routes');
 const catalogRoutes = require('./routes/catalog.routes');
 const blogRoutes = require('./routes/blog.routes');
 const contactRoutes = require('./routes/contact.routes');
+const permissionsRoutes = require('./routes/permissions.routes');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -55,6 +56,7 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/permissions', permissionsRoutes);
 
 // ------------------ Panel de administración (protegido) ------------------
 // El HTML del dashboard vive FUERA de /public para que nadie pueda acceder

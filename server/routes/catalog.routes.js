@@ -67,13 +67,18 @@ router.post('/admin/upload-image', requireCatalogAdmin, function (req, res) {
 });
 
 // Correos autorizados a usar el panel de actualización de catálogo.
-// NO es la misma autorización que /admin: aquí solo se permite crear
-// contraseña y entrar si el correo ya existe (sembrado) en catalog_admins.
-function getAuthorizedCatalogEmails() {
-  return (process.env.CATALOG_ADMIN_EMAILS || 'isabellacastrocamacho117@outlook.com')
+// NO es la misma autorización que /admin. La fuente de la verdad es la
+// tabla catalog_admins (gestionada desde el panel "Permisos" en /admin),
+// más lo que siga en la variable de entorno por compatibilidad.
+async function isEmailCatalogAuthorized(email) {
+  const envEmails = (process.env.CATALOG_ADMIN_EMAILS || '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
+  if (envEmails.includes(email)) return true;
+
+  const { rows } = await pool.query('SELECT id FROM catalog_admins WHERE email = $1', [email]);
+  return rows.length > 0;
 }
 
 function isStrongPassword(password) {
@@ -106,8 +111,8 @@ router.get('/auth/status', authLimiter, async (req, res) => {
     if (!EMAIL_REGEX.test(email)) {
       return res.status(400).json({ ok: false, message: 'Correo inválido.' });
     }
-    const authorized = getAuthorizedCatalogEmails();
-    if (!authorized.includes(email)) {
+    const authorized = await isEmailCatalogAuthorized(email);
+    if (!authorized) {
       return res.status(403).json({ ok: false, message: 'Este correo no está autorizado para el panel de catálogo.' });
     }
     const { rows } = await pool.query('SELECT password_hash FROM catalog_admins WHERE email = $1', [email]);
@@ -129,8 +134,8 @@ router.post('/auth/create-password', authLimiter, async (req, res) => {
     if (!EMAIL_REGEX.test(normalizedEmail)) {
       return res.status(400).json({ ok: false, message: 'Correo inválido.' });
     }
-    const authorized = getAuthorizedCatalogEmails();
-    if (!authorized.includes(normalizedEmail)) {
+    const authorized = await isEmailCatalogAuthorized(normalizedEmail);
+    if (!authorized) {
       return res.status(403).json({ ok: false, message: 'Este correo no está autorizado para el panel de catálogo.' });
     }
     if (!isStrongPassword(password)) {
@@ -180,8 +185,8 @@ router.post('/auth/login', authLimiter, async (req, res) => {
     if (!normalizedEmail || !password) {
       return res.status(400).json({ ok: false, message: 'Correo y contraseña son obligatorios.' });
     }
-    const authorized = getAuthorizedCatalogEmails();
-    if (!authorized.includes(normalizedEmail)) {
+    const authorized = await isEmailCatalogAuthorized(normalizedEmail);
+    if (!authorized) {
       return res.status(403).json({ ok: false, message: 'Este correo no está autorizado para el panel de catálogo.' });
     }
 

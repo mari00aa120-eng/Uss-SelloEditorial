@@ -29,6 +29,23 @@ const router = express.Router();
 
 const CODE_TTL_MINUTES = 10;
 
+// Un correo puede entrar a /admin si está marcado con can_admin en la tabla
+// de Permisos, o si sigue en la variable de entorno ADMIN_EMAIL (por
+// compatibilidad con instalaciones que todavía no usan el panel de Permisos).
+async function isEmailAdminAuthorized(normalizedEmail) {
+  const envEmails = (process.env.ADMIN_EMAIL || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (envEmails.includes(normalizedEmail)) return true;
+
+  const { rows } = await pool.query(
+    'SELECT id FROM permitted_users WHERE email = $1 AND can_admin = TRUE',
+    [normalizedEmail]
+  );
+  return rows.length > 0;
+}
+
 const requestLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -54,12 +71,9 @@ router.post('/request-code', requestLimiter, async (req, res) => {
       return res.status(400).json({ ok: false, message: 'El correo es obligatorio.' });
     }
     const normalizedEmail = email.trim().toLowerCase();
-    const authorizedEmails = (process.env.ADMIN_EMAIL || '')
-      .split(',')
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
+    const isAuthorized = await isEmailAdminAuthorized(normalizedEmail);
 
-    if (authorizedEmails.length === 0 || !authorizedEmails.includes(normalizedEmail)) {
+    if (!isAuthorized) {
       // No revelamos si el correo existe o no en el sistema, solo negamos el acceso.
       return res.status(403).json({ ok: false, message: 'Este correo no está autorizado para acceder al panel.' });
     }
@@ -97,12 +111,9 @@ router.post('/verify-code', verifyLimiter, async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Correo y código son obligatorios.' });
     }
     const normalizedEmail = email.trim().toLowerCase();
-    const authorizedEmails = (process.env.ADMIN_EMAIL || '')
-      .split(',')
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
+    const isAuthorized = await isEmailAdminAuthorized(normalizedEmail);
 
-    if (authorizedEmails.length === 0 || !authorizedEmails.includes(normalizedEmail)) {
+    if (!isAuthorized) {
       return res.status(403).json({ ok: false, message: 'Correo no autorizado.' });
     }
 

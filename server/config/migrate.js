@@ -59,10 +59,41 @@ async function runMigrations() {
   }
 
   // ---------------------------------------------------------------------
-  // Panel de catálogo (actualización de catalogo.html) - acceso separado
-  // del panel de administración general (/admin). Solo correos incluidos
-  // en CATALOG_ADMIN_EMAILS pueden crear su contraseña y entrar aquí.
+  // Permisos unificados: qué correos pueden entrar a /admin, /panel-catalogo
+  // y /panel-blog. Se gestiona desde el panel "Permisos" en /admin.
+  // Reemplaza las variables de entorno ADMIN_EMAIL / CATALOG_ADMIN_EMAILS /
+  // BLOG_ADMIN_EMAILS como fuente de la verdad (esas variables solo se usan
+  // como semilla inicial la primera vez que la tabla está vacía).
   // ---------------------------------------------------------------------
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS permitted_users (
+        id               SERIAL PRIMARY KEY,
+        first_name       VARCHAR(150) NOT NULL DEFAULT '',
+        last_name        VARCHAR(150) NOT NULL DEFAULT '',
+        email            VARCHAR(255) NOT NULL UNIQUE,
+        can_admin        BOOLEAN NOT NULL DEFAULT FALSE,
+        can_catalog      BOOLEAN NOT NULL DEFAULT FALSE,
+        can_blog         BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  // Semilla: si la tabla está vacía, se crea Isabella con acceso completo
+  // a los 3 paneles (correo autorizado por defecto en todo el proyecto).
+  const { rows: existingPermittedUsers } = await pool.query('SELECT COUNT(*)::int AS total FROM permitted_users');
+  if (existingPermittedUsers[0].total === 0) {
+    const seedEmail = (process.env.ADMIN_EMAIL || 'isabellacastrocamacho117@outlook.com')
+      .split(',')[0].trim().toLowerCase();
+    await pool.query(
+      `INSERT INTO permitted_users (first_name, last_name, email, can_admin, can_catalog, can_blog)
+       VALUES ($1, $2, $3, TRUE, TRUE, TRUE)
+       ON CONFLICT (email) DO NOTHING`,
+      ['Isabella', 'Castro Camacho', seedEmail]
+    );
+  }
+
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS catalog_admins (
         id               SERIAL PRIMARY KEY,
@@ -108,9 +139,9 @@ async function runMigrations() {
   // stock") y baja automáticamente cuando un pedido se marca como "pagado".
   await pool.query(`ALTER TABLE catalog_books ADD COLUMN IF NOT EXISTS stock INTEGER NOT NULL DEFAULT 0;`);
 
-  // Siembra el/los correo(s) autorizados para el panel de catálogo, sin
-  // password_hash todavía (se crea la primera vez que el correo entra a
-  // "Crear contraseña" en catalog-admin-login.html).
+  // Siembra automáticamente todos los correos que en "Permisos" tengan
+  // marcado "Actualizar Catálogo" (además de la variable de entorno, por
+  // compatibilidad con instalaciones existentes).
   const catalogAuthorizedEmails = (process.env.CATALOG_ADMIN_EMAILS || 'isabellacastrocamacho117@outlook.com')
     .split(',')
     .map((e) => e.trim().toLowerCase())
@@ -120,6 +151,16 @@ async function runMigrations() {
     await pool.query(
       `INSERT INTO catalog_admins (email) VALUES ($1) ON CONFLICT (email) DO NOTHING`,
       [email]
+    );
+  }
+
+  const { rows: catalogPermittedRows } = await pool.query(
+    `SELECT email FROM permitted_users WHERE can_catalog = TRUE`
+  );
+  for (const row of catalogPermittedRows) {
+    await pool.query(
+      `INSERT INTO catalog_admins (email) VALUES ($1) ON CONFLICT (email) DO NOTHING`,
+      [row.email]
     );
   }
 
@@ -147,6 +188,16 @@ async function runMigrations() {
     await pool.query(
       `INSERT INTO blog_admins (email) VALUES ($1) ON CONFLICT (email) DO NOTHING`,
       [email]
+    );
+  }
+
+  const { rows: blogPermittedRows } = await pool.query(
+    `SELECT email FROM permitted_users WHERE can_blog = TRUE`
+  );
+  for (const row of blogPermittedRows) {
+    await pool.query(
+      `INSERT INTO blog_admins (email) VALUES ($1) ON CONFLICT (email) DO NOTHING`,
+      [row.email]
     );
   }
 
