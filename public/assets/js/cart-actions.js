@@ -108,14 +108,14 @@
     // el clic buscando el botón más cercano con closest(). Así funciona sin
     // importar cuándo se creen las tarjetas.
     document.addEventListener('click', function (e) {
-      const btn = e.target.closest('.catalog-product-card__cart');
+      const btn = e.target.closest('.catalog-product-card__cart, .product-card__cart');
       if (!btn) return;
       e.preventDefault();
-      const card = btn.closest('.catalog-product-card');
+      const card = btn.closest('.catalog-product-card, .product-card');
       if (!card) return;
       const name = (card.querySelector('h3') || {}).textContent || 'Producto';
-      const author = (card.querySelector('.catalog-product-card__author') || {}).textContent || '';
-      const priceEl = card.querySelector('.catalog-product-card__price--new') || card.querySelector('.catalog-product-card__price');
+      const author = (card.querySelector('.catalog-product-card__author, .product-card__author') || {}).textContent || '';
+      const priceEl = card.querySelector('.catalog-product-card__price--new, .product-card__price--new') || card.querySelector('.catalog-product-card__price, .product-card__price');
       const price = parsePrice(priceEl ? priceEl.textContent : '0');
       const imgEl = card.querySelector('img');
       const image = imgEl ? imgEl.getAttribute('src') : '';

@@ -147,58 +147,43 @@
       <aside class="catalog-filter">
         <div class="catalog-filter__header">
           <h3>Filtrar Por</h3>
-          <a href="#" class="catalog-filter__clear">Limpiar Filtros</a>
+          <a href="#" class="catalog-filter__clear" id="catalogFilterClear">Limpiar Filtros</a>
         </div>
 
         <div class="catalog-filter__block">
           <h4>Categorías</h4>
-          <label class="catalog-filter__row">
-            <span>Derecho</span>
-            <span class="catalog-filter__count">120</span>
-          </label>
-          <label class="catalog-filter__row">
-            <span>Gestión Pública</span>
-            <span class="catalog-filter__count">85</span>
-          </label>
-          <label class="catalog-filter__row">
-            <span>Investigación</span>
-            <span class="catalog-filter__count">64</span>
-          </label>
-          <label class="catalog-filter__row">
-            <span>Economía</span>
-            <span class="catalog-filter__count">48</span>
-          </label>
-          <label class="catalog-filter__row">
-            <span>Educación</span>
-            <span class="catalog-filter__count">36</span>
-          </label>
-          <a href="#" class="catalog-filter__more">Ver más</a>
+          <div id="filterCategoriesList">
+            <p class="catalog-filter__empty" style="font-size:0.85rem; color:#999;">Cargando...</p>
+          </div>
+          <a href="#" class="catalog-filter__more" id="filterCategoriesMore" style="display:none;">Ver más</a>
         </div>
 
         <hr class="catalog-filter__divider">
 
         <div class="catalog-filter__block">
           <h4>Formato</h4>
-          <label class="catalog-filter__checkbox">
-            <input type="checkbox">
-            <span>Libro físico</span>
-            <span class="catalog-filter__count">232</span>
-          </label>
-          <label class="catalog-filter__checkbox">
-            <input type="checkbox">
-            <span>Libro digital</span>
-            <span class="catalog-filter__count">8</span>
-          </label>
+          <div id="filterFormatList">
+            <label class="catalog-filter__checkbox">
+              <input type="checkbox" data-filter="format" value="fisico">
+              <span>Libro físico</span>
+              <span class="catalog-filter__count" id="countFormatFisico">0</span>
+            </label>
+            <label class="catalog-filter__checkbox">
+              <input type="checkbox" data-filter="format" value="digital">
+              <span>Libro digital</span>
+              <span class="catalog-filter__count" id="countFormatDigital">0</span>
+            </label>
+          </div>
         </div>
 
         <hr class="catalog-filter__divider">
 
         <div class="catalog-filter__block">
           <h4>Rango de Precio</h4>
-          <input type="range" class="catalog-filter__range" min="0" max="200" value="200">
+          <input type="range" class="catalog-filter__range" id="filterPriceRange" min="0" max="200" value="200">
           <div class="catalog-filter__range-labels">
             <span>S/ 0</span>
-            <span>S/ 200</span>
+            <span id="filterPriceMaxLabel">S/ 200</span>
           </div>
         </div>
 
@@ -206,44 +191,29 @@
 
         <div class="catalog-filter__block">
           <h4>Autor</h4>
-          <input type="text" class="catalog-filter__search" placeholder="Buscar Autor">
-          <label class="catalog-filter__checkbox">
-            <input type="checkbox">
-            <span>Rivera Lozada</span>
-            <span class="catalog-filter__count">12</span>
-          </label>
-          <label class="catalog-filter__checkbox">
-            <input type="checkbox">
-            <span>Barturen Mondragón</span>
-            <span class="catalog-filter__count">10</span>
-          </label>
-          <label class="catalog-filter__checkbox">
-            <input type="checkbox">
-            <span>Barboza Meca</span>
-            <span class="catalog-filter__count">8</span>
-          </label>
-          <label class="catalog-filter__checkbox">
-            <input type="checkbox">
-            <span>Joshua Jordano</span>
-            <span class="catalog-filter__count">6</span>
-          </label>
-          <a href="#" class="catalog-filter__more">Más autores</a>
+          <input type="text" class="catalog-filter__search" id="filterAuthorSearch" placeholder="Buscar Autor">
+          <div id="filterAuthorsList">
+            <p class="catalog-filter__empty" style="font-size:0.85rem; color:#999;">Cargando...</p>
+          </div>
+          <a href="#" class="catalog-filter__more" id="filterAuthorsMore" style="display:none;">Más autores</a>
         </div>
 
         <hr class="catalog-filter__divider">
 
         <div class="catalog-filter__block">
           <h4>Características</h4>
-          <label class="catalog-filter__checkbox">
-            <input type="checkbox">
-            <span>Pasta dura</span>
-            <span class="catalog-filter__count">10</span>
-          </label>
-          <label class="catalog-filter__checkbox">
-            <input type="checkbox">
-            <span>Pasta blanda</span>
-            <span class="catalog-filter__count">3</span>
-          </label>
+          <div id="filterFeaturesList">
+            <label class="catalog-filter__checkbox">
+              <input type="checkbox" data-filter="cover" value="Dura">
+              <span>Pasta dura</span>
+              <span class="catalog-filter__count" id="countCoverDura">0</span>
+            </label>
+            <label class="catalog-filter__checkbox">
+              <input type="checkbox" data-filter="cover" value="Blanda">
+              <span>Pasta blanda</span>
+              <span class="catalog-filter__count" id="countCoverBlanda">0</span>
+            </label>
+          </div>
         </div>
       </aside>
 
@@ -264,7 +234,7 @@
 
         <div class="catalog-contact__bottom">
           <p>Escríbenos y te ayudamos a resolver tus inquietudes</p>
-          <button class="btn btn--primary catalog-contact__btn">Contactar</button>
+          <a href="QA.html#contactanos" class="btn btn--primary catalog-contact__btn">Contactar</a>
         </div>
       </div>
 
@@ -686,12 +656,28 @@
 
   <script>
     // ---------- Catálogo dinámico: cargado desde el panel de actualización ----------
-    // Cada 6 libros activos habilitan una página más de paginación (por eso
-    // el botón 2 solo aparece si hay más de 6 libros, el 3 si hay más de 12, etc.)
+    // Cada 6 libros que pasan el filtro habilitan una página más de paginación.
     (function () {
       var BOOKS_PER_PAGE = 6;
+      var CATEGORIES_VISIBLE = 5;
+      var AUTHORS_VISIBLE = 4;
+
       var allBooks = [];
+      var filteredBooks = [];
       var currentPage = 1;
+      var maxPriceInCatalog = 200;
+
+      var activeFilters = {
+        categories: [],   // array de nombres de categoría seleccionados
+        formats: [],       // 'fisico' | 'digital'
+        covers: [],         // 'Dura' | 'Blanda'
+        authors: [],       // nombres de autor seleccionados
+        maxPrice: null,     // null = sin límite (todavía no se tocó el slider)
+      };
+
+      var categoriesExpanded = false;
+      var authorsExpanded = false;
+      var authorSearchQuery = '';
 
       var productsEl = document.getElementById('catalogProducts');
       var paginationEl = document.getElementById('catalogPagination');
@@ -708,13 +694,178 @@
         return 'assets/' + url.replace(/^assets\//, '').replace(/^\/+/, '');
       }
 
+      // El modelo actual del catálogo no distingue "libro físico" de "libro
+      // digital" como campo propio (solo existe tapa Dura/Blanda para libros
+      // físicos). Mientras ese campo no exista en el panel de catálogo,
+      // tratamos todo libro publicado como "físico" para que el filtro de
+      // Formato ya funcione con datos reales y no quede roto ni con datos
+      // inventados; en cuanto se agregue el campo, este filtro se actualiza solo.
+      function bookFormat(book) {
+        return book.isDigital ? 'digital' : 'fisico';
+      }
+
+      // ---------------------------------------------------------------
+      // Construir las listas de filtros (categorías/autores/formato/tapa)
+      // con conteos reales, a partir de los libros ya publicados.
+      // ---------------------------------------------------------------
+      function buildFilterOptions() {
+        var categoryCounts = {};
+        var authorCounts = {};
+        var formatCounts = { fisico: 0, digital: 0 };
+        var coverCounts = { Dura: 0, Blanda: 0 };
+        var highestPrice = 0;
+
+        allBooks.forEach(function (b) {
+          if (b.category) {
+            categoryCounts[b.category] = (categoryCounts[b.category] || 0) + 1;
+          }
+          (b.authors || []).forEach(function (a) {
+            var name = a.trim();
+            if (!name) return;
+            authorCounts[name] = (authorCounts[name] || 0) + 1;
+          });
+          formatCounts[bookFormat(b)]++;
+          if (b.coverType === 'Dura' || b.coverType === 'Blanda') {
+            coverCounts[b.coverType]++;
+          }
+          if (typeof b.price === 'number' && b.price > highestPrice) highestPrice = b.price;
+        });
+
+        maxPriceInCatalog = highestPrice > 0 ? Math.ceil(highestPrice) : 200;
+
+        return {
+          categories: Object.keys(categoryCounts).map(function (name) {
+            return { name: name, count: categoryCounts[name] };
+          }).sort(function (a, b) { return b.count - a.count; }),
+          authors: Object.keys(authorCounts).map(function (name) {
+            return { name: name, count: authorCounts[name] };
+          }).sort(function (a, b) { return b.count - a.count; }),
+          formatCounts: formatCounts,
+          coverCounts: coverCounts,
+        };
+      }
+
+      var filterOptions = { categories: [], authors: [], formatCounts: { fisico: 0, digital: 0 }, coverCounts: { Dura: 0, Blanda: 0 } };
+
+      // ---------------------------------------------------------------
+      // Renderizar el bloque de Categorías (checkbox + contador + "Ver más")
+      // ---------------------------------------------------------------
+      function renderCategories() {
+        var list = document.getElementById('filterCategoriesList');
+        var moreLink = document.getElementById('filterCategoriesMore');
+
+        if (filterOptions.categories.length === 0) {
+          list.innerHTML = '<p style="font-size:0.85rem; color:#999;">Sin categorías registradas todavía.</p>';
+          moreLink.style.display = 'none';
+          return;
+        }
+
+        var visible = categoriesExpanded ? filterOptions.categories : filterOptions.categories.slice(0, CATEGORIES_VISIBLE);
+
+        list.innerHTML = visible.map(function (c) {
+          var checked = activeFilters.categories.indexOf(c.name) !== -1 ? ' checked' : '';
+          return '<label class="catalog-filter__row">' +
+            '<span style="display:flex; align-items:center; gap:8px;">' +
+              '<input type="checkbox" data-filter="category" value="' + escapeHtml(c.name) + '"' + checked + ' style="width:15px;height:15px;accent-color:var(--green);">' +
+              '<span>' + escapeHtml(c.name) + '</span>' +
+            '</span>' +
+            '<span class="catalog-filter__count">' + c.count + '</span>' +
+          '</label>';
+        }).join('');
+
+        if (filterOptions.categories.length > CATEGORIES_VISIBLE) {
+          moreLink.style.display = 'inline-block';
+          moreLink.textContent = categoriesExpanded ? 'Ver menos' : 'Ver más';
+        } else {
+          moreLink.style.display = 'none';
+        }
+      }
+
+      // ---------------------------------------------------------------
+      // Renderizar el bloque de Autores (búsqueda + checkbox + "Más autores")
+      // ---------------------------------------------------------------
+      function renderAuthors() {
+        var list = document.getElementById('filterAuthorsList');
+        var moreLink = document.getElementById('filterAuthorsMore');
+
+        var pool = filterOptions.authors;
+        if (authorSearchQuery) {
+          pool = pool.filter(function (a) { return a.name.toLowerCase().indexOf(authorSearchQuery) !== -1; });
+        }
+
+        if (pool.length === 0) {
+          list.innerHTML = '<p style="font-size:0.85rem; color:#999;">' + (authorSearchQuery ? 'Ningún autor coincide con tu búsqueda.' : 'Sin autores registrados todavía.') + '</p>';
+          moreLink.style.display = 'none';
+          return;
+        }
+
+        var visible = (authorsExpanded || authorSearchQuery) ? pool : pool.slice(0, AUTHORS_VISIBLE);
+
+        list.innerHTML = visible.map(function (a) {
+          var checked = activeFilters.authors.indexOf(a.name) !== -1 ? ' checked' : '';
+          return '<label class="catalog-filter__checkbox">' +
+            '<input type="checkbox" data-filter="author" value="' + escapeHtml(a.name) + '"' + checked + '>' +
+            '<span>' + escapeHtml(a.name) + '</span>' +
+            '<span class="catalog-filter__count">' + a.count + '</span>' +
+          '</label>';
+        }).join('');
+
+        if (!authorSearchQuery && pool.length > AUTHORS_VISIBLE) {
+          moreLink.style.display = 'inline-block';
+          moreLink.textContent = authorsExpanded ? 'Ver menos autores' : 'Más autores';
+        } else {
+          moreLink.style.display = 'none';
+        }
+      }
+
+      function renderFormatAndCoverCounts() {
+        document.getElementById('countFormatFisico').textContent = filterOptions.formatCounts.fisico;
+        document.getElementById('countFormatDigital').textContent = filterOptions.formatCounts.digital;
+        document.getElementById('countCoverDura').textContent = filterOptions.coverCounts.Dura;
+        document.getElementById('countCoverBlanda').textContent = filterOptions.coverCounts.Blanda;
+      }
+
+      function renderPriceRange() {
+        var rangeInput = document.getElementById('filterPriceRange');
+        rangeInput.max = maxPriceInCatalog;
+        if (activeFilters.maxPrice === null) {
+          rangeInput.value = maxPriceInCatalog;
+        }
+        document.getElementById('filterPriceMaxLabel').textContent = 'S/ ' + (activeFilters.maxPrice === null ? maxPriceInCatalog : activeFilters.maxPrice);
+      }
+
+      // ---------------------------------------------------------------
+      // Aplicar todos los filtros activos sobre allBooks
+      // ---------------------------------------------------------------
+      function applyFilters() {
+        filteredBooks = allBooks.filter(function (b) {
+          if (activeFilters.categories.length > 0 && activeFilters.categories.indexOf(b.category) === -1) return false;
+          if (activeFilters.formats.length > 0 && activeFilters.formats.indexOf(bookFormat(b)) === -1) return false;
+          if (activeFilters.covers.length > 0 && activeFilters.covers.indexOf(b.coverType) === -1) return false;
+          if (activeFilters.authors.length > 0) {
+            var bookAuthors = b.authors || [];
+            var matchesAuthor = activeFilters.authors.some(function (selected) { return bookAuthors.indexOf(selected) !== -1; });
+            if (!matchesAuthor) return false;
+          }
+          if (activeFilters.maxPrice !== null && typeof b.price === 'number' && b.price > activeFilters.maxPrice) return false;
+          return true;
+        });
+
+        renderBooks(1);
+        renderPagination();
+      }
+
       function renderBooks(page) {
         currentPage = page;
         var start = (page - 1) * BOOKS_PER_PAGE;
-        var pageBooks = allBooks.slice(start, start + BOOKS_PER_PAGE);
+        var pageBooks = filteredBooks.slice(start, start + BOOKS_PER_PAGE);
 
         if (allBooks.length === 0) {
           productsEl.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#999; padding: 40px 0;">Todavía no hay libros publicados en el catálogo.</p>';
+          return;
+        }
+        if (filteredBooks.length === 0) {
+          productsEl.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#999; padding: 40px 0;">Ningún libro coincide con los filtros seleccionados.</p>';
           return;
         }
 
@@ -759,9 +910,7 @@
       }
 
       function renderPagination() {
-        var totalPages = Math.max(1, Math.ceil(allBooks.length / BOOKS_PER_PAGE));
-        // Solo se muestra paginación si hay más de una página habilitada
-        // (más de 6 libros = botón 2, más de 12 = botón 3, y así sucesivamente).
+        var totalPages = Math.max(1, Math.ceil(filteredBooks.length / BOOKS_PER_PAGE));
         if (totalPages <= 1) {
           paginationEl.innerHTML = '';
           return;
@@ -783,10 +932,95 @@
         });
       }
 
+      // ---------------------------------------------------------------
+      // Listeners de los filtros (delegados, porque las listas se re-pintan)
+      // ---------------------------------------------------------------
+      document.getElementById('filterCategoriesList').addEventListener('change', function (e) {
+        var input = e.target.closest('[data-filter="category"]');
+        if (!input) return;
+        toggleArrayValue(activeFilters.categories, input.value);
+        applyFilters();
+      });
+
+      document.getElementById('filterAuthorsList').addEventListener('change', function (e) {
+        var input = e.target.closest('[data-filter="author"]');
+        if (!input) return;
+        toggleArrayValue(activeFilters.authors, input.value);
+        applyFilters();
+      });
+
+      document.getElementById('filterFormatList').addEventListener('change', function (e) {
+        var input = e.target.closest('[data-filter="format"]');
+        if (!input) return;
+        toggleArrayValue(activeFilters.formats, input.value);
+        applyFilters();
+      });
+
+      document.getElementById('filterFeaturesList').addEventListener('change', function (e) {
+        var input = e.target.closest('[data-filter="cover"]');
+        if (!input) return;
+        toggleArrayValue(activeFilters.covers, input.value);
+        applyFilters();
+      });
+
+      function toggleArrayValue(arr, value) {
+        var idx = arr.indexOf(value);
+        if (idx === -1) arr.push(value);
+        else arr.splice(idx, 1);
+      }
+
+      document.getElementById('filterPriceRange').addEventListener('input', function (e) {
+        activeFilters.maxPrice = Number(e.target.value);
+        document.getElementById('filterPriceMaxLabel').textContent = 'S/ ' + activeFilters.maxPrice;
+      });
+      document.getElementById('filterPriceRange').addEventListener('change', function () {
+        applyFilters();
+      });
+
+      document.getElementById('filterAuthorSearch').addEventListener('input', function (e) {
+        authorSearchQuery = e.target.value.trim().toLowerCase();
+        renderAuthors();
+      });
+
+      document.getElementById('filterCategoriesMore').addEventListener('click', function (e) {
+        e.preventDefault();
+        categoriesExpanded = !categoriesExpanded;
+        renderCategories();
+      });
+
+      document.getElementById('filterAuthorsMore').addEventListener('click', function (e) {
+        e.preventDefault();
+        authorsExpanded = !authorsExpanded;
+        renderAuthors();
+      });
+
+      document.getElementById('catalogFilterClear').addEventListener('click', function (e) {
+        e.preventDefault();
+        activeFilters = { categories: [], formats: [], covers: [], authors: [], maxPrice: null };
+        authorSearchQuery = '';
+        document.getElementById('filterAuthorSearch').value = '';
+        renderCategories();
+        renderAuthors();
+        renderPriceRange();
+        document.querySelectorAll('#filterFormatList input, #filterFeaturesList input').forEach(function (input) {
+          input.checked = false;
+        });
+        applyFilters();
+      });
+
+      // ---------------------------------------------------------------
+      // Carga inicial
+      // ---------------------------------------------------------------
       fetch('/api/catalog/books')
         .then(function (r) { return r.json(); })
         .then(function (data) {
           allBooks = (data.ok && data.books) ? data.books : [];
+          filteredBooks = allBooks.slice();
+          filterOptions = buildFilterOptions();
+          renderCategories();
+          renderAuthors();
+          renderFormatAndCoverCounts();
+          renderPriceRange();
           renderBooks(1);
           renderPagination();
         })
