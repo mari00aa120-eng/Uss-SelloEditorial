@@ -222,6 +222,42 @@ async function runMigrations() {
     );
   `);
 
+  // ---------------------------------------------------------------------
+  // Mensajes del formulario de contacto (QA.html). Panel de gestión
+  // separado en /admin -> "Actualizar Contacto", con el mismo semáforo de
+  // estados que el panel de "Usuarios y pedidos".
+  // ---------------------------------------------------------------------
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS contact_messages (
+        id               SERIAL PRIMARY KEY,
+        name             VARCHAR(200) NOT NULL,
+        phone            VARCHAR(40) NOT NULL,
+        email            VARCHAR(255) NOT NULL,
+        subject          VARCHAR(300) NOT NULL,
+        message          TEXT NOT NULL,
+        status           VARCHAR(20) NOT NULL DEFAULT 'pendiente', -- pendiente | respondido | resuelto
+        response_text    TEXT,
+        responded_by     VARCHAR(255),
+        responded_at     TIMESTAMPTZ,
+        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages (status, created_at);
+  `);
+
+  // Correos que reciben la notificación de "nuevo contacto" (además de
+  // poder gestionarlos desde /admin). Por ahora solo Isabella; se pueden
+  // agregar más separados por coma en la variable de entorno.
+  const contactNotifyEmails = (process.env.CONTACT_NOTIFY_EMAILS || 'isabellacastrocamacho117@outlook.com')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (contactNotifyEmails.length > 0) {
+    console.log('[migrate] Correos de notificación de contacto:', contactNotifyEmails.join(', '));
+  }
+
   console.log('[migrate] Esquema verificado/actualizado correctamente.');
 }
 

@@ -14,6 +14,7 @@ const adminRoutes = require('./routes/admin.routes');
 const ordersRoutes = require('./routes/orders.routes');
 const catalogRoutes = require('./routes/catalog.routes');
 const blogRoutes = require('./routes/blog.routes');
+const contactRoutes = require('./routes/contact.routes');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -53,6 +54,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/blog', blogRoutes);
+app.use('/api/contact', contactRoutes);
 
 // ------------------ Panel de administración (protegido) ------------------
 // El HTML del dashboard vive FUERA de /public para que nadie pueda acceder
@@ -82,6 +84,16 @@ app.get('/panel-blog', (req, res) => {
     return res.sendFile(path.join(__dirname, 'views', 'blog-dashboard.html'));
   }
   return res.redirect('/blog-admin-login.html');
+});
+
+// ------------------ Panel de mensajes de contacto (protegido) ------------------
+// Usa la MISMA sesión que /admin (isAdmin), ya que es parte del dashboard
+// general de administración, no un panel separado como catálogo o blog.
+app.get('/panel-contacto', (req, res) => {
+  if (req.session && req.session.isAdmin && req.session.adminEmail) {
+    return res.sendFile(path.join(__dirname, 'views', 'contacto-dashboard.html'));
+  }
+  return res.redirect('/admin-login.html');
 });
 
 // ------------------ Página raíz ------------------

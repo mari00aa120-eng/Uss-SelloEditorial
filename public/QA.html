@@ -556,11 +556,39 @@
 
         if (!isValid) return;
 
-        // No hay backend de contacto todavía: confirmamos visualmente el envío.
+        // Envía el mensaje al backend real: se guarda en la base de datos,
+        // se le confirma por correo al usuario y se notifica al equipo.
         submitBtn.disabled = true;
-        successMsg.style.display = 'block';
-        form.reset();
-        setTimeout(function () { submitBtn.disabled = false; }, 1200);
+        var originalBtnHTML = submitBtn.innerHTML;
+        submitBtn.textContent = 'Enviando...';
+
+        fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: nameInput.value.trim(),
+            phone: phoneInput.value.trim(),
+            email: emailInput.value.trim(),
+            subject: subjectInput.value.trim(),
+            message: messageInput.value.trim(),
+          }),
+        })
+          .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+          .then(function (res) {
+            if (res.data.ok) {
+              successMsg.style.display = 'block';
+              form.reset();
+            } else {
+              showFieldError(messageInput, res.data.message || 'No se pudo enviar tu mensaje. Intenta de nuevo.');
+            }
+          })
+          .catch(function () {
+            showFieldError(messageInput, 'Error de conexión con el servidor. Intenta de nuevo.');
+          })
+          .finally(function () {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHTML;
+          });
       });
     })();
   </script>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contacto | USS Sello Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+<style>
+  :root {
+    --w-bg: #F4F5FA;
+    --w-surface: #FFFFFF;
+    --w-border: #ECEEF5;
+    --w-text: #1E1B39;
+    --w-text-soft: #8A8CA5;
+    --w-primary: #6C5CE7;
+    --w-primary-light: #EFECFD;
+    --w-mint: #16C79A;
+    --w-mint-light: #DFF8F0;
+    --w-coral: #FF8A65;
+    --w-coral-light: #FFEDE5;
+    --w-blue: #4C8DFF;
+    --w-blue-light: #E9F1FF;
+    --w-amber: #F5A524;
+    --w-amber-light: #FEF3DD;
+    --w-red: #F35B6C;
+    --w-red-light: #FDEAEC;
+    --w-radius: 18px;
+    --w-shadow: 0 4px 24px rgba(30, 27, 57, 0.06);
+  }
+
+  body { background: var(--w-bg); font-family: 'Inter', sans-serif; margin: 0; color: var(--w-text); }
+
+  /* ---------- Layout con panel lateral (idéntico a /admin) ---------- */
+  .app-shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 232px; flex-shrink: 0; background: var(--w-surface); color: var(--w-text);
+    display: flex; flex-direction: column; padding: 24px 16px; position: sticky; top: 0; height: 100vh;
+    border-right: 1px solid var(--w-border);
+  }
+  .sidebar__logo { font-size: 15.5px; font-weight: 800; padding: 4px 10px 26px; color: var(--w-text); letter-spacing: .01em; display: flex; align-items: center; gap: 10px; }
+  .sidebar__logo span { display: block; font-size: 11px; font-weight: 600; color: var(--w-text-soft); margin-top: 2px; letter-spacing: .03em; }
+  .sidebar__nav { display: flex; flex-direction: column; gap: 4px; }
+  .sidebar__link {
+    display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 11px;
+    color: var(--w-text-soft); text-decoration: none; font-size: 13.5px; font-weight: 600; cursor: pointer;
+    border: none; background: none; text-align: left; width: 100%; font-family: inherit; transition: all .15s ease;
+  }
+  .sidebar__link:hover { background: var(--w-bg); color: var(--w-text); }
+  .sidebar__link.active { background: var(--w-primary-light); color: var(--w-primary); }
+  .sidebar__link .ic { width: 16px; text-align: center; flex-shrink: 0; }
+  .sidebar__spacer { flex: 1; }
+  .sidebar__foot { font-size: 11px; color: var(--w-text-soft); padding: 14px 12px 0; border-top: 1px solid var(--w-border); margin-top: 10px; }
+
+  .main-area { flex: 1; min-width: 0; }
+  .admin-wrap { max-width: 1180px; margin: 0 auto; padding: 36px 28px 80px; }
+  .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 12px; }
+  .admin-header h1 { font-size: 24px; margin: 0; font-weight: 800; }
+  .admin-header__actions { display: flex; gap: 10px; align-items: center; }
+  .admin-header button { background: var(--w-primary); color: #fff; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+  .admin-header .btn-secondary { background: var(--w-surface); color: var(--w-text); border: 1.5px solid var(--w-border); }
+  .admin-header .btn-secondary:hover { border-color: var(--w-primary); color: var(--w-primary); }
+
+  .admin-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .admin-card { background: var(--w-surface); border-radius: var(--w-radius); padding: 20px; box-shadow: var(--w-shadow); border: 1px solid var(--w-border); }
+  .admin-card span { display: block; font-size: 13px; color: var(--w-text-soft); margin-bottom: 6px; font-weight: 600; }
+  .admin-card strong { font-size: 28px; font-weight: 800; }
+
+  .admin-table-wrap { background: var(--w-surface); border-radius: var(--w-radius); padding: 22px; box-shadow: var(--w-shadow); border: 1px solid var(--w-border); overflow-x: auto; }
+  .admin-table-wrap h2 { font-size: 16px; margin: 0 0 4px; font-weight: 800; }
+  .admin-table-wrap p.hint { font-size: 12.5px; color: var(--w-text-soft); margin: 0 0 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 820px; }
+  th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--w-border); vertical-align: middle; }
+  th { color: var(--w-text-soft); font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .pill--gray { background: #EEF0F6; color: #666B85; }
+  .pill--green { background: var(--w-mint-light); color: #0B9C77; }
+  .pill--amber { background: var(--w-amber-light); color: #A66A0A; }
+  .pill--red { background: var(--w-red-light); color: #C93A4A; }
+
+  .contact-preview { font-size: 12.5px; color: var(--w-text-soft); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .contact-subject { font-weight: 700; color: var(--w-text); }
+
+  /* Botón "Responder" con semáforo de estado: rojo=pendiente, ámbar=respondido, verde=resuelto */
+  .btn-responder { border: none; cursor: pointer; font-weight: 700; font-size: 12.5px; padding: 8px 14px; border-radius: 10px; color: #fff; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; transition: filter .15s ease; }
+  .btn-responder:hover { filter: brightness(0.95); }
+  .btn-responder .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.85); }
+  .btn-responder--pendiente { background: var(--w-red); }
+  .btn-responder--respondido { background: var(--w-amber); }
+  .btn-responder--resuelto { background: var(--w-mint); }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(30,27,57,0.45); display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 999; overflow-y: auto; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--w-surface); border-radius: 20px; max-width: 560px; width: 100%; padding: 28px; box-shadow: 0 20px 60px rgba(30,27,57,0.25); position: relative; }
+  .modal-box h3 { margin: 0 0 4px; font-size: 19px; font-weight: 800; }
+  .modal-box .modal-sub { font-size: 13px; color: var(--w-text-soft); margin: 0 0 18px; }
+  .modal-close { position: absolute; top: 18px; right: 20px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--w-text-soft); }
+
+  .contact-detail-card { background: var(--w-bg); border: 1px solid var(--w-border); border-radius: 14px; padding: 14px 16px; margin-bottom: 20px; font-size: 13.5px; }
+  .contact-detail-card h4 { margin: 0 0 10px; font-size: 13px; color: var(--w-text-soft); text-transform: uppercase; letter-spacing: .03em; font-weight: 700; }
+  .contact-detail-row { display: flex; justify-content: space-between; padding: 3px 0; gap: 12px; }
+  .contact-detail-row span:first-child { color: var(--w-text-soft); flex-shrink: 0; }
+  .contact-detail-row span:last-child { font-weight: 600; text-align: right; }
+  .contact-detail-message { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--w-border); white-space: pre-line; color: var(--w-text); font-weight: 500; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 700; color: var(--w-text); margin-bottom: 6px; }
+  .field input[type="text"], .field input[type="email"], .field textarea {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--w-border); border-radius: 10px; font-family: inherit; font-size: 13.5px; background: var(--w-bg);
+  }
+  .field input[readonly] { background: #EEF0F6; color: var(--w-text-soft); }
+  .field textarea { min-height: 110px; resize: vertical; }
+
+  .status-options { display: flex; flex-wrap: wrap; gap: 8px; }
+  .status-opt { flex: 1 1 auto; min-width: 140px; }
+  .status-opt input { display: none; }
+  .status-opt label {
+    display: block; text-align: center; padding: 10px 8px; border: 1.5px solid var(--w-border); border-radius: 10px;
+    font-size: 12.5px; font-weight: 700; cursor: pointer; color: var(--w-text-soft); transition: all .15s ease;
+  }
+  .status-opt input:checked + label.opt-respondido { border-color: var(--w-amber); background: var(--w-amber-light); color: #A66A0A; }
+  .status-opt input:checked + label.opt-resuelto { border-color: var(--w-mint); background: var(--w-mint-light); color: #0B9C77; }
+
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+  .modal-actions button { border: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 13.5px; }
+  .btn-cancel { background: #EEF0F6; color: var(--w-text); }
+  .btn-send { background: var(--w-primary); color: #fff; }
+  .btn-send:disabled { opacity: .6; cursor: not-allowed; }
+  .form-error { color: var(--w-red); font-size: 12.5px; margin-top: 8px; display: none; }
+  .form-success { color: #0B9C77; font-size: 12.5px; margin-top: 8px; display: none; font-weight: 700; }
+
+  .already-responded-box { background: var(--w-mint-light); border: 1px solid #A7E8D4; border-radius: 12px; padding: 14px; margin-bottom: 18px; font-size: 13px; color: #0B9C77; }
+  .already-responded-box strong { display: block; margin-bottom: 4px; }
+
+  .dash-empty { text-align: center; padding: 40px 10px; color: var(--w-text-soft); font-size: 13px; }
+
+  /* Aviso no bloqueante (reemplaza a alert()) */
+  .uss-toast {
+    position: fixed; top: 20px; right: 20px; z-index: 2000; max-width: 360px;
+    background: var(--w-red-light); color: #C93A4A; border: 1px solid #FBC7CC;
+    border-radius: 12px; padding: 12px 16px; font-size: 13.5px; font-weight: 600;
+    box-shadow: var(--w-shadow); opacity: 0; transform: translateY(-8px);
+    transition: opacity .2s ease, transform .2s ease; pointer-events: none;
+  }
+  .uss-toast.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+</style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- ============ PANEL LATERAL (igual a /admin) ============ -->
+    <aside class="sidebar">
+      <div class="sidebar__logo">USS Sello Editorial</div>
+      <nav class="sidebar__nav">
+        <button type="button" class="sidebar__link" id="navDashboard">📊 Dashboard</button>
+        <button type="button" class="sidebar__link" id="navUsuarios">👥 Usuarios y pedidos</button>
+        <button type="button" class="sidebar__link" id="navCatalogo"><span class="ic">📚</span> Actualizar Catálogo</button>
+        <button type="button" class="sidebar__link" id="navBlog"><span class="ic">📝</span> Actualizar Blog</button>
+        <button type="button" class="sidebar__link active" id="navContacto"><span class="ic">✉️</span> Actualizar Contacto</button>
+      </nav>
+      <div class="sidebar__spacer"></div>
+      <div class="sidebar__foot">USS Sello Editorial</div>
+    </aside>
+
+    <div class="main-area">
+      <div class="admin-wrap">
+
+        <div class="admin-header">
+          <h1>Mensajes de contacto</h1>
+          <div class="admin-header__actions">
+            <button id="btnRefresh" class="btn-secondary" type="button">⟳ Refrescar</button>
+            <button id="btnLogout">Cerrar sesión</button>
+          </div>
+        </div>
+
+        <div class="admin-cards" id="contactCards">
+          <div class="admin-card"><span>Pendientes por responder</span><strong id="statPendiente">–</strong></div>
+          <div class="admin-card"><span>Respondidos</span><strong id="statRespondido">–</strong></div>
+          <div class="admin-card"><span>Resueltos</span><strong id="statResuelto">–</strong></div>
+        </div>
+
+        <p class="hint" id="lastRefreshedHint" style="text-align:right; margin-top:-6px; font-size:12.5px; color:var(--w-text-soft);"></p>
+
+        <div class="admin-table-wrap">
+          <h2>Mensajes recibidos desde QA.html</h2>
+          <p class="hint">Rojo: pendiente a responder · Ámbar: ya se le respondió · Verde: resuelto. Al responder, se le envía un correo real al remitente del mensaje.</p>
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Correo</th><th>Recibido</th><th>Asunto</th><th>Respuesta enviada</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="contactTableBody">
+              <tr><td colspan="6">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- Modal: detalle del mensaje + formulario de respuesta ---------- -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose" type="button">&times;</button>
+      <h3 id="modalContactSubject">—</h3>
+      <p class="modal-sub" id="modalContactMeta">—</p>
+
+      <div class="contact-detail-card" id="contactDetailCard">
+        <h4>Mensaje del formulario de contacto</h4>
+        <div class="contact-detail-row"><span>Nombre</span><span id="detailName">—</span></div>
+        <div class="contact-detail-row"><span>Correo</span><span id="detailEmail">—</span></div>
+        <div class="contact-detail-row"><span>Teléfono</span><span id="detailPhone">—</span></div>
+        <div class="contact-detail-row"><span>Recibido</span><span id="detailDate">—</span></div>
+        <div class="contact-detail-message" id="detailMessage">—</div>
+      </div>
+
+      <div class="already-responded-box" id="alreadyRespondedBox" style="display:none;">
+        <strong>Ya se envió una respuesta a este mensaje.</strong>
+        <span id="alreadyRespondedText"></span>
+      </div>
+
+      <form id="responseForm">
+        <div class="field">
+          <label>De (remitente / responder a)</label>
+          <input type="email" id="fieldFrom" value="fondoeditorial@uss.edu.pe" readonly>
+        </div>
+        <div class="field">
+          <label>Para</label>
+          <input type="email" id="fieldTo" readonly>
+        </div>
+
+        <div class="field">
+          <label>Estado del contacto</label>
+          <div class="status-options">
+            <div class="status-opt">
+              <input type="radio" name="contactStatus" id="optRespondido" value="respondido" checked>
+              <label for="optRespondido" class="opt-respondido">Respondido</label>
+            </div>
+            <div class="status-opt">
+              <input type="radio" name="contactStatus" id="optResuelto" value="resuelto">
+              <label for="optResuelto" class="opt-resuelto">Resuelto</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:16px;">
+          <label>Mensaje de respuesta</label>
+          <textarea id="fieldResponseText" placeholder="Escribe la respuesta para el usuario..."></textarea>
+        </div>
+
+        <p class="form-error" id="formError"></p>
+        <p class="form-success" id="formSuccess"></p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" id="btnCancel">Cancelar</button>
+          <button type="submit" class="btn-send" id="btnSend">Enviar respuesta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    var allMessages = [];
+    var currentMessageId = null;
+
+    var toastTimeout = null;
+    function showToast(message) {
+      var toast = document.getElementById('ussToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'uss-toast';
+        toast.id = 'ussToast';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = message;
+      toast.classList.add('is-visible');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(function () { toast.classList.remove('is-visible'); }, 4500);
+    }
+
+    function escapeHTML(str) {
+      var div = document.createElement('div');
+      div.textContent = str == null ? '' : str;
+      return div.innerHTML;
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      var d = new Date(iso);
+      return d.toLocaleString('es-PE');
+    }
+
+    function apiFetch(url, options) {
+      options = options || {};
+      options.headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+      return fetch(url, options).then(function (r) {
+        return r.json().then(function (data) { return { status: r.status, data: data }; });
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // Navegación del sidebar (igual a /admin, cada sección con su propia URL)
+    // ---------------------------------------------------------------
+    document.getElementById('navDashboard').addEventListener('click', function () { window.location.href = '/admin'; });
+    document.getElementById('navUsuarios').addEventListener('click', function () { window.location.href = '/admin'; });
+    document.getElementById('navCatalogo').addEventListener('click', function () { window.location.href = '/catalog-admin-login.html'; });
+    document.getElementById('navBlog').addEventListener('click', function () { window.location.href = '/blog-admin-login.html'; });
+
+    document.getElementById('btnLogout').addEventListener('click', function () {
+      apiFetch('/api/admin/logout', { method: 'POST' }).finally(function () {
+        window.location.href = '/admin-login.html';
+      });
+    });
+
+    // ---------------------------------------------------------------
+    // Cargar mensajes
+    // ---------------------------------------------------------------
+    function statusPillHtml(msg) {
+      if (msg.status === 'resuelto') return '<span class="pill pill--green">Resuelto</span>';
+      if (msg.status === 'respondido') return '<span class="pill pill--amber">Respondido</span>';
+      return '<span class="pill pill--red">Pendiente a responder</span>';
+    }
+
+    function responderButtonHtml(msg) {
+      var cls = 'btn-responder--' + msg.status;
+      var label = msg.status === 'resuelto' ? 'Ver / Resuelto' : (msg.status === 'respondido' ? 'Ver / Respondido' : 'Responder');
+      return '<button type="button" class="btn-responder ' + cls + '" data-message-id="' + msg.id + '">' +
+        '<span class="dot"></span>' + label + '</button>';
+    }
+
+    function loadMessages() {
+      apiFetch('/api/contact/admin/messages').then(function (res) {
+        if (!res.data.ok) {
+          document.getElementById('contactTableBody').innerHTML = '<tr><td colspan="6">No se pudieron cargar los mensajes.</td></tr>';
+          return;
+        }
+        allMessages = res.data.messages;
+        var counts = res.data.counts || { pendiente: 0, respondido: 0, resuelto: 0 };
+        document.getElementById('statPendiente').textContent = counts.pendiente || 0;
+        document.getElementById('statRespondido').textContent = counts.respondido || 0;
+        document.getElementById('statResuelto').textContent = counts.resuelto || 0;
+
+        var tbody = document.getElementById('contactTableBody');
+        if (allMessages.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">Todavía no llegó ningún mensaje de contacto.</td></tr>';
+        } else {
+          tbody.innerHTML = allMessages.map(function (m) {
+            return '<tr>' +
+              '<td>' + escapeHTML(m.name) + '</td>' +
+              '<td>' + escapeHTML(m.email) + '</td>' +
+              '<td>' + fmtDate(m.createdAt) + '</td>' +
+              '<td><span class="contact-subject">' + escapeHTML(m.subject) + '</span><br><span class="contact-preview">' + escapeHTML(m.message) + '</span></td>' +
+              '<td>' + (m.respondedAt ? fmtDate(m.respondedAt) : 'Aún no') + '</td>' +
+              '<td>' + responderButtonHtml(m) + statusPillHtml(m) + '</td>' +
+              '</tr>';
+          }).join('');
+
+          document.querySelectorAll('.btn-responder').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              openModal(btn.getAttribute('data-message-id'));
+            });
+          });
+        }
+
+        var now = new Date();
+        document.getElementById('lastRefreshedHint').textContent = 'Última actualización: ' + now.toLocaleTimeString('es-PE');
+      }).catch(function () {
+        document.getElementById('contactTableBody').innerHTML = '<tr><td colspan="6">Error de conexión. Verifica tu internet e intenta de nuevo.</td></tr>';
+      });
+    }
+
+    document.getElementById('btnRefresh').addEventListener('click', loadMessages);
+
+    // ---------------------------------------------------------------
+    // Modal: ver detalle + responder
+    // ---------------------------------------------------------------
+    var modalOverlay = document.getElementById('modalOverlay');
+    var responseForm = document.getElementById('responseForm');
+    var formError = document.getElementById('formError');
+    var formSuccess = document.getElementById('formSuccess');
+    var btnSend = document.getElementById('btnSend');
+
+    function openModal(messageId) {
+      var msg = allMessages.find(function (m) { return String(m.id) === String(messageId); });
+      if (!msg) return;
+      currentMessageId = msg.id;
+
+      document.getElementById('modalContactSubject').textContent = msg.subject;
+      document.getElementById('modalContactMeta').textContent = msg.name + ' · ' + msg.email;
+
+      document.getElementById('detailName').textContent = msg.name;
+      document.getElementById('detailEmail').textContent = msg.email;
+      document.getElementById('detailPhone').textContent = msg.phone;
+      document.getElementById('detailDate').textContent = fmtDate(msg.createdAt);
+      document.getElementById('detailMessage').textContent = msg.message;
+
+      // El "Para" queda fijo con el correo de quien contactó: no editable.
+      document.getElementById('fieldTo').value = msg.email;
+
+      var alreadyBox = document.getElementById('alreadyRespondedBox');
+      if (msg.respondedAt) {
+        alreadyBox.style.display = 'block';
+        document.getElementById('alreadyRespondedText').textContent =
+          'El ' + fmtDate(msg.respondedAt) + ' se envió: "' + msg.responseText + '"';
+        document.getElementById('fieldResponseText').value = '';
+      } else {
+        alreadyBox.style.display = 'none';
+        document.getElementById('fieldResponseText').value = '';
+      }
+
+      // Preselecciona el estado según el actual (si ya está resuelto, mantenlo marcado)
+      document.getElementById('optRespondido').checked = msg.status !== 'resuelto';
+      document.getElementById('optResuelto').checked = msg.status === 'resuelto';
+
+      formError.style.display = 'none';
+      formSuccess.style.display = 'none';
+      btnSend.disabled = false;
+      btnSend.textContent = 'Enviar respuesta';
+
+      modalOverlay.classList.add('open');
+    }
+
+    function closeModal() {
+      modalOverlay.classList.remove('open');
+      currentMessageId = null;
+    }
+
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('btnCancel').addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', function (e) {
+      if (e.target === modalOverlay) closeModal();
+    });
+
+    responseForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      formError.style.display = 'none';
+      formSuccess.style.display = 'none';
+
+      var responseText = document.getElementById('fieldResponseText').value.trim();
+      var status = document.querySelector('input[name="contactStatus"]:checked').value;
+
+      if (!responseText) {
+        formError.textContent = 'Escribe una respuesta antes de enviarla.';
+        formError.style.display = 'block';
+        return;
+      }
+
+      btnSend.disabled = true;
+      btnSend.textContent = 'Enviando...';
+
+      apiFetch('/api/contact/admin/messages/' + currentMessageId + '/respond', {
+        method: 'POST',
+        body: JSON.stringify({ responseText: responseText, status: status }),
+      }).then(function (res) {
+        if (res.data.ok) {
+          formSuccess.textContent = '¡Respuesta enviada correctamente al correo del usuario!';
+          formSuccess.style.display = 'block';
+          loadMessages();
+          setTimeout(closeModal, 1200);
+        } else {
+          formError.textContent = res.data.message || 'No se pudo enviar la respuesta.';
+          formError.style.display = 'block';
+          btnSend.disabled = false;
+          btnSend.textContent = 'Enviar respuesta';
+        }
+      }).catch(function () {
+        formError.textContent = 'Error de conexión con el servidor.';
+        formError.style.display = 'block';
+        btnSend.disabled = false;
+        btnSend.textContent = 'Enviar respuesta';
+      });
+    });
+
+    // ---------------------------------------------------------------
+    // Inicio
+    // ---------------------------------------------------------------
+    loadMessages();
+  </script>
+
+  <script src="/assets/js/session.js"></script>
+  <script src="/assets/js/account-panel.js"></script>
+</body>
+</html>

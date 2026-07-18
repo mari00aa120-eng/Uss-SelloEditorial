@@ -248,6 +248,7 @@
         <button type="button" class="sidebar__link active" id="navUsuarios"><span class="ic">👥</span> Usuarios y pedidos</button>
         <button type="button" class="sidebar__link" id="navCatalogo"><span class="ic">📚</span> Actualizar Catálogo</button>
         <button type="button" class="sidebar__link" id="navBlog"><span class="ic">📝</span> Actualizar Blog</button>
+        <button type="button" class="sidebar__link" id="navContacto"><span class="ic">✉️</span> Actualizar Contacto</button>
       </nav>
       <div class="sidebar__spacer"></div>
       <div class="sidebar__foot">USS Sello Editorial</div>
@@ -1126,6 +1127,9 @@
     });
     document.getElementById('navBlog').addEventListener('click', function () {
       window.location.href = '/blog-admin-login.html';
+    });
+    document.getElementById('navContacto').addEventListener('click', function () {
+      window.location.href = '/panel-contacto';
     });
 
     // =====================================================================

@@ -147,4 +147,84 @@ async function sendAdminResponseEmail({ to, customerName, message, orderStatus, 
   });
 }
 
-module.exports = { sendEmail, sendAdminCodeEmail, sendInvoiceEmail, sendAdminResponseEmail };
+// ---------------------------------------------------------------------
+// Formulario de contacto (QA.html)
+// ---------------------------------------------------------------------
+
+// Se envía al VISITANTE apenas llena el formulario de contacto, confirmando
+// que su mensaje llegó a USS Sello Editorial.
+async function sendContactConfirmationEmail({ to, name, subject }) {
+  return sendEmail({
+    to,
+    subject: 'Recibimos tu mensaje - USS Sello Editorial',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="color:#046C3B;">¡Gracias por escribirnos, ${name}!</h2>
+        <p>Tu mensaje fue enviado correctamente a <strong>USS Sello Editorial</strong> y ya está en manos de nuestro equipo.</p>
+        <p style="font-size: 14px; color:#333;"><strong>Asunto:</strong> ${subject}</p>
+        <p>Te responderemos a este mismo correo apenas revisemos tu consulta.</p>
+      </div>
+    `,
+  });
+}
+
+// Se envía al EQUIPO (correos autorizados, ej. isabellacastrocamacho117@outlook.com)
+// para avisar que llegó un mensaje de contacto nuevo.
+async function sendContactNotificationEmail({ to, name, phone, email, subject, message }) {
+  return sendEmail({
+    to,
+    replyTo: email,
+    subject: `Nuevo mensaje de contacto: ${subject}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto;">
+        <h2 style="color:#1a1a1a;">Nuevo mensaje de contacto</h2>
+        <p style="font-size: 14px; color:#333;">
+          <strong>Nombre:</strong> ${name}<br>
+          <strong>Correo:</strong> ${email}<br>
+          <strong>Teléfono:</strong> ${phone}<br>
+          <strong>Asunto:</strong> ${subject}
+        </p>
+        <p style="margin-top:16px; padding:14px; background:#f4f4f4; border-radius:8px; white-space:pre-line; font-size:14px; color:#333;">${message}</p>
+        <p style="font-size:12px; color:#777; margin-top:20px;">
+          Puedes responder a este correo directamente, o gestionar este mensaje desde el panel "Actualizar Contacto" en /admin.
+        </p>
+      </div>
+    `,
+  });
+}
+
+// Se envía al VISITANTE cuando un admin responde su mensaje desde el panel de contacto.
+async function sendContactResponseEmail({ to, name, subject, originalMessage, responseText, status }) {
+  const statusLabel = status === 'resuelto' ? 'Resuelto' : 'Respondido';
+  const statusColor = status === 'resuelto' ? '#046C3B' : '#B45309';
+  const statusBg = status === 'resuelto' ? '#DCFCE7' : '#FEF3C7';
+
+  return sendEmail({
+    to,
+    replyTo: 'fondoeditorial@uss.edu.pe',
+    senderName: 'USS Sello Editorial',
+    subject: `Respuesta a tu consulta: ${subject}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="color:#1a1a1a;">Hola${name ? ', ' + name : ''}</h2>
+        <span style="display:inline-block; padding:6px 12px; border-radius:999px; font-size:13px; font-weight:700; color:${statusColor}; background:${statusBg};">${statusLabel}</span>
+        <p style="font-size:14px; color:#333; margin-top:16px;">Este es un mensaje de USS Sello Editorial en respuesta a tu consulta:</p>
+        <p style="margin:8px 0; padding:12px; background:#f4f4f4; border-radius:8px; font-size:13px; color:#555; white-space:pre-line;">"${originalMessage}"</p>
+        <p style="font-size:14px; color:#333; margin-top:16px; white-space:pre-line;">${responseText}</p>
+        <p style="font-size:12px; color:#777; margin-top:24px;">
+          Si tienes alguna otra duda, puedes responder directamente a este correo.
+        </p>
+      </div>
+    `,
+  });
+}
+
+module.exports = {
+  sendEmail,
+  sendAdminCodeEmail,
+  sendInvoiceEmail,
+  sendAdminResponseEmail,
+  sendContactConfirmationEmail,
+  sendContactNotificationEmail,
+  sendContactResponseEmail,
+};
