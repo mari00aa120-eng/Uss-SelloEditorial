@@ -42,6 +42,13 @@
   .admin-login-step { display: none; }
   .admin-login-step.is-active { display: block; }
 
+  .field-error {
+    display: none; font-size: 12px; font-weight: 600; color: #B91C1C;
+    margin: -10px 0 12px;
+  }
+  .field-has-error input { border-color: #B91C1C !important; background: #FEF2F2 !important; }
+  .field-has-error .field-error { display: block; }
+
   .pw-checks { display: flex; flex-wrap: wrap; gap: 8px; margin: -4px 0 16px; }
   .pw-check { font-size: 11.5px; padding: 4px 9px; border-radius: 999px; background: #f1f1f1; color: #888; }
   .pw-check.is-valid { background: #DCFCE7; color: #046C3B; }
@@ -61,6 +68,7 @@
         <form id="formCheckEmail">
           <label for="blogEmail">Correo electrónico</label>
           <input type="email" id="blogEmail" placeholder="correo@ejemplo.com" required>
+          <p class="field-error" id="errorBlogEmail">Ingresa un correo electrónico válido.</p>
           <button type="submit" id="btnCheckEmail">Continuar</button>
         </form>
       </div>
@@ -70,6 +78,7 @@
         <form id="formCreatePassword">
           <label for="blogNewPassword">Crea tu contraseña</label>
           <input type="password" id="blogNewPassword" placeholder="Crea una contraseña segura" required>
+          <p class="field-error" id="errorBlogNewPassword">La contraseña no cumple los requisitos.</p>
 
           <div class="pw-checks" id="pwChecks">
             <span class="pw-check" data-rule="length">Mínimo 8 caracteres</span>
@@ -80,6 +89,7 @@
 
           <label for="blogConfirmPassword">Confirmar contraseña</label>
           <input type="password" id="blogConfirmPassword" placeholder="Repite tu contraseña" required>
+          <p class="field-error" id="errorBlogConfirmPassword">Las contraseñas no coinciden.</p>
 
           <button type="submit" id="btnCreatePassword">Crear contraseña e ingresar</button>
         </form>
@@ -91,6 +101,7 @@
         <form id="formLogin">
           <label for="blogLoginPassword">Contraseña</label>
           <input type="password" id="blogLoginPassword" placeholder="Ingresa tu contraseña" required>
+          <p class="field-error" id="errorBlogLoginPassword">Ingresa tu contraseña.</p>
           <button type="submit" id="btnLogin">Iniciar sesión</button>
         </form>
         <a class="back-link" id="backFromLogin">&larr; Usar otro correo</a>
@@ -121,10 +132,24 @@
       var btnLogin = document.getElementById('btnLogin');
 
       var currentEmail = '';
+      var EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
       function showMsg(text, type) {
         msg.textContent = text || '';
         msg.className = 'admin-login-msg ' + (type || '');
+      }
+
+      function markFieldError(errorId, message) {
+        var errorEl = document.getElementById(errorId);
+        if (!errorEl) return;
+        errorEl.textContent = message;
+        errorEl.parentElement.classList.add('field-has-error');
+      }
+
+      function clearFieldError(errorId) {
+        var errorEl = document.getElementById(errorId);
+        if (!errorEl) return;
+        errorEl.parentElement.classList.remove('field-has-error');
       }
 
       function showStep(step) {
@@ -133,10 +158,26 @@
         });
       }
 
+      emailInput.addEventListener('input', function () { clearFieldError('errorBlogEmail'); });
+      newPasswordInput.addEventListener('input', function () { clearFieldError('errorBlogNewPassword'); });
+      confirmPasswordInput.addEventListener('input', function () { clearFieldError('errorBlogConfirmPassword'); });
+      loginPasswordInput.addEventListener('input', function () { clearFieldError('errorBlogLoginPassword'); });
+
       formCheckEmail.addEventListener('submit', function (e) {
         e.preventDefault();
         showMsg('', '');
+        clearFieldError('errorBlogEmail');
         currentEmail = emailInput.value.trim().toLowerCase();
+
+        if (!currentEmail) {
+          markFieldError('errorBlogEmail', 'Ingresa tu correo electrónico.');
+          return;
+        }
+        if (!EMAIL_REGEX.test(currentEmail)) {
+          markFieldError('errorBlogEmail', 'Ingresa un correo electrónico válido (ejemplo@correo.com).');
+          return;
+        }
+
         btnCheckEmail.disabled = true;
         btnCheckEmail.textContent = 'Verificando...';
 
@@ -144,7 +185,7 @@
           .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
           .then(function (res) {
             if (!res.data.ok) {
-              showMsg(res.data.message || 'Este correo no está autorizado.', 'error');
+              markFieldError('errorBlogEmail', res.data.message || 'Este correo no está autorizado.');
               return;
             }
             if (res.data.hasPassword) {
@@ -177,9 +218,31 @@
       formCreatePassword.addEventListener('submit', function (e) {
         e.preventDefault();
         showMsg('', '');
+        clearFieldError('errorBlogNewPassword');
+        clearFieldError('errorBlogConfirmPassword');
 
+        var pwd = newPasswordInput.value;
+        var pwdRules = {
+          length: pwd.length >= 8,
+          upper: /[A-Z]/.test(pwd),
+          number: /[0-9]/.test(pwd),
+          symbol: /[^A-Za-z0-9]/.test(pwd),
+        };
+
+        if (!pwd) {
+          markFieldError('errorBlogNewPassword', 'Crea una contraseña.');
+          return;
+        }
+        if (!pwdRules.length || !pwdRules.upper || !pwdRules.number || !pwdRules.symbol) {
+          markFieldError('errorBlogNewPassword', 'La contraseña debe tener 8+ caracteres, una mayúscula, un número y un símbolo.');
+          return;
+        }
+        if (!confirmPasswordInput.value) {
+          markFieldError('errorBlogConfirmPassword', 'Repite tu contraseña.');
+          return;
+        }
         if (newPasswordInput.value !== confirmPasswordInput.value) {
-          showMsg('Las contraseñas no coinciden.', 'error');
+          markFieldError('errorBlogConfirmPassword', 'Las contraseñas no coinciden.');
           return;
         }
 
@@ -210,6 +273,13 @@
       formLogin.addEventListener('submit', function (e) {
         e.preventDefault();
         showMsg('', '');
+        clearFieldError('errorBlogLoginPassword');
+
+        if (!loginPasswordInput.value) {
+          markFieldError('errorBlogLoginPassword', 'Ingresa tu contraseña.');
+          return;
+        }
+
         btnLogin.disabled = true;
         btnLogin.textContent = 'Ingresando...';
 
@@ -224,7 +294,7 @@
               showMsg('Acceso concedido. Redirigiendo...', 'success');
               window.location.href = '/panel-blog';
             } else {
-              showMsg(res.data.message || 'Contraseña incorrecta.', 'error');
+              markFieldError('errorBlogLoginPassword', res.data.message || 'Contraseña incorrecta.');
             }
           })
           .catch(function () { showMsg('Error de conexión con el servidor.', 'error'); })

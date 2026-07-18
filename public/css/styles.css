@@ -2141,6 +2141,24 @@ margin: 40px 0 32px;
   align-items: flex-start;
 }
 
+.contact-form__field-error {
+  display: none;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #D92D20;
+  line-height: 1.4;
+}
+
+.contact-form__field--has-error .contact-form__control {
+  border-color: #D92D20;
+  background: #FEF3F2;
+}
+
+.contact-form__field--has-error .contact-form__field-error {
+  display: block;
+}
+
 .contact-form__control:hover {
   border-color: rgba(4, 108, 59, 0.45);
 }
@@ -5462,6 +5480,43 @@ margin: 40px 0 32px;
 .auth-modal__input:focus {
   outline: none;
   border-color: var(--green);
+}
+
+/* Error de validación por campo (texto rojo debajo del input) */
+.auth-modal__field--error .auth-modal__input {
+  border-color: #D92D20;
+  background: #FEF3F2;
+}
+
+.auth-modal__field-error {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #D92D20;
+  line-height: 1.4;
+}
+
+/* Mensaje general del formulario (respuesta del servidor) */
+.auth-modal__error {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #D92D20;
+  background: #FEF3F2;
+  border: 1px solid #FDA29B;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.auth-modal__success {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e8e3e;
+  background: #E9F9EE;
+  border: 1px solid #A6E9BC;
+  border-radius: 8px;
+  padding: 10px 12px;
 }
 
 .auth-modal__input-icon {

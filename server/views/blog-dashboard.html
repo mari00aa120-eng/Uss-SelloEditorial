@@ -195,6 +195,16 @@
     .cat-row2 { grid-template-columns: 1fr; }
     .cat-form-page { padding: 24px 18px 30px; }
   }
+
+  /* Aviso no bloqueante (reemplaza a alert()) */
+  .uss-toast {
+    position: fixed; top: 20px; right: 20px; z-index: 2000; max-width: 360px;
+    background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5;
+    border-radius: 12px; padding: 12px 16px; font-size: 13.5px; font-weight: 600;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08); opacity: 0; transform: translateY(-8px);
+    transition: opacity .2s ease, transform .2s ease; pointer-events: none;
+  }
+  .uss-toast.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 </style>
 </head>
 <body>
@@ -388,6 +398,22 @@
       var uploadedTestimonialUrl = '';
       var aboutAuthors = []; // { name, description, imageUrl }
 
+      // Aviso no bloqueante en la esquina, en vez de alert() nativo del navegador.
+      var toastTimeout = null;
+      function showToast(message) {
+        var toast = document.getElementById('ussToast');
+        if (!toast) {
+          toast = document.createElement('div');
+          toast.className = 'uss-toast';
+          toast.id = 'ussToast';
+          document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('is-visible');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(function () { toast.classList.remove('is-visible'); }, 4500);
+      }
+
       // ---------------------------------------------------------------
       // Utilidades
       // ---------------------------------------------------------------
@@ -490,7 +516,7 @@
       function toggleReview(id) {
         apiFetch('/api/blog/admin/reviews/' + id + '/toggle', { method: 'PATCH' }).then(function (res) {
           if (res.data.ok) loadReviews();
-          else alert(res.data.message || 'No se pudo cambiar el estado.');
+          else showToast(res.data.message || 'No se pudo cambiar el estado.');
         });
       }
 
@@ -498,7 +524,7 @@
         if (!confirm('¿Eliminar esta reseña definitivamente? Esta acción no se puede deshacer.')) return;
         apiFetch('/api/blog/admin/reviews/' + id, { method: 'DELETE' }).then(function (res) {
           if (res.data.ok) loadReviews();
-          else alert(res.data.message || 'No se pudo eliminar la reseña.');
+          else showToast(res.data.message || 'No se pudo eliminar la reseña.');
         });
       }
 

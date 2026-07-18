@@ -123,14 +123,47 @@
     });
   }
 
+  var EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function fieldWrap(input) {
+    // El campo real de USS envuelve el <input> en .auth-modal__field
+    return input.closest('.auth-modal__field') || input.parentElement;
+  }
+
+  function showFieldError(input, message) {
+    var wrap = fieldWrap(input);
+    if (!wrap) return;
+    wrap.classList.add('auth-modal__field--error');
+    var errorEl = wrap.querySelector('.auth-modal__field-error');
+    if (!errorEl) {
+      errorEl = document.createElement('p');
+      errorEl.className = 'auth-modal__field-error';
+      wrap.appendChild(errorEl);
+    }
+    errorEl.textContent = message;
+  }
+
+  function clearFieldError(input) {
+    var wrap = fieldWrap(input);
+    if (!wrap) return;
+    wrap.classList.remove('auth-modal__field--error');
+    var errorEl = wrap.querySelector('.auth-modal__field-error');
+    if (errorEl) errorEl.remove();
+  }
+
+  function clearAllFieldErrors(form) {
+    form.querySelectorAll('.auth-modal__field--error').forEach(function (wrap) {
+      wrap.classList.remove('auth-modal__field--error');
+      var errorEl = wrap.querySelector('.auth-modal__field-error');
+      if (errorEl) errorEl.remove();
+    });
+  }
+
   function showFormError(form, message) {
     let errorEl = form.querySelector('.auth-modal__error');
     if (!errorEl) {
       errorEl = document.createElement('p');
       errorEl.className = 'auth-modal__error';
-      errorEl.style.color = '#c0392b';
-      errorEl.style.fontSize = '13px';
-      errorEl.style.marginTop = '4px';
       form.insertBefore(errorEl, form.firstChild);
     }
     errorEl.textContent = message;
@@ -147,23 +180,66 @@
     if (!successEl) {
       successEl = document.createElement('p');
       successEl.className = 'auth-modal__success';
-      successEl.style.color = '#1e8e3e';
-      successEl.style.fontSize = '13px';
-      successEl.style.fontWeight = '600';
-      successEl.style.marginTop = '4px';
       form.insertBefore(successEl, form.firstChild);
     }
     successEl.textContent = message;
   }
 
+  // Valida un formulario de auth campo por campo. rules: [{ input, validators: [{ test, message }] }]
+  // Cada validator.test(value) debe devolver true si es VÁLIDO. Se muestra el primer error encontrado por campo.
+  function validateFields(rules) {
+    var isValid = true;
+    rules.forEach(function (rule) {
+      if (!rule.input) return;
+      clearFieldError(rule.input);
+      var value = rule.input.value;
+      for (var i = 0; i < rule.validators.length; i++) {
+        var validator = rule.validators[i];
+        if (!validator.test(value)) {
+          showFieldError(rule.input, validator.message);
+          isValid = false;
+          break;
+        }
+      }
+    });
+    return isValid;
+  }
+
   function wireAuthForms() {
     const loginForm = document.getElementById('authLoginForm');
     if (loginForm) {
+      const loginEmailInput = document.getElementById('authLoginEmail');
+      const loginPasswordInput = document.getElementById('authLoginPassword');
+
+      // Limpia el error de un campo apenas la persona empieza a corregirlo.
+      [loginEmailInput, loginPasswordInput].forEach(function (input) {
+        if (input) input.addEventListener('input', function () { clearFieldError(input); });
+      });
+
       loginForm.addEventListener('submit', function (e) {
         e.preventDefault();
         clearFormError(loginForm);
-        const email = document.getElementById('authLoginEmail').value.trim();
-        const password = document.getElementById('authLoginPassword').value;
+
+        const email = loginEmailInput.value.trim();
+        const password = loginPasswordInput.value;
+
+        const isValid = validateFields([
+          {
+            input: loginEmailInput,
+            validators: [
+              { test: function (v) { return v.trim().length > 0; }, message: 'Ingresa tu correo electrónico.' },
+              { test: function (v) { return EMAIL_REGEX.test(v.trim()); }, message: 'Ingresa un correo electrónico válido (ejemplo@correo.com).' },
+            ],
+          },
+          {
+            input: loginPasswordInput,
+            validators: [
+              { test: function (v) { return v.length > 0; }, message: 'Ingresa tu contraseña.' },
+            ],
+          },
+        ]);
+        if (!isValid) return;
+
         const submitBtn = loginForm.querySelector('.auth-modal__submit');
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
@@ -196,21 +272,76 @@
 
     const registerForm = document.getElementById('authRegisterForm');
     if (registerForm) {
+      const firstNameInput = document.getElementById('authRegisterFirstName');
+      const lastNameInput = document.getElementById('authRegisterLastName');
+      const emailField = document.getElementById('authRegisterEmail');
+      const addressInput = document.getElementById('authRegisterAddress');
+      const passwordInput = document.getElementById('authRegisterPassword');
+      const confirmPasswordInput = document.getElementById('authRegisterConfirmPassword');
+      const termsInput = document.getElementById('authRegisterTerms');
+
+      [firstNameInput, lastNameInput, emailField, addressInput, passwordInput, confirmPasswordInput].forEach(function (input) {
+        if (input) input.addEventListener('input', function () { clearFieldError(input); });
+      });
+      if (termsInput) termsInput.addEventListener('change', function () { clearFieldError(termsInput); });
+
       registerForm.addEventListener('submit', function (e) {
         e.preventDefault();
         clearFormError(registerForm);
 
-        const firstName = document.getElementById('authRegisterFirstName').value.trim();
-        const lastName = document.getElementById('authRegisterLastName').value.trim();
-        const emailField = document.getElementById('authRegisterEmail');
+        const firstName = firstNameInput.value.trim();
+        const lastName = lastNameInput.value.trim();
         const email = emailField ? emailField.value.trim() : '';
-        const password = document.getElementById('authRegisterPassword').value;
-        const confirmPassword = document.getElementById('authRegisterConfirmPassword').value;
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
 
-        if (password !== confirmPassword) {
-          showFormError(registerForm, 'Las contraseñas no coinciden.');
-          return;
+        const rules = [
+          {
+            input: firstNameInput,
+            validators: [{ test: function (v) { return v.trim().length > 0; }, message: 'Ingresa tus nombres.' }],
+          },
+          {
+            input: lastNameInput,
+            validators: [{ test: function (v) { return v.trim().length > 0; }, message: 'Ingresa tus apellidos.' }],
+          },
+          {
+            input: emailField,
+            validators: [
+              { test: function (v) { return v.trim().length > 0; }, message: 'Ingresa tu correo electrónico.' },
+              { test: function (v) { return EMAIL_REGEX.test(v.trim()); }, message: 'Ingresa un correo electrónico válido (ejemplo@correo.com).' },
+            ],
+          },
+          {
+            input: addressInput,
+            validators: [{ test: function (v) { return v.trim().length > 0; }, message: 'Ingresa tu dirección de residencia.' }],
+          },
+          {
+            input: passwordInput,
+            validators: [
+              { test: function (v) { return v.length > 0; }, message: 'Crea una contraseña.' },
+              { test: function (v) { return v.length >= 8; }, message: 'La contraseña debe tener al menos 8 caracteres.' },
+              { test: function (v) { return /[A-Z]/.test(v); }, message: 'La contraseña debe incluir al menos una letra mayúscula.' },
+              { test: function (v) { return /[0-9]/.test(v); }, message: 'La contraseña debe incluir al menos un número.' },
+              { test: function (v) { return /[^A-Za-z0-9]/.test(v); }, message: 'La contraseña debe incluir al menos un símbolo.' },
+            ],
+          },
+          {
+            input: confirmPasswordInput,
+            validators: [
+              { test: function (v) { return v.length > 0; }, message: 'Repite tu contraseña.' },
+              { test: function (v) { return v === passwordInput.value; }, message: 'Las contraseñas no coinciden.' },
+            ],
+          },
+        ];
+
+        let isValid = validateFields(rules);
+
+        if (termsInput && !termsInput.checked) {
+          showFormError(registerForm, 'Debes aceptar los Términos y condiciones y la Política de privacidad para continuar.');
+          isValid = false;
         }
+
+        if (!isValid) return;
 
         const submitBtn = registerForm.querySelector('.auth-modal__submit');
         const originalText = submitBtn.textContent;

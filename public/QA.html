@@ -294,7 +294,7 @@
         <h3 class="contact-card__title">Envíanos un Mensaje</h3>
         <p class="contact-card__lead">Por favor completa el formulario y nuestro equipo se pondrá en contacto contigo en breve.</p>
 
-        <form class="contact-form" id="contactForm">
+        <form class="contact-form" id="contactForm" novalidate>
           <div class="contact-form__row">
             <div class="contact-form__field">
               <label for="contactName">Nombre completo</label>
@@ -305,6 +305,7 @@
                 </svg>
                 <input type="text" id="contactName" name="contactName" placeholder="Ingresa tu nombre completo" required>
               </span>
+              <p class="contact-form__field-error" id="errorContactName"></p>
             </div>
 
             <div class="contact-form__field">
@@ -315,6 +316,7 @@
                 </svg>
                 <input type="tel" id="contactPhone" name="contactPhone" placeholder="Ingresa tu número de teléfono" required>
               </span>
+              <p class="contact-form__field-error" id="errorContactPhone"></p>
             </div>
           </div>
 
@@ -327,6 +329,7 @@
               </svg>
               <input type="email" id="contactEmail" name="contactEmail" placeholder="Ingresa tu correo electrónico" required>
             </span>
+            <p class="contact-form__field-error" id="errorContactEmail"></p>
           </div>
 
           <div class="contact-form__field">
@@ -337,6 +340,7 @@
               </svg>
               <input type="text" id="contactSubject" name="contactSubject" placeholder="¿En qué podemos ayudarte?" required>
             </span>
+            <p class="contact-form__field-error" id="errorContactSubject"></p>
           </div>
 
           <div class="contact-form__field">
@@ -348,10 +352,11 @@
               </svg>
               <textarea id="contactMessage" name="contactMessage" placeholder="Escribe tu mensaje aquí..." required></textarea>
             </span>
+            <p class="contact-form__field-error" id="errorContactMessage"></p>
           </div>
 
           <div class="contact-form__footer">
-            <button type="submit" class="btn btn--primary contact-form__submit">
+            <button type="submit" class="btn btn--primary contact-form__submit" id="contactSubmitBtn">
               Enviar mensaje
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12"/>
@@ -365,6 +370,7 @@
               Tu información está segura con nosotros
             </span>
           </div>
+          <p class="contact-form__success" id="contactFormSuccess" style="display:none; color:#1e8e3e; font-weight:700; font-size:13.5px; margin:14px 0 0;">¡Mensaje enviado correctamente! Te responderemos pronto.</p>
         </form>
       </div>
 
@@ -461,6 +467,102 @@
         d.querySelector('.nav__dropdown-trigger').setAttribute('aria-expanded', 'false');
       });
     });
+  </script>
+
+  <script>
+    // Formulario de contacto: validación por campo, texto en rojo debajo del campo (sin alert()).
+    (function () {
+      var form = document.getElementById('contactForm');
+      if (!form) return;
+
+      var EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      var PHONE_REGEX = /^[0-9+\s()-]{6,20}$/;
+
+      var nameInput = document.getElementById('contactName');
+      var phoneInput = document.getElementById('contactPhone');
+      var emailInput = document.getElementById('contactEmail');
+      var subjectInput = document.getElementById('contactSubject');
+      var messageInput = document.getElementById('contactMessage');
+      var successMsg = document.getElementById('contactFormSuccess');
+      var submitBtn = document.getElementById('contactSubmitBtn');
+
+      function fieldWrap(input) {
+        return input.closest('.contact-form__field');
+      }
+
+      function showFieldError(input, message) {
+        var wrap = fieldWrap(input);
+        if (!wrap) return;
+        wrap.classList.add('contact-form__field--has-error');
+        var errorEl = wrap.querySelector('.contact-form__field-error');
+        if (errorEl) errorEl.textContent = message;
+      }
+
+      function clearFieldError(input) {
+        var wrap = fieldWrap(input);
+        if (!wrap) return;
+        wrap.classList.remove('contact-form__field--has-error');
+      }
+
+      [nameInput, phoneInput, emailInput, subjectInput, messageInput].forEach(function (input) {
+        if (input) input.addEventListener('input', function () { clearFieldError(input); });
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        successMsg.style.display = 'none';
+
+        var rules = [
+          {
+            input: nameInput,
+            validators: [{ test: function (v) { return v.trim().length > 0; }, message: 'Ingresa tu nombre completo.' }],
+          },
+          {
+            input: phoneInput,
+            validators: [
+              { test: function (v) { return v.trim().length > 0; }, message: 'Ingresa tu número de teléfono.' },
+              { test: function (v) { return PHONE_REGEX.test(v.trim()); }, message: 'Ingresa un número de teléfono válido.' },
+            ],
+          },
+          {
+            input: emailInput,
+            validators: [
+              { test: function (v) { return v.trim().length > 0; }, message: 'Ingresa tu correo electrónico.' },
+              { test: function (v) { return EMAIL_REGEX.test(v.trim()); }, message: 'Ingresa un correo electrónico válido (ejemplo@correo.com).' },
+            ],
+          },
+          {
+            input: subjectInput,
+            validators: [{ test: function (v) { return v.trim().length > 0; }, message: 'Cuéntanos en qué podemos ayudarte.' }],
+          },
+          {
+            input: messageInput,
+            validators: [{ test: function (v) { return v.trim().length > 0; }, message: 'Escribe tu mensaje.' }],
+          },
+        ];
+
+        var isValid = true;
+        rules.forEach(function (rule) {
+          clearFieldError(rule.input);
+          var value = rule.input.value;
+          for (var i = 0; i < rule.validators.length; i++) {
+            if (!rule.validators[i].test(value)) {
+              showFieldError(rule.input, rule.validators[i].message);
+              isValid = false;
+              break;
+            }
+          }
+        });
+
+        if (!isValid) return;
+
+        // No hay backend de contacto todavía: confirmamos visualmente el envío.
+        submitBtn.disabled = true;
+        successMsg.style.display = 'block';
+        form.reset();
+        setTimeout(function () { submitBtn.disabled = false; }, 1200);
+      });
+    })();
   </script>
 
     <!-- Auth Modal: Iniciar Sesión / Registrarse -->
