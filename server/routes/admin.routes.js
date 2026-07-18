@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const pool = require('../config/db');
 const { sendAdminCodeEmail, sendAdminResponseEmail } = require('../config/brevo');
 const { generateSixDigitCode, hashCode } = require('../utils/codes');
+const { slugify } = require('../utils/slugify');
 const { requireAdmin } = require('../middleware/auth');
 const {
   getAllPaymentAccounts,
@@ -191,15 +192,15 @@ router.get('/stats', requireAdmin, async (req, res) => {
         LEFT JOIN LATERAL (
           SELECT * FROM orders WHERE orders.user_id = u.id ORDER BY created_at DESC LIMIT 1
         ) o ON TRUE
-        ORDER BY u.created_at DESC
-        LIMIT 10
+        ORDER BY COALESCE(o.created_at, u.created_at) DESC
+        LIMIT 20
       `),
       // Stock actual de cada libro del catálogo, para mostrar la columna "Stock"
       // junto a los libros de cada pedido reciente.
       pool.query('SELECT id, title, stock FROM catalog_books'),
     ]);
 
-    const catalogById = new Map(catalogRows.map((b) => [b.id, b]));
+    const catalogLookup = buildCatalogLookup(catalogRows);
 
     res.json({
       ok: true,
@@ -208,7 +209,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
         totalCartLines: cartCountRows[0].count,
         totalCartUnits: cartCountRows[0].units,
       },
-      recentUsers: recentUsers.map((row) => serializeUserRow(row, catalogById)),
+      recentUsers: recentUsers.map((row) => serializeUserRow(row, catalogLookup)),
     });
   } catch (err) {
     console.error('[admin/stats]', err);
@@ -216,10 +217,48 @@ router.get('/stats', requireAdmin, async (req, res) => {
   }
 });
 
-function serializeUserRow(row, catalogById) {
+// El carrito/los pedidos guardan cada item con un "productId" que en
+// realidad es el SLUG del título del libro (ver public/assets/js/cart-actions.js),
+// no el id numérico de catalog_books. Por eso, para encontrar el libro real
+// hay que buscarlo por slug (y, como respaldo, por el slug de su nombre
+// guardado en el item, en caso de que el título del libro haya cambiado
+// después de la compra).
+function buildCatalogLookup(catalogRows) {
+  const byId = new Map();
+  const bySlug = new Map();
+  catalogRows.forEach((b) => {
+    byId.set(b.id, b);
+    bySlug.set(slugify(b.title), b);
+  });
+  return {
+    byId,
+    findForItem(item) {
+      if (!item) return null;
+      // 1) Coincidencia directa por el slug guardado como productId.
+      if (item.productId != null) {
+        const bySlugMatch = bySlug.get(String(item.productId));
+        if (bySlugMatch) return bySlugMatch;
+        // Respaldo: por si en algún momento se llegó a guardar el id
+        // numérico real en vez del slug.
+        const numericId = Number(item.productId);
+        if (Number.isInteger(numericId) && byId.has(numericId)) {
+          return byId.get(numericId);
+        }
+      }
+      // 2) Respaldo final: slug calculado a partir del nombre guardado en el item.
+      if (item.name) {
+        const bySlugOfName = bySlug.get(slugify(item.name));
+        if (bySlugOfName) return bySlugOfName;
+      }
+      return null;
+    },
+  };
+}
+
+function serializeUserRow(row, catalogLookup) {
   const items = Array.isArray(row.order_items) ? row.order_items : [];
   const itemsWithStock = items.map((item) => {
-    const book = catalogById && item.productId != null ? catalogById.get(Number(item.productId)) : null;
+    const book = catalogLookup ? catalogLookup.findForItem(item) : null;
     return {
       name: item.name,
       quantity: item.quantity,
@@ -471,12 +510,24 @@ async function decrementStockForUser(userId) {
     );
     if (rows.length === 0) return;
     const items = Array.isArray(rows[0].items) ? rows[0].items : [];
+    if (items.length === 0) return;
+
+    // item.productId es un slug (texto), no el id numérico de catalog_books,
+    // así que hay que resolver primero el libro real antes de actualizar.
+    const { rows: catalogRows } = await pool.query('SELECT id, title, stock FROM catalog_books');
+    const catalogLookup = buildCatalogLookup(catalogRows);
+
     for (const item of items) {
       const qty = Number(item.quantity) || 0;
-      if (!item.productId || qty <= 0) continue;
+      if (qty <= 0) continue;
+      const book = catalogLookup.findForItem(item);
+      if (!book) {
+        console.warn('[admin/decrementStockForUser] No se encontró el libro del catálogo para el item:', item);
+        continue;
+      }
       await pool.query(
         `UPDATE catalog_books SET stock = GREATEST(stock - $1, 0), updated_at = NOW() WHERE id = $2`,
-        [qty, item.productId]
+        [qty, book.id]
       );
     }
   } catch (err) {
@@ -550,7 +601,7 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
       };
     });
 
-    const catalogById = new Map(catalogRows.map((b) => [b.id, b]));
+    const catalogLookup = buildCatalogLookup(catalogRows);
 
     // ---- Ventas por día/mes (serie temporal) ----
     const salesByDay = {};
@@ -585,7 +636,7 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
         bookSales[key].qty += qty;
         bookSales[key].revenue += rev;
 
-        const catalogBook = item.productId != null ? catalogById.get(Number(item.productId)) : null;
+        const catalogBook = catalogLookup.findForItem(item);
         const category = catalogBook && catalogBook.category ? catalogBook.category : 'Sin categoría';
         categorySales[category] = categorySales[category] || { qty: 0, revenue: 0 };
         categorySales[category].qty += qty;

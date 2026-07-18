@@ -798,7 +798,9 @@
         preview.textContent = 'Selecciona un medio de pago para ver los datos que se le enviarán al usuario.';
         return;
       }
-      var lines = ['<strong>' + pm.label + '</strong>', (pm.cci ? 'Cuenta' : 'Número / @') + ': ' + pm.handle];
+      var isCardMethod = pm.key === 'mastercard' || pm.key === 'visa';
+      var handleLabel = pm.cci ? 'Cuenta' : (isCardMethod ? 'Enlace de pago / código' : 'Número / @');
+      var lines = ['<strong>' + pm.label + '</strong>', handleLabel + ': ' + pm.handle];
       if (pm.cci) lines.push('CCI: ' + pm.cci);
       lines.push('Titular: ' + pm.holder);
       preview.innerHTML = lines.join('<br>');
@@ -930,7 +932,7 @@
 
     // ---------- Modal: configurar cuentas de pago ----------
     var paModalOverlay = document.getElementById('paModalOverlay');
-    var PA_LABELS = { yape: 'Yape', plin: 'Plin', bcp: 'BCP', bbva: 'BBVA' };
+    var PA_LABELS = { yape: 'Yape', plin: 'Plin', bcp: 'BCP', bbva: 'BBVA', mastercard: 'Mastercard', visa: 'Visa' };
 
     var lastLoadedAccounts = [];
 
@@ -970,12 +972,14 @@
 
       list.innerHTML = accountsToShow.map(function (acc) {
         var isBank = acc.key === 'bcp' || acc.key === 'bbva';
+        var isCard = acc.key === 'mastercard' || acc.key === 'visa';
+        var handleLabel = isBank ? 'Número de cuenta' : (isCard ? 'Enlace de pago / código de cobro' : 'Número / @');
         return (
           '<div class="pa-account-card" data-key="' + acc.key + '">' +
             '<h4>' + (PA_LABELS[acc.key] || acc.label) + '<span class="pa-saved-tag">Guardado ✓</span></h4>' +
             '<div class="pa-account-fields">' +
               '<div' + (isBank ? '' : ' class="pa-field-full"') + '>' +
-                '<label>' + (isBank ? 'Número de cuenta' : 'Número / @') + '</label>' +
+                '<label>' + handleLabel + '</label>' +
                 '<input type="text" class="pa-input-handle" value="' + escapeAttr(acc.handle) + '">' +
               '</div>' +
               (isBank ? '<div><label>CCI</label><input type="text" class="pa-input-cci" value="' + escapeAttr(acc.cci || '') + '"></div>' : '') +

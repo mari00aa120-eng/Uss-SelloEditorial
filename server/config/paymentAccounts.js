@@ -30,11 +30,27 @@ const PAYMENT_ACCOUNTS = {
     cci: process.env.PAYMENT_BBVA_CCI || '011-XXX-XXXXXXXXXXXXX-XX',
     holder: process.env.PAYMENT_BBVA_HOLDER || 'Universidad Señor de Sipán S.A.C.',
   },
+  mastercard: {
+    label: 'Mastercard',
+    // Aquí no va un número de cuenta bancaria: va el enlace de pago (pasarela
+    // tipo Niubiz/Culqi/etc.) o el código que el cliente debe usar para pagar
+    // con su tarjeta Mastercard cuando el admin marca el pedido como
+    // "Pendiente a pagar".
+    handle: process.env.PAYMENT_MASTERCARD_LINK || 'Pendiente de configurar',
+    holder: process.env.PAYMENT_MASTERCARD_HOLDER || 'USS Fondo Editorial',
+  },
+  visa: {
+    label: 'Visa',
+    handle: process.env.PAYMENT_VISA_LINK || 'Pendiente de configurar',
+    holder: process.env.PAYMENT_VISA_HOLDER || 'USS Fondo Editorial',
+  },
 };
 
-// Mastercard/Visa no aplican aquí: son el medio de pago propio del cliente,
-// no una cuenta de la institución a la que se le pueda pedir que transfiera.
-const REQUESTABLE_METHODS = ['yape', 'plin', 'bcp', 'bbva'];
+// Los 6 medios de pago que el admin puede configurar y solicitar al cliente
+// desde el panel ("Configurar cuentas de pago" y "Medio de pago a
+// solicitar"). Para Mastercard/Visa el campo "handle" se usa para el enlace
+// de pago o código de cobro (no hay número de cuenta ni CCI).
+const REQUESTABLE_METHODS = ['yape', 'plin', 'bcp', 'bbva', 'mastercard', 'visa'];
 
 function getPaymentAccount(methodKey) {
   return PAYMENT_ACCOUNTS[methodKey] || null;

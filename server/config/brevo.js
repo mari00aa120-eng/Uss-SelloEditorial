@@ -114,13 +114,15 @@ async function sendAdminResponseEmail({ to, customerName, message, orderStatus, 
 
   let paymentBlock = '';
   if (orderStatus === 'pendiente_pago' && paymentInfo) {
+    const isCardMethod = paymentInfo.key === 'mastercard' || paymentInfo.key === 'visa';
+    const handleLabel = paymentInfo.cci ? 'Cuenta' : (isCardMethod ? 'Enlace de pago / código' : 'Número / @');
     paymentBlock = `
       <div style="margin-top:16px; padding:16px; background:#FFF7ED; border:1px solid #FDBA74; border-radius:8px;">
         <p style="margin:0 0 8px; font-weight:700; color:#9A3412;">Datos para completar tu pago</p>
         <p style="margin:0; font-size:14px; color:#333;">
           <strong>Monto a pagar:</strong> S/ ${Number(paymentInfo.amount).toFixed(2)}<br>
           <strong>Método:</strong> ${paymentInfo.label}<br>
-          <strong>${paymentInfo.cci ? 'Cuenta' : 'Número / @'}:</strong> ${paymentInfo.handle}<br>
+          <strong>${handleLabel}:</strong> ${paymentInfo.handle}<br>
           ${paymentInfo.cci ? `<strong>CCI:</strong> ${paymentInfo.cci}<br>` : ''}
           <strong>Titular:</strong> ${paymentInfo.holder}
         </p>
