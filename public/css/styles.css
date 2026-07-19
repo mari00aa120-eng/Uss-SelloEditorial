@@ -1748,8 +1748,14 @@ margin: 40px 0 32px;
     align-items: center;
   }
 
+  .commitment__col--left,
+  .commitment__col--right {
+    transform: none;
+  }
+
   .commitment__item--right {
     text-align: center;
+    margin-left: 0;
   }
 
   .commitment__item--right .commitment__icon {
@@ -1767,6 +1773,10 @@ margin: 40px 0 32px;
 
   .about-info__badge {
     right: 16px;
+  }
+
+  .about-info__content {
+    margin-left: 0;
   }
 
   .hero {
