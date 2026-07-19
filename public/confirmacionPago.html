@@ -16,7 +16,7 @@
         <img src="assets/logo-uss.svg" alt="USS Sello Editorial" class="brand__logo">
       </a>
 
-      <nav class="nav">
+      <nav class="nav" id="mainNav">
         <a href="inicio.html" class="nav__link">Inicio</a>
         <a href="sobreNosotros.html" class="nav__link">Sobre Nosotros</a>
         <a href="catalogo.html" class="nav__link nav__link--active">Catalogo</a>
@@ -66,6 +66,10 @@
           Registrarse
         </button>
       </div>
+
+      <button type="button" class="nav__toggle" id="navToggleBtn" aria-label="Abrir menu" aria-expanded="false" aria-controls="mainNav">
+        <span class="nav__toggle-bar"></span>
+      </button>
     </div>
   </header>
 
@@ -257,6 +261,41 @@
         d.querySelector('.nav__dropdown-trigger').setAttribute('aria-expanded', 'false');
       });
     });
+  </script>
+
+  <script>
+    // Menu movil: boton hamburguesa para abrir/cerrar la navegacion en tablet y celular
+    (function () {
+      var navbarEl = document.querySelector('.navbar');
+      var toggleBtn = document.getElementById('navToggleBtn');
+      var navEl = document.getElementById('mainNav');
+      if (!navbarEl || !toggleBtn || !navEl) return;
+
+      function closeNav() {
+        navbarEl.classList.remove('navbar--nav-open');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      toggleBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = navbarEl.classList.toggle('navbar--nav-open');
+        toggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      navEl.querySelectorAll('.nav__link:not(.nav__dropdown-trigger)').forEach(function (link) {
+        link.addEventListener('click', closeNav);
+      });
+
+      document.addEventListener('click', function (e) {
+        if (navbarEl.classList.contains('navbar--nav-open') && !navbarEl.contains(e.target)) {
+          closeNav();
+        }
+      });
+
+      window.addEventListener('resize', function () {
+        if (window.innerWidth > 1024) closeNav();
+      });
+    })();
   </script>
 
   <script>

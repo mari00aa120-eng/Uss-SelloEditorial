@@ -274,6 +274,71 @@ button {
   white-space: nowrap;
 }
 
+/* ---------- Navbar: botón de menú móvil (hamburguesa) ---------- */
+/* Oculto en escritorio; se muestra en tablet/celular (ver media queries) */
+
+.nav__toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.nav__toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.nav__toggle-bar {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: background 0.15s ease;
+}
+
+.nav__toggle-bar::before,
+.nav__toggle-bar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 22px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 0.2s ease, top 0.2s ease;
+}
+
+.nav__toggle-bar::before {
+  top: -7px;
+}
+
+.nav__toggle-bar::after {
+  top: 7px;
+}
+
+.navbar--nav-open .nav__toggle-bar {
+  background: transparent;
+}
+
+.navbar--nav-open .nav__toggle-bar::before {
+  top: 0;
+  transform: rotate(45deg);
+}
+
+.navbar--nav-open .nav__toggle-bar::after {
+  top: 0;
+  transform: rotate(-45deg);
+}
+
 /* ---------- Hero ---------- */
 
 .hero {
@@ -1732,11 +1797,29 @@ margin: 40px 0 32px;
   }
 
   .brand__logo {
-    height: 70px;
+    height: 56px;
   }
 
   .navbar__inner {
     padding: 12px 20px;
+    gap: 12px;
+  }
+
+  .navbar__actions {
+    gap: 8px;
+  }
+
+  /* Los botones de Iniciar Sesión / Registrarse se vuelven compactos
+     (solo ícono) para que quepan junto al logo y la hamburguesa */
+  .navbar__actions .btn {
+    padding: 10px;
+    font-size: 0;
+    gap: 0;
+  }
+
+  .navbar__actions .btn svg {
+    width: 20px;
+    height: 20px;
   }
 
   .features {
@@ -1776,8 +1859,40 @@ margin: 40px 0 32px;
     display: none;
   }
 
+  /* El menú de enlaces se oculta por defecto y se muestra como panel
+     desplegable (debajo del navbar) al activar el botón hamburguesa */
   .nav {
     display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    background: var(--cream);
+    padding: 12px 20px 24px;
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.12);
+    max-height: calc(100vh - 100%);
+    overflow-y: auto;
+  }
+
+  .navbar--nav-open .nav {
+    display: flex;
+  }
+
+  .nav__link {
+    width: 100%;
+    padding: 12px 4px;
+    font-size: 1.1rem;
+  }
+
+  .nav__dropdown {
+    width: 100%;
+  }
+
+  .nav__toggle {
+    display: inline-flex;
   }
 }
 
@@ -1835,6 +1950,29 @@ margin: 40px 0 32px;
 
   .navbar__inner {
     padding: 14px 20px;
+    gap: 8px;
+  }
+
+  .navbar__actions {
+    gap: 6px;
+  }
+
+  .navbar__actions .btn {
+    padding: 8px;
+  }
+
+  .navbar__actions .btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .nav__toggle {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand__logo {
+    height: 44px;
   }
 
   .about-info__grid {
@@ -1849,10 +1987,6 @@ margin: 40px 0 32px;
 
   .about-banner__frame {
     height: 280px;
-  }
-
-  .brand__logo {
-    height: 52px;
   }
 
   .btn--ghost span,
@@ -2428,6 +2562,29 @@ margin: 40px 0 32px;
 
 .nav__dropdown-item:hover svg {
   color: var(--green);
+}
+
+/* Nav: Dropdown "QA" dentro del panel móvil (se apila en vez de flotar) */
+@media (max-width: 1024px) {
+  .nav__dropdown-menu {
+    position: static;
+    min-width: 0;
+    width: 100%;
+    box-shadow: none;
+    background: transparent;
+    padding: 4px 0 4px 14px;
+    transform: none;
+  }
+
+  .nav__dropdown:hover .nav__dropdown-menu,
+  .nav__dropdown:focus-within .nav__dropdown-menu,
+  .nav__dropdown.is-open .nav__dropdown-menu {
+    transform: none;
+  }
+
+  .nav__dropdown-menu::before {
+    display: none;
+  }
 }
 
 /* Ancla: compensar la navbar sticky al hacer scroll a estas secciones */
