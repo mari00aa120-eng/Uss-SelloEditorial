@@ -1731,6 +1731,11 @@ margin: 40px 0 32px;
     align-items: flex-start;
   }
 
+  .catalog-hero__text h1 {
+    white-space: normal;
+    font-size: clamp(2rem, 6vw, 2.6rem);
+  }
+
   .catalog-hero__media {
     width: 100%;
     max-width: 100%;
@@ -1833,6 +1838,7 @@ margin: 40px 0 32px;
   }
 
   .features {
+    display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -2032,6 +2038,12 @@ margin: 40px 0 32px;
 
   .hero__cta {
     gap: 16px;
+  }
+
+  .hero__researchers {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .footer__inner {
